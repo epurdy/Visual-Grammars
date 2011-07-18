@@ -1,0 +1,8 @@
+#true: profile
+"util": include
+"vlib-ocaml": include
+"ocaml-base": include
+<*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
+<util/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
+<util/*.cmx>: for-pack(Util)
+"cdt": not_hygienic
