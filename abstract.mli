@@ -3,7 +3,10 @@ open Util
 open Printf
 
 type sid = int
+(** Unique identifier for a symbol *)
+
 type cid = int
+(** Unique identifier for a composition *)
 
 type ('symbol,'composition) friend = {
   __sym__: 'symbol;
