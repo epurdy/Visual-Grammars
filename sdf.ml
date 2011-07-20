@@ -1,6 +1,7 @@
 open Util.Hops
 open Util.Misc
 open Printf
+open Scanf
 
 open Abstract
 
@@ -299,6 +300,49 @@ let print_levels curves =
       printf "\n---\n";
     end
     curves
+
+let load_family fname = 
+  let chan = open_in fname in
+  let line = input_line chan in
+  let n = 
+    let n = ref 0 in
+      sscanf line "%d" (fun x -> n := x);
+      !n
+  in
+  let lfamily = make_live_family () () n (n*n) (n*n*n) in
+
+  let thelen i j = 
+    let x = j - i + n + 1 in
+      (x mod n) - 1
+  in
+
+  let seen = mkhash 100 in
+  let add (i,j) =
+    if not (seen >>? (i,j)) then begin
+      seen << ((i,j), ());
+      lfamily.imake_new_scurve (i,j) (thelen i j) ();
+    end
+  in
+
+    begin try
+      let proc ax ay bx by cx cy =
+	assert(ax == bx);
+	assert(ay == cy);
+	assert(by == cx);
+	add (ax,ay);
+	add (bx,by);
+	add (cx,cy);
+	lfamily.imake_new_comp (ax, by, ay) ();
+      in
+	while true do
+	  let line = input_line chan in
+	    sscanf line " [%d,%d] -> [%d,%d] [%d,%d]" proc;
+	done
+    with End_of_file -> ()
+    end;
+
+    finalize lfamily.gram
+
 
 let make_full_family n =
   let lfamily = make_live_family () () n (n*n) (n*n*n) in

@@ -37,3 +37,4 @@ val sparse_inside_outside : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family ->
 
 val sparse_parse_cost : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> float
 
+val viterbi : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> float * (int * int) list

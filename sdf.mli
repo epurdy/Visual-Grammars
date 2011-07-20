@@ -86,3 +86,5 @@ val sparse_family_of_curve : Curve.t -> int -> normal_family
 val sparse_family_of_curve_debug : Curve.t -> int -> debug_family
 val full_family_of_curve : Curve.t -> normal_family
 val full_family_of_curve_debug : Curve.t -> debug_family
+
+val load_family : string -> unit_family

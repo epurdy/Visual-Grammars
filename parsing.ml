@@ -1,4 +1,4 @@
-open Hops
+open Util.Hops
 open Printf
 open Util.Misc
 
@@ -12,6 +12,7 @@ let strict_parsing = false
 let inside_verbose = false
 let outside_verbose = false
 let count_verbose = false
+let viterbi_verbose = true
 
 (* a in model domain, b in data domain *)
 type parse_table = {
@@ -272,3 +273,87 @@ let sparse_parse_cost gram family =
   let table = inside gram family in
     table.qual
 
+
+
+let viterbi gram family =
+  let qual = ref infinity in
+    (* chart maps (X,I) -> q, X=nonterminal, I=SDF interval *)
+  let table = new_parse_table (gram.num_symbols()) (family.num_symbols()) 
+    "viterbi" viterbi_verbose in
+  let toplevel = ref None in
+  let foo = mkhash 100 in
+  
+
+    (*   let print_entry symbol scurve = *)
+    (*     print_parse_table_entry table  *)
+    (*       (gram.x.symbol_name symbol) (family.x.symbol_name scurve) *)
+    (*       symbol.G.sid scurve.S.sid *)
+    (*   in *)
+
+    family.iter_symbols
+      begin fun scurve -> 
+	if family.x.lexical_ok scurve then begin
+	  gram.iter_symbols
+	    begin fun symbol -> 
+	      let cost = G.lexical_cost symbol scurve in
+		set table (symbol.G.sid, scurve.S.sid) cost;
+		(* 		print_entry symbol scurve;  *)
+	    end
+	end;
+
+	if family.x.binary_ok scurve then begin
+	  gram.iter_all_decompositions
+
+	    begin fun symbol prod ->
+	      if G.compatible symbol scurve then begin
+		family.iter_decompositions scurve
+		  begin fun dcomp ->
+		    let cost = (G.binary_cost prod dcomp) +. 
+		      (get table (prod.G.leftsid, dcomp.S.leftsid)) +.
+		      (get table (prod.G.rightsid, dcomp.S.rightsid)) 
+		    in
+		      if cost <= (get table (symbol.G.sid, scurve.S.sid)) then begin
+			set table (symbol.G.sid, scurve.S.sid) cost;
+			foo << ((symbol.G.sid, scurve.S.sid),
+				(prod.G.cid, dcomp.S.cid));
+		      end
+		  end;
+		(* 		print_entry symbol scurve; *)
+	      end
+	    end
+
+	end;
+
+	if family.x.goal_ok scurve then begin
+	  let cost = S.goal_cost family scurve +. (get table (0, scurve.S.sid)) in
+	    (** TODO is that zero a problem? *)
+	    if cost <= !qual then begin
+	      toplevel := Some (0, scurve.S.sid);
+	      qual := cost;
+	    end
+	end
+
+      end;
+
+    if strict_parsing && not (isfinite !qual) then
+      failwith "Could not parse!";
+
+    let pairs = ref [] in
+    let rec visit (symbolid, scurveid) = 
+      pairs := (symbolid, scurveid) :: !pairs;
+      let symbol, scurve = gram.get_symbol symbolid, family.get_symbol scurveid in
+	if foo >>? (symbol.G.sid, scurve.S.sid) then begin
+	  let prodid, dcompid = foo >> (symbol.G.sid, scurve.S.sid) in
+	  let prod, dcomp = gram.get_composition prodid, 
+	    family.get_composition dcompid in
+	    visit (prod.G.leftsid, dcomp.S.leftsid);
+	    visit (prod.G.rightsid, dcomp.S.rightsid);
+	end
+    in
+    let toplevel = 
+      match !toplevel with Some x -> x
+	| None -> failwith "Could not parse! v2";
+    in
+      visit toplevel;
+
+      !qual, !pairs

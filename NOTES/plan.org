@@ -1,0 +1,352 @@
+We should work on a latex file that runs parallel to this file and
+which has automatically generated figures which are repopulated
+periodically.
+
+how should we repopulate automatically? issues:
+  - need to be able to convert svg to eps
+  - need to make svg
+  - need to call all the relevant executables through a global script
+
+datasets
+  romer
+    I
+1.shape_models
+  1.1.procrustes
+    1.1.procrustes.tex
+    1.1.procrustes.ml
+    output.txt
+    log.txt
+    images
+
+* METRICS
+  - examine samples
+  - examine pictures of midpoint distributions
+  - examine cross-entropy, i.e., (-\frac{1}{N} \sum_{i=1}^N
+    \log q(x_i) ), where q(x) is probability according to the
+    model. Very important to make sure that q is normalized, which
+    could be difficult.
+
+* assembling datasets
+
+** Articulator and other synthetic data
+** Romer
+*** Romer I
+  - hand-annotated simplified version, with 27 points hand-marked
+*** Romer II
+  - ground-truth Romer curves from diff
+*** Romer III
+  - images
+** Weizmann horses
+** hand datasets
+  - http://www.idiap.ch/resource/gestures/
+  - http://personalpages.manchester.ac.uk/staff/timothy.f.cootes/data/hand_data.html
+
+** ASL alphabet
+  - annotating chosen points with gimp
+  - come up with file format for annotations
+    - one point per line
+    - point can either be labeled (>=1) or unlabeled (0)
+  - write code to pick out annotated points and write to file
+  - figure out an easy way to specify correspondences
+  - draw correspondences somehow and check that they seem correct
+    - pick a color for each labeled point, and a color for unlabeled
+      points, and draw circles or boxes
+
+  - figure out how to initialize correspondences based on the
+    assumption that points are close to where they are in another
+    image. suppose that source image has the correct set of points,
+    and destination image is missing some and has combined some. For
+    now, assume some are combined but none are missing. 
+
+    Want to minimize e.g. sum of squared distance from source to
+    destination. if there is one-to-one corresp, can first assign
+    everything to closest unassigned point, and then try all
+    swaps. Could even start randomly, or arbitrarily. 
+
+    If we have some collisions, can we deal with that well? Swaps
+    still make sense, but we want to be able to change which point is
+    being used multiple times. Could say that when a and b both map to
+    x, and we go to swap a and b, we can instead move a or b to an
+    arbitrary point. 
+
+    also makes sense to use consistency of mappings, i.e., if x-> a,
+    y-> b, then d(a,b) and d(x,y) should be similar
+ 
+
+** LabelMe
+
+
+** Time Series datasets
+
+* grammatical shape models
+** TODO compare grammars to markov models
+** TODO implement procrustes / watson / bingham as baseline
+** TODO build interesting grammars by hand
+
+Simplest is probably a simplified hand.
+ - want to see choice (thumb vs. no thumb)
+ - want to see shared parts (fingers)
+ - want to see meaningful MP dist (ideally, articulation of
+   fingers and thumbs)
+ - check that samples look nice
+
+** TODO build interesting and valid grammars from shapetrees
+Want to have good shape deformation given simple hand-picked midpoint
+models, with no structural variability whatsoever, not even X->l or
+L->LL
+  - use hand-built grammars based on hand-annotation and
+    hand-choosing the shapetree
+  - see how choosing different shape trees will influence the
+    samples
+  - try comparing samples to samples from a standard
+    procrustes/watson/bingham model     
+  - look at cross-entropy
+
+  - what kind of dataset do we need? want enough images that the
+    watson distro or whatever can actually be fit. need to have
+    explicit correspondences. hand could work, or we could put
+    explicit annotations on romer.
+
+  - what code is needed? 
+    - k-ary watson, need to be able to calculate probability
+      (including normalization), sample, and learn
+    - need to specify a single parse tree
+    - need to be able to train, use, and sample from 3-ary watson,
+      given hand-labelings
+
+** TODO Figure out how to deal with variation in length
+Either have good shape models that include X->l and L->LL (or figure
+out a different way to deal with variable length curves)
+  - again, want cross-entropy to support this, although it's not
+    clear what the non-grammatical version would be
+
+  - GOAL: have good shape models using more complex grammars
+    - try building them by hand by hand-parsing example curves,
+      choosing intuitively reasonable correspondences.
+    - imposing a hand-built grammar on Romer seems relatively
+      reasonable, especially if we hand-pick and use the ground truth
+      curves
+    - can also impose a hand-built grammar on ASL
+
+
+* Parsing
+** TODO Recover a 1-1 correspondence
+  - we don't even have a viterbi parser right now. easy enough to
+    write one, but how do we represent the output? keep table around,
+    make a grammar is a simple way to do it
+  - how do we make a picture? can draw curves in svg with labeled
+    circles? how does that work exactly? would it work with non 1-1
+    mappings? can leave out numbers, leave some circles blank. we did
+    this in python...
+  - what data do we need? need to know what to label every point of
+    the target curve. 
+  - what data do we have? the curve that generated a particular
+    nonterminal, the curve that generated a particular scurve. so we
+    can do lookups to figure out indices?
+  - suppose we have original curve for the grammar. we should have it
+    at the root nonterminal if nowhere else. then we can get an
+    interval (i,j) for every nonterminal with lookups. Similarly for
+    the sdf. then, if X[i,j] ->> s[k,l], point k should have label i,
+    point l should have label j. If we just set them so when we
+    discover them, then we will correctly handle missing points or
+    extra points.
+  - parsing code can just emit a list of symbol, scurve pairs, let
+    the calling code use that however they want
+  - Would it make sense to do this in a more hacky way with images?
+
+  - we can now specify an sdf, which we can add curve data to and then
+    turn into a grammar. this means we can pick a grammar that
+    corresponds to a fixed parse of a curve. 
+  - we know how to get point labels for the viterbi parse
+  - we just need to draw the curves with the right labels now, and
+    we're done
+
+  - next step is to do this with a few very simple real curves, like
+    romer I, and make sure it still works
+   
+** TODO Recover a 1-1 correspondence with extra intermediate points
+  - given curves with corresponding points, and also more intermediate
+    points, make sure that we can recover the correspondence
+** TODO Recover a 1-1 correspondence with misleading intermediate points
+  - given curves with corresponding points, and also somewhat
+    misleading intermediate points, make sure that we can recover the
+    correspondence
+    - want to see ambiguity (fake stubby finger parsed by L->LL or some such)
+** TODO Recover a correspondence where some points are missing 
+  - given curves with corresponding points, where some may be missing,
+    make sure that we can recover the correspondence
+** TODO Recover a correspondence with both extra points and missing points
+  - given curves with corresponding points, where there are both extra
+    points and missing points, make sure that we can recover the
+    correspondence
+** TODO Given hand-built rich grammar, choose correct structure
+  - given a hand-built grammar with structural variation, make sure
+    that parsing chooses the correct structure, and also gets the
+    corresponding points correct
+
+
+* EM for parameter tuning / shape learning
+General notes: want to do each goal for both a hand-built and
+auto-generated single-example grammars.
+
+** TODO given fixed parses and hand-selected grammar, EM retrains midpoint distros well
+ - [ ] take 1 curve
+ - [ ] impose perfect grammar,
+ - [ ] parse the other curve
+ - [ ] reestimate midpoints
+
+** TODO given fixed parses, EM retrains midpoint distros well
+  - retrain various single-example grammars by using fixed parses of
+    similar curves
+
+** TODO given fixed parses, EM tunes length-related rules well
+  - length-related: L->LL and X->l. 
+  - this is a retarded goal, since these parameters are essentially
+    just measures of scale, and thus it is not very meaningful to
+    learn them
+
+** TODO given fixed parses, EM tunes rich grammars correctly
+  - this should already work, just verifying that EM behaves
+    correctly given fixed parses
+
+** TODO given bad parses, EM fails in some way
+  - impose bad grammar, see what happens
+
+
+** TODO EM retrains midpoint distros well
+
+** TODO EM tunes length-related rules well
+  - again, retardedo  
+
+** TODO EM tunes rich grammars correctly
+  - basically just making sure that if parsing works on its own, and
+    retraining works on its own, then we can combine them: we both
+    find the correct parses, and are sure enough about them to do our
+    updates correctly
+
+  - think about discriminative training vs. EM
+
+
+
+* Parsing in Real Images
+** TODO Parse cluttered image with hand-built grammar, localization information?
+  - GOAL: be able to parse from a cluttered image, using a hand-built
+    grammar, given lots of localization information
+
+** TODO Parse cluttered image with hand-built grammar
+  - GOAL: be able to parse from a cluttered image using a hand-built
+    grammar
+
+** TODO Parse cluttered image with auto-generated grammar
+  - GOAL: be able to parse from a cluttered image using an
+    auto-generated grammar
+
+** TODO Parse cluttered image with hand-built rich grammar, get pose info
+  - GOAL: be able to detect pose information from a cluttered image
+    using a hand-built rich grammar
+
+** TODO Tune hand-built grammar with hand-parsed cluttered images
+  - GOAL: be able to use hand-picked parses from cluttered images to
+    tune a hand-built grammar, possibly discriminatively
+
+** TODO Tune hand-built grammar with cluttered images 
+  - GOAL: be able to use parses from cluttered images to tune a
+    hand-built grammar
+
+** TODO Tune auto-generated grammar with cluttered images
+  - GOAL: be able to use parses from cluttered images to tune an
+    auto-generated grammar
+
+** TODO Improve 2-D parsing with image filters with hand-picked grammars, keypoints
+  - look at a small window around the point, and use this to know
+    where various points are. Use this to more accurately parse ASL
+    images. at this point we are tackling a special case of a pushpin
+    grammar. (where the pins are connected via a shape grammar rather
+    than some other model) Do this with hand-picked keypoints.
+
+** TODO Improve 2-D parsing with image filters with hand-picked grammars, auto keypoints
+  - As above, but try to pick keypoints automatically. That is, take
+    images with ground-truth silhouettes, and try to simplify these to
+    a few points such that the curve is still approximately
+    represented, and such that the points are at distinctive
+    locations, e.g. look more or less like SIFT keypoints.
+
+** TODO Improve 2-D parsing with image filters with auto grammar, auto keypoints
+
+** More general pushpin grammars?
+  - do something with more general pushpin grammars? can have some
+    arrangement of pushpins tied together with procrustes models. that
+    is, can grow existing set of pushpins by imposing a procrustes
+    model on some collection of old and new points (in the normal
+    case, two old points and one new point)
+
+** Do detection and segmentation on real images
+*** With working EM
+ - [ ] Filter out most false positives with Pedro's hog model
+ - [ ] Run pose-estimating detector as a benchmark, mark pixels according to rectangles
+ - [ ] Parse with model grammar to filter out more false positives, mark pixels according to MAP curve
+*** With working structure learning
+
+** Foreground detection
+ - Look at Pedro's thesis
+ - Sample from the posterior using the inside weights
+ - Can have a lot of false detections and a good filtration
+   algorithm - sampling is cheap compared to parsing
+ - Can look at a slightly more complicated version of the generic grammar from Pedro's thesis
+
+
+* Using SDF's in other domains
+** TODO Improve on time-series classification with SDF's
+
+* Learning Structure
+** TODO Figure out optimal single-example grammar
+  - figure out the correct way to build a grammar from a single example
+    - random thought: what if we formulate some notion of
+      triangle-skinniness, and use this to define the optimal
+      subtree. this seems like it would help with a lot of
+      issues. ratio of shortest to longest side is one measure, maybe
+      we would add logs of that
+
+** TODO Implement Merge and Replace
+  - demonstrate that merging and replacement do something reasonable,
+    given an auto-generated grammar
+  - start from ideal single use grammar, show a Replace (finger models)
+  - start from ideal single use grammar, show a Merge (thumb vs no thumb)
+
+** TODO Implement Merge and Replace KL heuristics
+  - actually compute the KL tables for these two guys
+  - demonstrate that merging and replacement heuristics do something
+    reasonable, given hand-built grammar
+
+** TODO Use Merge and Replace to search for good grammar 
+  - demonstrate that we can learn interesting grammars from scratch,
+    i.e., that beam search or whatever works well given the
+    heuristics. probably have to do something more clever than
+    applying individual merges and replacements based on pairwise
+    similarity.
+
+  - using ASL alphabet seems like it gives a lot of opportunities for 
+    interesting grammars
+
+  - can hope to learn symmetries of human figure
+  - sample a shape and decide whether it looks plausible
+  - generate novel but correct shapes?
+
+
+** Figure out how to optimally incorporate new samples
+
+* Learning Curve Texture
+** TODO Come up with curve texture descriptor that does OK on swedish leaves
+  - current thoughts: think of a curve as coming from a gaussian
+    process. map to modified bookstein coordinates, subtract out some
+    global trend (perhaps the optimal parabola centered midway, e.g.)
+    and then figure out what the covariance of f(x_1) and f(x_2) is as
+    a function of x_1 - x_2. Graph this as a function of dx to see if
+    anything pops out, it should for various sawtooth-like curves
+
+** TODO Improve classification performance of global model with texture model
+
+* Classification
+** Use a discriminative version of EM?
+** Distinguish between dog silhouettes and cat silouettes?
+
