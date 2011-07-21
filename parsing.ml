@@ -312,7 +312,7 @@ let viterbi gram family =
 		      (get table (prod.G.leftsid, dcomp.S.leftsid)) +.
 		      (get table (prod.G.rightsid, dcomp.S.rightsid)) 
 		    in
-		      if cost <= (get table (symbol.G.sid, scurve.S.sid)) then begin
+		      if cost < (get table (symbol.G.sid, scurve.S.sid)) then begin
 			set table (symbol.G.sid, scurve.S.sid) cost;
 			foo << ((symbol.G.sid, scurve.S.sid),
 				(prod.G.cid, dcomp.S.cid));
@@ -327,7 +327,7 @@ let viterbi gram family =
 	if family.x.goal_ok scurve then begin
 	  let cost = S.goal_cost family scurve +. (get table (0, scurve.S.sid)) in
 	    (** TODO is that zero a problem? *)
-	    if cost <= !qual then begin
+	    if cost < !qual then begin
 	      toplevel := Some (0, scurve.S.sid);
 	      qual := cost;
 	    end
