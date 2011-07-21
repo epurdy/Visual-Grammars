@@ -1,0 +1,19 @@
+abstract - abstraction over grammars and sdfs
+annotation - interacts with hand marked green dotted images. Produces .annotation files representing this.
+bounds - axis-aligned rectangular regions
+con - Various constants
+curve - Curves, as described in the paper
+curve_network - like a planar graph. Points and curve segments (not curves from curve.ml though)
+geometry - 2d points
+grammar - probabilistic models of curves based on grammar
+examples/ and examples.mlpack - just one hand.ml (hand built grammar)
+parsing - does CKY parsing given a grammr and sdf (i think)
+parzen - Parezen estimator to a non-parametric distribution
+retrain - EM retraining (takes data from a prse and refits midpoint distributions)
+sdf - decompositions of curves or the indicies of a curve (sparse decomposition family)
+shape - Representing shapes (mid point distribution)
+svg - SVG interactions
+viz - visualize stuff
+
+config - old probably should die as new experiment stuff is built
+datasets - old probably should die as new experiment stuff is built
