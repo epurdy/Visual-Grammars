@@ -47,6 +47,10 @@ let flip (curve : t) : t =
   let curve = reverse curve in
     Array.map Geometry.flip_x curve
 
+let flip_xy (curve : t) : t =
+  Array.map Geometry.flip_xy curve
+
+
 (* remove duplicates *)
 let uniqify (curve : 'a array) : 'a array =
   let n = Array.length curve in

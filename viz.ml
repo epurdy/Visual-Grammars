@@ -43,7 +43,8 @@ let show_samples x ?(bottom_buffer=4.5) title ncols samples =
 
 let show_samples_midpoints x title ncols basecurve (samples,mpchoices) buffer =
   let radius=0.03 in
-    Svg.show_title x title;
+    if String.length title > 0 then
+      Svg.show_title x title;
     Svg.draw_in_table x ncols (Array.length samples)
       begin fun x i ->
 

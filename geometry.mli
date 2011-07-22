@@ -10,6 +10,8 @@ type cpt = Complex.t
 
 val flip_x : cpt -> cpt
 
+val flip_xy : cpt -> cpt
+
 val scale : cpt -> float -> cpt
 
 val dot : cpt -> cpt -> float

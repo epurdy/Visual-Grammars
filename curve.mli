@@ -27,6 +27,8 @@ val reverse : 'a array -> 'a array
     reversing the curve. *)
 val flip : t -> t
 
+(** Flip x and y coordinates *)
+val flip_xy : t -> t
 
 (** [align a b] rotates, scales, translates, and flips [a] so that it
     lines up more or less with [b] *)

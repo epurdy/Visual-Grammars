@@ -9,10 +9,3 @@ doit(cmd)
 
 cmd = 'inkscape tmp/parse.svg -E experiments/2.parsing/one_to_one/parse.eps'
 doit(cmd)
-
-
-
-# need to turn svg into eps
-# need to include eps in tex fragment
-
-

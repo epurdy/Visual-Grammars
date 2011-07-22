@@ -77,8 +77,8 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
 	  end
 	in
 
-	let excurve = Array.map (fun {C.re=x;C.im=y} -> {C.re=y;C.im=x}) excurve in
-	let curve = Array.map (fun {C.re=x;C.im=y} -> {C.re=y;C.im=x}) curve in
+	let excurve = Curve.flip_xy excurve in
+	let curve = Curve.flip_xy curve in
 	  
 	  Viz.show_labeled_curve x excurve (Array.init (Array.length excurve) (sprintf "%d"));
 	  Cairo.translate x.Svg.ctx 10. 0.;

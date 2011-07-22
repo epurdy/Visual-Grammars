@@ -18,6 +18,10 @@ let flip_x z =
   {Complex.re = -. z.Complex.re;
    Complex.im = z.Complex.im}
 
+let flip_xy z = 
+  {Complex.re = z.Complex.im;
+   Complex.im = z.Complex.re}
+
 (* multiply complex number by scalar *)
 let scale x s = 
   { Complex.re = x.Complex.re *. s;
