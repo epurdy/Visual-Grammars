@@ -2,7 +2,9 @@
 
 import os
 
-def doit(cmd): assert(os.system(cmd) == 0)
+def doit(cmd): 
+  print cmd
+  assert(os.system(cmd) == 0)
 
 cmd = './one_to_one.native romer/ann/curve0020.curve romer/ann/curve0000.curve romer/misc/romer1.sdf tmp/parse.svg'
 doit(cmd)
