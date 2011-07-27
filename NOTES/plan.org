@@ -1,22 +1,108 @@
-We should work on a latex file that runs parallel to this file and
-which has automatically generated figures which are repopulated
-periodically.
+* notes on code organization
 
-how should we repopulate automatically? issues:
-  - need to be able to convert svg to eps
-  - need to make svg
-  - need to call all the relevant executables through a global script
+  - in general, each file should do one thing. right now there is too
+    much of a tendency towards monolithic objects.
 
-datasets
-  romer
-    I
-1.shape_models
-  1.1.procrustes
-    1.1.procrustes.tex
-    1.1.procrustes.ml
-    output.txt
-    log.txt
-    images
+  - break the link between sdf and curve, think of sdf as purely being
+    about indices. either stop precomputing shape descriptor, or store
+    those separately?
+
+  - simplify the code relating to abstract grammars, such that there
+    is only one (possibly parameterized) type of grammar. make it so
+    that sdf and shape grammar both include a grammar, in a more
+    straightforward way
+    - as part of this, maybe take in some functions that do particular
+      things on the grammar?
+
+    - live_shape_grammar: what does this do? it wraps live grammar,
+      and adds convenience functions for insertion. this is pretty
+      cool - maybe it should be how all live grammars work
+
+    - what's the deal with live grammars and frozen grammars? we went
+      to a lot of trouble to make sure that they both supported
+      certain stuff so that we could e.g. parse with a live grammar,
+      but that seems like it's just a waste. live grammars should be
+      for building, and frozen grammars should be for using
+
+    - at some point, would be good to solve the start/0 issue
+
+    - at some point, would be good to have it figure out the correct
+      ordering of symbols etc. instead of having to do things in a
+      particular order
+
+    - how do we solve the problem of having these nonterminals with
+      associated data? if we want to make it so that there is only one
+      sort of grammar, then shape grammars and sdf's are both either
+      parameterized variants of grammars, or a grammar plus a way of
+      looking up the relevant metadata in e.g. a hash table.
+
+      it's nice to interact with nonterminals as unified objects, so
+      looking up the metadata in a hash table is probably bad, and
+      there could be problems keeping things in sync
+
+      if they are unified things, then we probably need to have a
+      nested record structure, so that we can separate the parts that
+      hook into the grammar and the parts that are actually metadata
+
+      symbol.sid
+      symbol.dcompids
+      symbol.lcompids
+      symbol.sdata.closed
+      symbol.sdata.straightprob
+
+      in the past, something has felt vaguely weird about sdata. it is
+      probably partly that we have been trying to maintain too much
+      flexibility about what's in there, so we haven't been dealing
+      with it straightforwardly. so, more or less fixing the content
+      of sdata would be good, should probably be the union of what's
+      in Grammar.symbol and Sdf.debug_sdata
+
+    - what is up with get_params? it is basically a bunch of options
+      about how we build a grammar, but i think it is too specific to
+      a particular view of it. it would be better to just take some
+      functions, but what would they be?
+
+      - need(?) nonsense symbol and production to init live grammar
+      - need to make a symbol from every subcurve, which entails
+        picking straightcost, and getting debug info like the subcurve
+
+      - need to make a rule from every production of sdf, which
+        entails picking a shape model, getting debug info, getting
+        sids
+
+      - need to make LLL rules for some of the subcurves. if we are
+        going to change this to have scaled L's, this becomes kind of
+        scary. do we generate scaled L's on the fly during parsing, or
+        do we generate a whole bunch of statically scaled L's during
+        grammar creation, and just go down fairly far (thus making the
+        grammar far bigger than it is now) a compromise would be to
+        statically generate the L's but have them for a number of
+        scales, and link them all up appropriately (rounding the
+        scales a bit) that seems like it would work just fine.
+
+    - replace/merge/sample/prune/drawing might need to change very
+      slightly if the typedefs change, but not significantly
+
+    - a lot of drawing functions feel more like experiments and less
+      like library functions. they have a lot of arbitrary choices and
+      they are usually tailored to some particular use of them. it's
+      not clear what to do about this though
+
+  - general rule of thumb(?) - the library files should not have
+    serious choices in them, they should give enough support for the
+    experiments and executables to make choices. when a choice is
+    needed, take a relatively generic function instead of various
+    parameters. this is good for keeping the library current and
+    correct, and as long as we don't change the sort of function we
+    accept, it also means that old experiments will still run, even if
+    we have moved on to different choices in newer experiments
+
+  - rename curve_network maybe? think about the data structure in there
+
+  - think about moving geometry into basically a module about complex #s
+
+  - shape.ml is kind of a flaky file... there's very little in it
+    though, so maybe that's ok
 
 * METRICS
   - examine samples
@@ -26,7 +112,24 @@ datasets
     model. Very important to make sure that q is normalized, which
     could be difficult.
 
-* assembling datasets
+* 0. assembling datasets
+** General notes about organizing data
+- filetypes:
+  + x.curve - a curve
+  + x.annotation - a set of possibly labeled points, corresponding to a marked image
+  + x.sdf - an sdf, specified in terms of indices
+  + x.edges - a curve network
+
+  might also want:
+  + x.grammar, although it's unclear how to balance expressiveness vs. readability
+
+- dataset/clean
+  dataset/annotated
+  dataset/misc
+
+  is a pretty good hierarchy, might also want to aim for having all
+  files associated with a particular image have the same id number
+
 
 ** Articulator and other synthetic data
 ** Romer
@@ -42,45 +145,31 @@ datasets
   - http://personalpages.manchester.ac.uk/staff/timothy.f.cootes/data/hand_data.html
 
 ** ASL alphabet
-  - annotating chosen points with gimp
-  - come up with file format for annotations
-    - one point per line
-    - point can either be labeled (>=1) or unlabeled (0)
-  - write code to pick out annotated points and write to file
-  - figure out an easy way to specify correspondences
-  - draw correspondences somehow and check that they seem correct
-    - pick a color for each labeled point, and a color for unlabeled
-      points, and draw circles or boxes
-
-  - figure out how to initialize correspondences based on the
-    assumption that points are close to where they are in another
-    image. suppose that source image has the correct set of points,
-    and destination image is missing some and has combined some. For
-    now, assume some are combined but none are missing. 
-
-    Want to minimize e.g. sum of squared distance from source to
-    destination. if there is one-to-one corresp, can first assign
-    everything to closest unassigned point, and then try all
-    swaps. Could even start randomly, or arbitrarily. 
-
-    If we have some collisions, can we deal with that well? Swaps
-    still make sense, but we want to be able to change which point is
-    being used multiple times. Could say that when a and b both map to
-    x, and we go to swap a and b, we can instead move a or b to an
-    arbitrary point. 
-
-    also makes sense to use consistency of mappings, i.e., if x-> a,
-    y-> b, then d(a,b) and d(x,y) should be similar
- 
 
 ** LabelMe
 
 
 ** Time Series datasets
 
-* grammatical shape models
+* 1. grammatical shape models
 ** TODO compare grammars to markov models
-** TODO implement procrustes / watson / bingham as baseline
+  - implement markov models (already done somewhere?)
+  - parse with markov models? this is probably easy, but it would
+    require a bunch of coding.
+  - alternatively, we found a paper that shoehorns a markov model into
+    a bingham distro or some such
+** TODO PLAN compare grammars to procrustes / watson / bingham as baseline
+  - need to implement whatever, which will require figuring out the
+    math for it
+  - can represent shapes as curves, so we just need to know how to map
+    shape to procrustes-style coordinates, how to compute score (just
+    a dot product?)
+  - should compare to learned watson etc., so we need to be able to learn a
+    watson etc.
+  - need to write code to organize the cross-entropy calculation
+  - need to make sure that both grammars and watson are normalized distros
+  - should do a grid search over the concentration parameter, at least
+    for watson. can either report all or choose one by xval
 ** TODO build interesting grammars by hand
 
 Simplest is probably a simplified hand.
@@ -89,6 +178,11 @@ Simplest is probably a simplified hand.
  - want to see meaningful MP dist (ideally, articulation of
    fingers and thumbs)
  - check that samples look nice
+
+  - if we build a model for hand-annotated romer or asl, compare a
+    hand-built grammar with rich structure to an auto-generated
+    one. this is not that important here, because without EM the
+    structure is not that important.
 
 ** TODO build interesting and valid grammars from shapetrees
 Want to have good shape deformation given simple hand-picked midpoint
@@ -120,7 +214,67 @@ out a different way to deal with variable length curves)
   - again, want cross-entropy to support this, although it's not
     clear what the non-grammatical version would be
 
-  - GOAL: have good shape models using more complex grammars
+  - X->l L->LL may(???) be basically mandatory for classification or for
+    cluttered parsing, both domains have length bias problems to
+    consider
+
+    - for classification, we are parsing a single curve with many
+      grammars. therefore, it is important that we use the same number
+      of rules in parsing the curve with each grammar. using X->l and
+      L->LL makes this sort of true, since we always use n X->l rules
+      and (n-1) X->YZ rules, including L->LL. The concentrations make
+      this not work perfectly, since those (n-1) rules will not all
+      have the same concentration, and it seems like concentration
+      tells you a lot about the magnitude of the terms (but not
+      everything)
+
+      in the past we have used log P(X->l) \propto scale(X)^2, since
+      we are guaranteed that sum scale(X) = 1 for the set of
+      nonterminals used in any parse. EXCEPT, this does not apply to
+      the leaves, since they exist at multiple scales once L->LL is
+      invoked
+
+      so maybe the answer is to have an infinite chain of nonterminals
+      that AREN'T self-similar. The most obvious thing to do would be
+      to have the leaves be L_s, and have L_s -> L_t L_{s-t}. 
+
+      This leaves us with the problem of deciding the properties of
+      L_s as a function of s. The probability of L_s -> l can be set
+      as before, since the ell-2 norm of things that sum to 1 seemed
+      pretty solid - mostly unbiased, some push towards balance
+
+      this still leaves us with picking a midpoint distribution, and
+      also with deciding P(L_s -> L_t L_{s-t}) as a function of t. We
+      could simply fix t=s/2.
+
+      Picking the midpoint distributions seems like it should just be
+      done empirically. Pick a class of shapes, and just look at what
+      L_s -> L_s/2 L_s/2 would look like. We can use either euclidean
+      arclength or simply the index to think about the scale. To get
+      enough data, we should group the scales somehow? Good scales
+      are: 1/2, .4, .3, .2, .1, .09, .08, .07, ..., .01, .009, etc.
+      We can look at every subcurve and just round everything to the
+      nearest scale.
+
+      This still does not address texture, but it would at least let
+      us do our classification in a principled way.
+
+      This might even get at texture, since it gets relatively close
+      to the GP "correlation at a specific distance" phenomenon.
+
+      results: there is an interesting amount of variation between
+      classes in swedish leaves, very different watson concentrations,
+      slightly different patterns wrt scale
+
+  - next thing to do: sample from this somehow, see if we like the
+    generated subcurves
+
+  - a good start would be to just do some exploratory work, figure out
+    what short curves tend to look like, then we know more about things...
+
+
+â
+** TODO Have good shape models using more complex grammars
     - try building them by hand by hand-parsing example curves,
       choosing intuitively reasonable correspondences.
     - imposing a hand-built grammar on Romer seems relatively
@@ -128,45 +282,26 @@ out a different way to deal with variable length curves)
       curves
     - can also impose a hand-built grammar on ASL
 
+      
+* 2. Parsing
+** DONE Recover a 1-1 correspondence   
+  - show the parse table? it will be 27^3 entries... could just show
+    the scores for the 27 rotations.
 
-* Parsing
-** TODO Recover a 1-1 correspondence
-  - we don't even have a viterbi parser right now. easy enough to
-    write one, but how do we represent the output? keep table around,
-    make a grammar is a simple way to do it
-  - how do we make a picture? can draw curves in svg with labeled
-    circles? how does that work exactly? would it work with non 1-1
-    mappings? can leave out numbers, leave some circles blank. we did
-    this in python...
-  - what data do we need? need to know what to label every point of
-    the target curve. 
-  - what data do we have? the curve that generated a particular
-    nonterminal, the curve that generated a particular scurve. so we
-    can do lookups to figure out indices?
-  - suppose we have original curve for the grammar. we should have it
-    at the root nonterminal if nowhere else. then we can get an
-    interval (i,j) for every nonterminal with lookups. Similarly for
-    the sdf. then, if X[i,j] ->> s[k,l], point k should have label i,
-    point l should have label j. If we just set them so when we
-    discover them, then we will correctly handle missing points or
-    extra points.
-  - parsing code can just emit a list of symbol, scurve pairs, let
-    the calling code use that however they want
-  - Would it make sense to do this in a more hacky way with images?
-
-  - we can now specify an sdf, which we can add curve data to and then
-    turn into a grammar. this means we can pick a grammar that
-    corresponds to a fixed parse of a curve. 
-  - we know how to get point labels for the viterbi parse
-  - we just need to draw the curves with the right labels now, and
-    we're done
-
-  - next step is to do this with a few very simple real curves, like
-    romer I, and make sure it still works
-   
+  - do this with more than one curve!
 ** TODO Recover a 1-1 correspondence with extra intermediate points
   - given curves with corresponding points, and also more intermediate
-    points, make sure that we can recover the correspondence
+    points, make sure that we can recover the correspondence. already
+    we are faced with the length problem
+
+  - do this with swedish leaves or some other relatively rigid
+    dataset, even easy romer is relatively hard if we're going from a
+    single example.
+
+  - estimate a grammar from all but one of the easy romer curves
+    (using given correspondence), then try to parse a non-easy romer
+    curve (subsampled to 50 or so?)
+
 ** TODO Recover a 1-1 correspondence with misleading intermediate points
   - given curves with corresponding points, and also somewhat
     misleading intermediate points, make sure that we can recover the
@@ -185,16 +320,16 @@ out a different way to deal with variable length curves)
     corresponding points correct
 
 
-* EM for parameter tuning / shape learning
+* 3. EM for parameter tuning / shape learning
 General notes: want to do each goal for both a hand-built and
 auto-generated single-example grammars.
 
-** TODO given fixed parses and hand-selected grammar, EM retrains midpoint distros well
+** TODO PLAN given fixed parses and hand-selected grammar, EM retrains midpoint distros well
  - [ ] take 1 curve
  - [ ] impose perfect grammar,
  - [ ] parse the other curve
  - [ ] reestimate midpoints
-
+      
 ** TODO given fixed parses, EM retrains midpoint distros well
   - retrain various single-example grammars by using fixed parses of
     similar curves
@@ -228,7 +363,7 @@ auto-generated single-example grammars.
 
 
 
-* Parsing in Real Images
+* 4. Parsing in Real Images
 ** TODO Parse cluttered image with hand-built grammar, localization information?
   - GOAL: be able to parse from a cluttered image, using a hand-built
     grammar, given lots of localization information
@@ -295,10 +430,44 @@ auto-generated single-example grammars.
  - Can look at a slightly more complicated version of the generic grammar from Pedro's thesis
 
 
-* Using SDF's in other domains
+* 5. Using SDF's in other domains
+thoughts: can we turn any binary decomposition of a string into an
+SDF, using Pedro's construction?
+
+can we derive a lwoer bound on cost of any parse using sdf parses?
+
+we can imagine trimming any parse tree by intersecting every interval
+in it with a particular interval. the question then becomes, if T_1
+gets trimmed to T_2, and T_3 gets trimmed to T_4, and T_1 and T_3
+compose to give T, how can we know about that?
+
+we could also look at parsing where we try to optimize density, or
+just optimize X->>[i,j] for each length of observed yield
+
+if we know that X->YZ, and
+Y ->> [ ?i, <=j ] and Z ->> [ <=j, ??k ], then we *might* have X ->> [ ?i, ??k ] 
+
+can think more generally of assertions X ->> [ I,J ] where I,J are
+sets. Then Y ->> [I,J], Z ->> [K,L], and J,K not disjoint, then we can have X ->> [I,L]
+
+also, if i in I, then X -> a, data[i]=a, can deduce X ->> [{i},{i+1}]
+
+also can deduce X->>[I,J] |= X->>[I',J'] if I subset I', J subset J'
+
+guarantee is cost~ <= cost, i.e.
+think of cost~(X->>[I,J]) = theta as an assertion that cost(X->>[i,j]) >= theta for any i in I, j in J
+
+rephrasing, cost~(X->>[I,J]) <= min_{i in I, j in J} cost(X->>[i,j]) 
+
+can also look at cost~ >= cost, this has false negatives instead of false positives
+
+other random thought - maybe we can turn any binary decomposition into
+an SDF via pedro's construction, we could even do that with 2-d stuff
+like a hierarchical segmentation. 
+
 ** TODO Improve on time-series classification with SDF's
 
-* Learning Structure
+* 6. Learning Structure
 ** TODO Figure out optimal single-example grammar
   - figure out the correct way to build a grammar from a single example
     - random thought: what if we formulate some notion of
@@ -306,6 +475,13 @@ auto-generated single-example grammars.
       subtree. this seems like it would help with a lot of
       issues. ratio of shortest to longest side is one measure, maybe
       we would add logs of that
+
+  - we can optimize any function of the form sum_{examples}
+    sum_{i,j,k} f(i,j,k) if we let f(i,j,k) be the negative log
+    probability of the shape deformation cost (which we know because
+    we have correspondences) then we can get cross-entropy this way
+
+  - we are getting some fucking constituents in this bitch!
 
 ** TODO Implement Merge and Replace
   - demonstrate that merging and replacement do something reasonable,
@@ -335,7 +511,7 @@ auto-generated single-example grammars.
 
 ** Figure out how to optimally incorporate new samples
 
-* Learning Curve Texture
+* 7. Learning Curve Texture
 ** TODO Come up with curve texture descriptor that does OK on swedish leaves
   - current thoughts: think of a curve as coming from a gaussian
     process. map to modified bookstein coordinates, subtract out some
@@ -346,7 +522,7 @@ auto-generated single-example grammars.
 
 ** TODO Improve classification performance of global model with texture model
 
-* Classification
+* 8. Classification
 ** Use a discriminative version of EM?
 ** Distinguish between dog silhouettes and cat silouettes?
 
