@@ -1,78 +1,74 @@
 (** Shape grammars! *)
 
-type sid = int
-type cid = int
-type 'a symbol = {
-  mutable sdata : 'a;
-  mutable closed : bool;
-  mutable straightprob : float;
-  mutable straightcost : float;
-  mutable sid : sid;
-  mutable dcompids : cid list;
-  mutable lcompids : cid list;
-  mutable rcompids : cid list;
+open Abstract
+
+(** {2 Types} *)
+
+type sdata = {
+  closed : bool;
+  straightprob : float;
+  straightcost : float;
+  curve : Curve.t;
 }
-type ssg_geom_data = Improper | Parzen of Parzen.model
-type 'a composition = {
-  mutable cdata : 'a;
-  mutable prob : float;
-  mutable cost : float;
-  mutable geom : ssg_geom_data;
-  mutable cid : cid;
-  mutable topsid : sid;
-  mutable leftsid : sid;
-  mutable rightsid : sid;
+type ssg_geom_data =
+    Improper
+  | Parzen of Parzen.model
+  | Watson of Watson.distro
+type cdata = {
+  prob : float;
+  cost : float;
+  geom : ssg_geom_data;
+  ocurve : Curve.t;
+  lcurve : Curve.t;
+  rcurve : Curve.t;
 }
-type ('a,'b,'c) grammar = ('a symbol, 'b composition, 'c) Abstract.frozen_grammar
+type gdata = unit
+type grammar = (sdata, cdata, gdata) Abstract.frozen_grammar
 
-val copy_symbol' : 'a symbol -> 'b -> 'b symbol
-val copy_comp' : 'a composition -> 'b -> 'b composition
-val copy_symbol : 'a symbol -> 'a symbol
-val copy_comp : 'a composition -> 'a composition
-val symbol_name : 'a symbol -> string
-val composition_name : 'a composition -> string
-val lexical_ok : 'a symbol -> bool
-val binary_ok : 'a -> bool
-val goal_ok : 'a symbol -> bool
+(** {2 Printing} *)
 
-val lexical_cost : 'a symbol -> 'b -> float
-val prod_cost : 'a composition -> Shape.shape -> float
-val binary_cost : 'a composition -> Sdf.sdf_debug_cdata Sdf.composition -> float
-val compatible : 'a symbol -> 'b Sdf.symbol -> bool
+val symbol_name_long : sdata Abstract.symbol -> string
 
-type ('a, 'b, 'c) live_shape_grammar = {
-  gram : ('a symbol, 'b composition, 'c) Abstract.live_grammar;
-  make_new_state : bool -> float -> 'a -> 'a symbol;
-  make_new_prod : sid -> sid * sid -> float -> ssg_geom_data -> 'b -> 'b composition;
-  imake_new_state : bool -> float -> 'a -> unit;
-  imake_new_prod : sid -> sid * sid -> float -> ssg_geom_data -> 'b -> unit;
-  start_: 'a symbol;
-}
-val make_live_shape_grammar :  'a -> 'a -> 'b -> ('a, 'b, unit) live_shape_grammar
+val print_grammar : grammar -> unit
 
-val grammar_of_family : ?spfactor:float -> Sdf.debug_family -> 
-  (Sdf.sdf_debug_sdata, Sdf.sdf_debug_cdata, unit) grammar
+(** {2 Building grammars} *)
+val grammar_of_family :
+  ('a, 'b, 'c) frozen_grammar ->
+  sdata ->
+  ('a symbol -> sdata option) ->
+  ('a symbol -> 'b composition -> cdata) ->
+  grammar
 
-val marshal : ('a,'b,'c) grammar -> string -> unit
-val unmarshal : 'a -> 'b -> string -> ('a,'b,'c) grammar
+(** {2 Manipulating grammars} *)
 
-val merge_tops : ('a,'b,'c) grammar array -> ('a,'b,'c) grammar
+val renormalize : grammar -> sdata Abstract.symbol -> unit
 
-val merge_leaves : ('a,'b,'c) grammar -> ('a,'b,'c) grammar
+val renormalize_binary : grammar -> sdata Abstract.symbol -> unit
 
-val merge_symbols_left : ('a,'b,'c) grammar -> 'a symbol -> 'a symbol -> renorm:bool -> unit
+val merge_symbols_left : grammar -> sdata symbol -> sdata symbol -> 
+  renorm:bool -> unit
 
-val replace_symbol : ('a,'b,'c) grammar -> 'a symbol -> 'a symbol -> unit
+val replace_symbol : grammar -> sdata symbol -> sdata symbol -> unit
 
-val sample : ('a, 'b, 'c) grammar -> Complex.t -> Complex.t -> Curve.t
+val merge_leaves : grammar -> grammar
 
-val print_grammar : ('a, 'b, 'c) grammar -> unit
+val merge_tops : grammar array -> grammar
 
-val draw_grammar_best_rules :
-  (int -> int -> cid -> string) -> ('a,Sdf.sdf_debug_cdata,'c) grammar -> unit
+val prune : grammar -> float -> grammar
 
-val draw_grammar : (int -> string) -> ('a, Sdf.sdf_debug_cdata,'c) grammar -> unit
+(** {2 Sampling from grammars} *)
 
-val finalize: ('a,'b,'c) live_shape_grammar -> ('a,'b,'c) grammar
+val sampling_thresh : float
 
-val prune :  ('a,'b,'c) grammar -> float -> ('a,'b,'c) grammar
+val sample_prod : cdata composition ->
+  Geometry.cpt -> Geometry.cpt -> Geometry.cpt * Geometry.cpt * Geometry.cpt
+
+val sample_state : grammar ->
+  sdata symbol -> Geometry.cpt -> Geometry.cpt -> Geometry.cpt list
+
+val sample : grammar ->
+  Geometry.cpt -> Geometry.cpt -> Geometry.cpt array
+
+val sample_counts : grammar ->
+  (int * cid) list
+

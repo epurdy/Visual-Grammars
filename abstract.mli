@@ -1,133 +1,189 @@
-open Hops
-open Util
-open Printf
+(** Abstract grammars *)
 
-type sid = int
+(** 
+   It is >>> VERY IMPORTANT <<< that the data inside sdata and cdata
+   be immutable. The abstract grammar code is written under this
+   assumption, and violating it will cause shared reference bugs.
+
+*)
+
 (** Unique identifier for a symbol *)
+type sid = int
 
-type cid = int
 (** Unique identifier for a composition *)
+type cid = int
 
-type ('symbol,'composition) friend = {
-  __sym__: 'symbol;
-  __comp__: 'composition;
-
-  sid_: 'symbol -> int; (* read sid *)
-  _sid: 'symbol -> int -> unit; (* set sid *)
-  dcompids_: 'symbol -> int list;
-  _dcompids: 'symbol -> int list -> unit;
-  lcompids_: 'symbol -> int list;
-  _lcompids: 'symbol -> int list -> unit;
-  rcompids_: 'symbol -> int list;
-  _rcompids: 'symbol -> int list -> unit;
-
-  cid_: 'composition -> int;
-  _cid: 'composition -> int -> unit;
-  topsid_: 'composition -> int;
-  _topsid: 'composition -> int -> unit;
-  leftsid_: 'composition -> int;
-  _leftsid: 'composition -> int -> unit;
-  rightsid_: 'composition -> int;
-  _rightsid: 'composition -> int -> unit;
-
-  copy_symbol: 'symbol -> 'symbol;
-  copy_comp: 'composition -> 'composition;
-  
-  symbol_name: 'symbol -> string;
-  symbol_name_long: 'symbol -> string;
-  composition_name: 'composition -> string;
-
-  lexical_ok: 'symbol -> bool;
-  binary_ok: 'symbol -> bool;
-  goal_ok: 'symbol -> bool;
+type 'sdata symbol = {
+  mutable sid : sid;
+  mutable dcompids : cid list;
+  mutable lcompids : cid list;
+  mutable rcompids : cid list;
+  mutable sdata : 'sdata;
+  mutable startable: bool;
 }
 
-(* val change_labels_symbol : ('symbol,'composition) friend -> 'symbol -> (int,int) hash -> (int,int) hash -> unit *)
-
-(* val change_labels_composition : ('symbol,'composition) friend -> *)
-(*   'composition ->  *)
-(*   (int,int) hash -> (int,int) hash -> unit *)
-
-type ('symbol,'composition,'c,'self) grammar = {
-  mutable self: 'self;
-  mutable x: ('symbol, 'composition) friend;
-  mutable get_gdata: unit -> 'c;
-  mutable num_symbols : unit -> int;
-  mutable num_compositions : unit -> int;
-  mutable get_symbol : sid -> 'symbol;
-  mutable get_composition : cid -> 'composition;
-  mutable get_lhs : 'composition -> 'symbol;
-  mutable get_rhs : 'composition -> 'symbol * 'symbol;
-  mutable get_decompositions : 'symbol -> 'composition list;
-  mutable iter_symbols : ('symbol -> unit) -> unit;
-  mutable iter_symbols_rev : ('symbol -> unit) -> unit;
-  mutable iter_decompositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_left_compositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_right_compositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_all_compositions : ('composition -> unit) -> unit;
-  mutable iter_all_decompositions : ('symbol -> 'composition -> unit) -> unit;
-  mutable start: unit -> 'symbol;
+type 'cdata composition = {
+  mutable cid : cid;
+  mutable topsid : sid;
+  mutable leftsid : sid;
+  mutable rightsid : sid;
+  mutable cdata : 'cdata;
 }
 
-val sample_path : ('symbol,'composition,'c,'self) grammar -> 'symbol list
-val print : ('symbol,'composition,'c,'self) grammar -> unit
+val copy_symbol : 'sdata symbol -> 'sdata symbol
+val copy_composition : 'cdata composition -> 'cdata composition
 
-type ('symbol,'composition,'c) frozen_grammar_data = {
-  f_gdata: 'c;
-  f_symbols: 'symbol array;
-  f_compositions: 'composition array;
+val symbol_name : 'sdata symbol -> string
+val composition_name : 'cdata composition -> string
+
+(** remap sids and cids in place *)
+val change_labels_symbol : 'sdata symbol -> (sid -> sid) -> (cid -> cid) -> unit
+val change_labels_composition :
+  'cdata composition -> (sid -> sid) -> (cid -> cid) -> unit
+
+val map_labels_symbol :
+  'sdata symbol -> (sid -> sid) -> (cid -> cid) -> 'sdata symbol
+val map_labels_composition :
+  'cdata composition -> (sid -> sid) -> (cid -> cid) -> 'cdata composition
+
+(** {2 Live Grammars} *) 
+
+type ('sdata, 'cdata, 'gdata) live_grammar
+
+module Live :
+  sig
+    val get_gdata : ('sdata, 'cdata, 'gdata) live_grammar -> 'gdata
+    val num_symbols : ('sdata, 'cdata, 'gdata) live_grammar -> int
+    val num_compositions : ('sdata, 'cdata, 'gdata) live_grammar -> int
+    val get_symbol : ('sdata, 'cdata, 'gdata) live_grammar -> sid -> 'sdata symbol
+    val get_composition :
+      ('sdata, 'cdata, 'gdata) live_grammar -> cid -> 'cdata composition
+    val start : ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol
+    val iter_symbols :
+      ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata symbol -> unit) -> unit
+    val iter_symbols_rev :
+      ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata symbol -> unit) -> unit
+    val get_decompositions :
+      ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol -> 'cdata composition list
+    val get_left_compositions :
+      ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol -> 'cdata composition list
+    val get_right_compositions :
+      ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol -> 'cdata composition list
+    val iter_decompositions :
+      ('sdata, 'cdata, 'gdata) live_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val iter_left_compositions :
+      ('sdata, 'cdata, 'gdata) live_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val iter_right_compositions :
+      ('sdata, 'cdata, 'gdata) live_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val get_lhs :
+      ('sdata, 'cdata, 'gdata) live_grammar -> 'cdata composition -> 'sdata symbol
+    val get_rhs :
+      ('sdata, 'cdata, 'gdata) live_grammar ->
+      'cdata composition -> 'sdata symbol * 'sdata symbol
+    val validate_sym : ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol -> unit
+    val sample_path : ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata symbol list
+    val print :
+      ('sdata symbol -> string) -> ('sdata, 'cdata, 'gdata) live_grammar -> unit
+  end
+val new_live_grammar : ?nsyms:int -> ?ncomps:int -> 'gdata -> ('sdata, 'cdata, 'gdata) live_grammar
+
+val validate_live : ('sdata, 'cdata, 'gdata) live_grammar -> unit
+val make_new_symbol : ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata -> bool -> 'sdata symbol
+val make_new_composition :
+  ('sdata, 'cdata, 'gdata) live_grammar -> sid -> sid * sid -> 'cdata ->
+  'cdata composition
+val imake_new_symbol : ('sdata, 'cdata, 'gdata) live_grammar -> 'sdata -> bool -> unit
+val imake_new_composition :
+  ('sdata, 'cdata, 'gdata) live_grammar -> sid -> sid * sid -> 'cdata -> unit
+type ('sdata, 'cdata, 'gdata) frozen_grammar = {
+  f_gdata : 'gdata;
+  f_symbols : 'sdata symbol array;
+  f_compositions : 'cdata composition array;
 }
-type ('symbol,'composition,'c) frozen_grammar = 
-    ('symbol,'composition,'c, ('symbol,'composition,'c) frozen_grammar_data) grammar
 
-val new_frozen_grammar : ('symbol,'composition) friend -> 'c -> 'symbol array ->
-  'composition array -> ('symbol,'composition,'c) frozen_grammar
+(** {2 Frozen Grammars} *) 
 
-val marshal_frozen_grammar :
-('symbol,'composition,'c) frozen_grammar -> string -> unit
+module Frozen :
+  sig
+    val get_gdata : ('sdata, 'cdata, 'gdata) frozen_grammar -> 'gdata
+    val num_symbols : ('sdata, 'cdata, 'gdata) frozen_grammar -> int
+    val num_compositions : ('sdata, 'cdata, 'gdata) frozen_grammar -> int
+    val get_symbol : ('sdata, 'cdata, 'gdata) frozen_grammar -> sid -> 'sdata symbol
+    val get_composition :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> cid -> 'cdata composition
+    val start : ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol
+    val iter_symbols :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> ('sdata symbol -> unit) -> unit
+    val iter_symbols_rev :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> ('sdata symbol -> unit) -> unit
+    val get_decompositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol -> 'cdata composition list
+    val get_left_compositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol -> 'cdata composition list
+    val get_right_compositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol -> 'cdata composition list
+    val iter_decompositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val iter_left_compositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val iter_right_compositions :
+      ('sdata, 'cdata, 'gdata) frozen_grammar ->
+      'sdata symbol -> ('cdata composition -> unit) -> unit
+    val get_lhs :
+      ('sdata, 'cdata, 'gdata) frozen_grammar -> 'cdata composition -> 'sdata symbol
+    val get_rhs :
+      ('sdata, 'cdata, 'gdata) frozen_grammar ->
+      'cdata composition -> 'sdata symbol * 'sdata symbol
+    val validate_sym : ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol -> unit
+    val sample_path : ('sdata, 'cdata, 'gdata) frozen_grammar -> 'sdata symbol list
+    val print :
+      ('sdata symbol -> string) -> ('sdata, 'cdata, 'gdata) frozen_grammar -> unit
+  end
 
-val unmarshal_frozen_grammar :
-('symbol,'composition) friend -> string ->
-('symbol,'composition,'c) frozen_grammar
+val new_frozen_grammar :
+  'gdata ->
+  'sdata symbol array -> 'cdata composition array -> ('sdata, 'cdata, 'gdata) frozen_grammar
 
-val map_frozen_grammar : 
-  ('symbol2, 'composition2) friend ->
-  ('symbol,'composition,'c) frozen_grammar ->
-  ('c -> 'c2) -> ('symbol -> 'symbol2) ->
-  ('composition -> 'composition2) ->
-  ('symbol2,'composition2,'c2) frozen_grammar
+val validate_frozen : ('sdata, 'cdata, 'gdata) frozen_grammar -> unit
 
-val merge_frozen_grams : ('symbol, 'composition, 'c) frozen_grammar array ->
-    ('symbol, 'composition, 'c) frozen_grammar
+val iter_all_compositions :
+  ('sdata, 'cdata, 'gdata) frozen_grammar -> ('cdata composition -> unit) -> unit
 
+val iter_all_decompositions :
+  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('sdata symbol -> 'cdata composition -> unit) -> unit
 
-type ('symbol,'composition,'c) live_grammar_data = {
-  mutable l_gdata: 'c;
-  mutable l_symbols: (sid, 'symbol) hash;
-  mutable l_compositions: (cid, 'composition) hash;
-  mutable next_sid: int;
-  mutable next_cid: int;
-  mutable insert_symbol : 'symbol -> 'symbol;
-  mutable insert_composition :
-    'composition -> 'composition;
-}
-type ('symbol,'composition,'c) live_grammar = 
-    ('symbol,'composition,'c, ('symbol,'composition,'c) live_grammar_data) grammar
+(** {2 Various Useful Functions} *)
 
-val new_live_grammar : ('symbol,'composition) friend -> 'c -> 'symbol -> 'composition -> int -> int -> 
-  ('symbol,'composition,'c) live_grammar
+(** . *) 
+val map_frozen_grammar :
+  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('gdata -> 'gdata2) ->
+  ('sdata symbol -> 'sdata2 symbol) ->
+  ('cdata composition -> 'cdata2 composition) -> 
+  ('sdata2, 'cdata2, 'gdata2) frozen_grammar
 
-val finalize : ('symbol,'composition,'c) live_grammar ->
-  ('symbol,'composition,'c) frozen_grammar 
+val compactify : ('sdata, 'cdata, 'gdata) live_grammar -> unit
 
-val compactify : ('symbol,'composition,'c) live_grammar -> unit
+val finalize : ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata, 'cdata, 'gdata) frozen_grammar
 
-val check_reachability : ('symbol,'composition,'c) frozen_grammar ->
-  bool array
+val merge_frozen_grams :
+  ('sdata, 'cdata, 'gdata) frozen_grammar array -> 'gdata -> 
+  ('sdata, 'cdata, 'gdata) frozen_grammar
 
-val ensure_reachability : ('symbol,'composition,'c) frozen_grammar ->
-  ('symbol,'composition,'c) frozen_grammar
+val check_reachability :
+  ('sdata, 'cdata, 'gdata) frozen_grammar -> bool array
 
-val filter_compositions : ('symbol,'composition,'c) frozen_grammar ->
-  ('composition -> bool) ->
-  ('symbol,'composition,'c) frozen_grammar
+val ensure_reachability :
+  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('sdata, 'cdata, 'gdata) frozen_grammar
+
+val filter_compositions :
+  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('cdata composition -> bool) ->
+  ('sdata, 'cdata, 'gdata) frozen_grammar

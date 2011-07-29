@@ -14,6 +14,20 @@ let outside_verbose = false
 let count_verbose = false
 let viterbi_verbose = true
 
+type ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy = {
+  lexical_ok :  'tgt_sym symbol -> bool;
+  lexical_cost : 'mod_sym symbol -> 'tgt_sym symbol -> float;
+  binary_ok : 'tgt_sym symbol -> bool;
+  binary_cost : 'mod_comp composition -> 'tgt_comp composition -> float;
+  goal_ok : 'tgt_sym symbol -> bool;
+  goal_cost : 'tgt_glob -> 'tgt_sym symbol -> float;
+  compatible : 'mod_sym symbol -> 'tgt_sym symbol -> bool;
+  getshape : 'tgt_comp -> Shape.shape;
+  fit_midpoint_distro : 'mod_comp composition -> (float * Shape.shape) list -> Shape.shape option ->
+				       'mod_comp
+}
+
+
 (* a in model domain, b in data domain *)
 type parse_table = {
   na: int;
@@ -61,10 +75,12 @@ let print_parse_table_entry table aname bname aid bid =
   if table.verbose then 
     printf "%s: %s ->> %s : %f\n" table.name aname bname (get table (aid,bid))
 
-let inside gram family =
+
+let inside gram family strat =
   let qual = ref infinity in
     (* chart maps (X,I) -> q, X=nonterminal, I=SDF interval *)
-  let table = new_parse_table (gram.num_symbols()) (family.num_symbols()) "sparse inside" inside_verbose in
+  let table = new_parse_table (Frozen.num_symbols gram)
+    (Frozen.num_symbols family) "sparse inside" inside_verbose in
 
 (*   let print_entry symbol scurve = *)
 (*     print_parse_table_entry table  *)
@@ -72,29 +88,29 @@ let inside gram family =
 (*       symbol.G.sid scurve.S.sid *)
 (*   in *)
 
-    family.iter_symbols
+    Frozen.iter_symbols family
       begin fun scurve -> 
-	if family.x.lexical_ok scurve then begin
-	  gram.iter_symbols
+	if strat.lexical_ok scurve then begin
+	  Frozen.iter_symbols gram
 	    begin fun symbol -> 
-	      let cost = G.lexical_cost symbol scurve in
-		set table (symbol.G.sid, scurve.S.sid) cost;
+	      let cost = strat.lexical_cost symbol scurve in
+		set table (symbol.sid, scurve.sid) cost;
 (* 		print_entry symbol scurve;  *)
 	    end
 	end;
 
-	if family.x.binary_ok scurve then begin
-	  gram.iter_all_decompositions
+	if strat.binary_ok scurve then begin
+	  iter_all_decompositions gram
 
 	    begin fun symbol prod ->
-	      if G.compatible symbol scurve then begin
-		family.iter_decompositions scurve
+	      if strat.compatible symbol scurve then begin
+		Frozen.iter_decompositions family scurve
 		  begin fun dcomp ->
-		    let cost = (G.binary_cost prod dcomp) +. 
-		      (get table (prod.G.leftsid, dcomp.S.leftsid)) +.
-		      (get table (prod.G.rightsid, dcomp.S.rightsid)) 
+		    let cost = (strat.binary_cost prod dcomp) +. 
+		      (get table (prod.leftsid, dcomp.leftsid)) +.
+		      (get table (prod.rightsid, dcomp.rightsid)) 
 		    in
-		      linc table (symbol.G.sid, scurve.S.sid) cost;
+		      linc table (symbol.sid, scurve.sid) cost;
 		  end;
 (* 		print_entry symbol scurve; *)
 	      end
@@ -102,8 +118,8 @@ let inside gram family =
 
 	end;
 
-	if family.x.goal_ok scurve then begin
-	  let cost = S.goal_cost family scurve +. (get table (0, scurve.S.sid)) in
+	if strat.goal_ok scurve then begin
+	  let cost = strat.goal_cost family.f_gdata scurve +. (get table (0, scurve.sid)) in
 	    (** TODO is that zero a problem? *)
 	    qual := neglogadd cost !qual;
 	end
@@ -116,9 +132,11 @@ let inside gram family =
     {qual = !qual;
      inside = table}
 
-let outside gram family inside =
+let outside gram family inside strat =
+  
   let itable = inside.inside in
-  let table = new_parse_table (gram.num_symbols()) (family.num_symbols())
+  let table = new_parse_table
+    (Frozen.num_symbols gram) (Frozen.num_symbols family)
     "sparse outside" outside_verbose in
 
 (*   let print_entry symbol scurve = *)
@@ -127,29 +145,29 @@ let outside gram family inside =
 (*       symbol.G.sid scurve.S.sid *)
 (*   in *)
 
-    family.iter_symbols_rev
+    Frozen.iter_symbols_rev family
       begin fun scurve ->
-	if family.x.goal_ok scurve then begin
-	  let thisqual = S.goal_cost family scurve in
-	    set table (0,scurve.S.sid) thisqual;
+	if strat.goal_ok scurve then begin
+	  let thisqual = strat.goal_cost family.f_gdata scurve in
+	    set table (0,scurve.sid) thisqual;
 (* 	    print_entry (gram.start()) scurve *)
 	end;
 
-	gram.iter_all_decompositions
+	iter_all_decompositions gram
 	  begin fun symbol prod ->
-	    if G.compatible symbol scurve then begin
+	    if strat.compatible symbol scurve then begin
 
-	      let lsym, rsym = gram.get_rhs prod in
-		family.iter_decompositions scurve
+	      let lsym, rsym = Frozen.get_rhs gram prod in
+		Frozen.iter_decompositions family scurve
 
 		  begin fun dcomp ->
-		    let lcurve, rcurve = family.get_rhs dcomp in
+		    let lcurve, rcurve = Frozen.get_rhs family dcomp in
 		    let proc asym acurve bsym bcurve =
-		      let cost = (G.binary_cost prod dcomp) +.
-			(get itable (asym.G.sid, acurve.S.sid)) +.
-			(get table (symbol.G.sid, scurve.S.sid)) in
+		      let cost = (strat.binary_cost prod dcomp) +.
+			(get itable (asym.sid, acurve.sid)) +.
+			(get table (symbol.sid, scurve.sid)) in
 			
-			linc table (bsym.G.sid, bcurve.S.sid) cost;
+			linc table (bsym.sid, bcurve.sid) cost;
 (* 			print_entry bsym bcurve; *)
 		    in
 		      proc lsym lcurve rsym rcurve;
@@ -205,52 +223,53 @@ let combine_soft_counts c1 c2 =
     }
 	
 
-let soft_counts gram family inside outside sc =
+let soft_counts gram family inside outside sc strat =
   sc.qual__ <- sc.qual__ +. inside.qual;
-  family.iter_symbols
+  Frozen.iter_symbols family
     begin fun scurve ->
-      if family.x.lexical_ok scurve then begin
-	gram.iter_symbols
+      if strat.lexical_ok scurve then begin
+	Frozen.iter_symbols gram
 	  begin fun state ->
 	    let count = 
 	      if isfinite inside.qual then
-		G.lexical_cost state scurve
+		strat.lexical_cost state scurve
 		-. inside.qual
-		+. (get outside.outside (state.G.sid, scurve.S.sid))
+		+. (get outside.outside (state.sid, scurve.sid))
 	      else
 		infinity
 	    in
-	      sc.lexical_counts.(state.G.sid) <- neglogadd sc.lexical_counts.(state.G.sid) count;
+	      sc.lexical_counts.(state.sid) <- neglogadd sc.lexical_counts.(state.sid) count;
 	      (* 	      if count_verbose then printf "soft_counts: state %d -> scurve %d=(%d,%d) : ~%f~\n%!"  *)
 	      (* 		state.G.sid scurve.S.sid scurve.S.first scurve.S.last count; *)
 	  end
       end;
 
-      if family.x.binary_ok scurve then begin
-	family.iter_decompositions scurve
+      if strat.binary_ok scurve then begin
+	Frozen.iter_decompositions family scurve
 	  begin fun dcomp ->
-	    gram.iter_all_decompositions
+	    iter_all_decompositions gram
 	      begin fun state prod ->
 		let count =
 		  if isfinite inside.qual then
-		    (G.binary_cost prod dcomp)
+		    (strat.binary_cost prod dcomp)
 		    -. inside.qual
-		    +. (get outside.outside (state.G.sid, scurve.S.sid))
-		    +. (get inside.inside  (prod.G.leftsid, dcomp.S.leftsid))
-		    +. (get inside.inside  (prod.G.rightsid, dcomp.S.rightsid))
+		    +. (get outside.outside (state.sid, scurve.sid))
+		    +. (get inside.inside  (prod.leftsid, dcomp.leftsid))
+		    +. (get inside.inside  (prod.rightsid, dcomp.rightsid))
 		  else
 		    infinity
 		in
-		  sc.binary_counts.(prod.G.cid) <- neglogadd sc.binary_counts.(prod.G.cid) count;
+		  sc.binary_counts.(prod.cid) <- neglogadd sc.binary_counts.(prod.cid) count;
 
-		  let modecount, _ = sc.mpmodes.(prod.G.cid) in
+		  let modecount, _ = sc.mpmodes.(prod.cid) in
 
 		    if count < modecount +. 10. then begin
-		      sc.mpchoices.(prod.G.cid) <- (count, dcomp.S.cdata) :: sc.mpchoices.(prod.G.cid);
+		      sc.mpchoices.(prod.cid) <- (count, strat.getshape dcomp.cdata) :: sc.mpchoices.(prod.cid);
 		    end;
 
 		    if count <  modecount then begin
-		      sc.mpmodes.(prod.G.cid) <- (count, Some dcomp.S.cdata);
+		      sc.mpmodes.(prod.cid) <- 
+			(count, Some (strat.getshape dcomp.cdata));
 		    end;
 
 	      (* 		  printf "nmps(%d) = %d\n%!" prod.G.cid (List.length sc.mpchoices.(prod.G.cid)); *)
@@ -263,22 +282,23 @@ let soft_counts gram family inside outside sc =
   printf "QUAL %f\n%!" outside.qual_
   
 
-let sparse_inside_outside gram family sc_table =
-  let inside_table = inside gram family in
-  let outside_table = outside gram family inside_table in
-    soft_counts gram family inside_table outside_table sc_table
+let sparse_inside_outside gram family sc_table strat =
+  let inside_table = inside gram family strat in
+  let outside_table = outside gram family inside_table strat in
+    soft_counts gram family inside_table outside_table sc_table strat
 
 
-let sparse_parse_cost gram family = 
-  let table = inside gram family in
+let sparse_parse_cost gram family strat = 
+  let table = inside gram family strat in
     table.qual
 
 
 
-let viterbi gram family =
+let viterbi gram family strat =
   let qual = ref infinity in
     (* chart maps (X,I) -> q, X=nonterminal, I=SDF interval *)
-  let table = new_parse_table (gram.num_symbols()) (family.num_symbols()) 
+  let table = new_parse_table (Frozen.num_symbols gram)
+    (Frozen.num_symbols family) 
     "viterbi" viterbi_verbose in
   let toplevel = ref None in
   let foo = mkhash 100 in
@@ -290,32 +310,32 @@ let viterbi gram family =
     (*       symbol.G.sid scurve.S.sid *)
     (*   in *)
 
-    family.iter_symbols
+    Frozen.iter_symbols family
       begin fun scurve -> 
-	if family.x.lexical_ok scurve then begin
-	  gram.iter_symbols
+	if strat.lexical_ok scurve then begin
+	  Frozen.iter_symbols gram
 	    begin fun symbol -> 
-	      let cost = G.lexical_cost symbol scurve in
-		set table (symbol.G.sid, scurve.S.sid) cost;
+	      let cost = strat.lexical_cost symbol scurve in
+		set table (symbol.sid, scurve.sid) cost;
 		(* 		print_entry symbol scurve;  *)
 	    end
 	end;
 
-	if family.x.binary_ok scurve then begin
-	  gram.iter_all_decompositions
+	if strat.binary_ok scurve then begin
+	  iter_all_decompositions gram
 
 	    begin fun symbol prod ->
-	      if G.compatible symbol scurve then begin
-		family.iter_decompositions scurve
+	      if strat.compatible symbol scurve then begin
+		Frozen.iter_decompositions family scurve
 		  begin fun dcomp ->
-		    let cost = (G.binary_cost prod dcomp) +. 
-		      (get table (prod.G.leftsid, dcomp.S.leftsid)) +.
-		      (get table (prod.G.rightsid, dcomp.S.rightsid)) 
+		    let cost = (strat.binary_cost prod dcomp) +. 
+		      (get table (prod.leftsid, dcomp.leftsid)) +.
+		      (get table (prod.rightsid, dcomp.rightsid)) 
 		    in
-		      if cost < (get table (symbol.G.sid, scurve.S.sid)) then begin
-			set table (symbol.G.sid, scurve.S.sid) cost;
-			foo << ((symbol.G.sid, scurve.S.sid),
-				(prod.G.cid, dcomp.S.cid));
+		      if cost < (get table (symbol.sid, scurve.sid)) then begin
+			set table (symbol.sid, scurve.sid) cost;
+			foo << ((symbol.sid, scurve.sid),
+				(prod.cid, dcomp.cid));
 		      end
 		  end;
 		(* 		print_entry symbol scurve; *)
@@ -324,11 +344,11 @@ let viterbi gram family =
 
 	end;
 
-	if family.x.goal_ok scurve then begin
-	  let cost = S.goal_cost family scurve +. (get table (0, scurve.S.sid)) in
+	if strat.goal_ok scurve then begin
+	  let cost = strat.goal_cost family.f_gdata scurve +. (get table (0, scurve.sid)) in
 	    (** TODO is that zero a problem? *)
 	    if cost < !qual then begin
-	      toplevel := Some (0, scurve.S.sid);
+	      toplevel := Some (0, scurve.sid);
 	      qual := cost;
 	    end
 	end
@@ -341,13 +361,14 @@ let viterbi gram family =
     let pairs = ref [] in
     let rec visit (symbolid, scurveid) = 
       pairs := (symbolid, scurveid) :: !pairs;
-      let symbol, scurve = gram.get_symbol symbolid, family.get_symbol scurveid in
-	if foo >>? (symbol.G.sid, scurve.S.sid) then begin
-	  let prodid, dcompid = foo >> (symbol.G.sid, scurve.S.sid) in
-	  let prod, dcomp = gram.get_composition prodid, 
-	    family.get_composition dcompid in
-	    visit (prod.G.leftsid, dcomp.S.leftsid);
-	    visit (prod.G.rightsid, dcomp.S.rightsid);
+      let symbol, scurve = Frozen.get_symbol gram symbolid, 
+	Frozen.get_symbol family scurveid in
+	if foo >>? (symbol.sid, scurve.sid) then begin
+	  let prodid, dcompid = foo >> (symbol.sid, scurve.sid) in
+	  let prod, dcomp = Frozen.get_composition gram prodid, 
+	    Frozen.get_composition family dcompid in
+	    visit (prod.leftsid, dcomp.leftsid);
+	    visit (prod.rightsid, dcomp.rightsid);
 	end
     in
     let toplevel = 

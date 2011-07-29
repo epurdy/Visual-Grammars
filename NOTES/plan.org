@@ -1,11 +1,16 @@
-* notes on code organization
+* TODO for today
+  - continue to refactor grammars code
+  - add LLL rules to grammar making, ok to do it badly for now
+  - finish annotating romer I
+  - sample from local_nts somehow
+  - figure out how to fit differently constrained watsons, i.e.,
+    watson with fixed mean, watson with mean constrained to lie on a
+    line, etc.  
+  - figure out how to do the shared scaled LLL rules
 
+* notes on code organization
   - in general, each file should do one thing. right now there is too
     much of a tendency towards monolithic objects.
-
-  - break the link between sdf and curve, think of sdf as purely being
-    about indices. either stop precomputing shape descriptor, or store
-    those separately?
 
   - simplify the code relating to abstract grammars, such that there
     is only one (possibly parameterized) type of grammar. make it so
@@ -14,79 +19,22 @@
     - as part of this, maybe take in some functions that do particular
       things on the grammar?
 
-    - live_shape_grammar: what does this do? it wraps live grammar,
-      and adds convenience functions for insertion. this is pretty
-      cool - maybe it should be how all live grammars work
-
-    - what's the deal with live grammars and frozen grammars? we went
-      to a lot of trouble to make sure that they both supported
-      certain stuff so that we could e.g. parse with a live grammar,
-      but that seems like it's just a waste. live grammars should be
-      for building, and frozen grammars should be for using
-
     - at some point, would be good to solve the start/0 issue
 
     - at some point, would be good to have it figure out the correct
       ordering of symbols etc. instead of having to do things in a
       particular order
 
-    - how do we solve the problem of having these nonterminals with
-      associated data? if we want to make it so that there is only one
-      sort of grammar, then shape grammars and sdf's are both either
-      parameterized variants of grammars, or a grammar plus a way of
-      looking up the relevant metadata in e.g. a hash table.
+    - need to make LLL rules for some of the subcurves. if we are
+      going to change this to have scaled L's, this becomes kind of
+      scary. do we generate scaled L's on the fly during parsing, or
+      do we generate a whole bunch of statically scaled L's during
+      grammar creation, and just go down fairly far (thus making the
+      grammar far bigger than it is now) a compromise would be to
+      statically generate the L's but have them for a number of
+      scales, and link them all up appropriately (rounding the scales
+      a bit) that seems like it would work just fine.
 
-      it's nice to interact with nonterminals as unified objects, so
-      looking up the metadata in a hash table is probably bad, and
-      there could be problems keeping things in sync
-
-      if they are unified things, then we probably need to have a
-      nested record structure, so that we can separate the parts that
-      hook into the grammar and the parts that are actually metadata
-
-      symbol.sid
-      symbol.dcompids
-      symbol.lcompids
-      symbol.sdata.closed
-      symbol.sdata.straightprob
-
-      in the past, something has felt vaguely weird about sdata. it is
-      probably partly that we have been trying to maintain too much
-      flexibility about what's in there, so we haven't been dealing
-      with it straightforwardly. so, more or less fixing the content
-      of sdata would be good, should probably be the union of what's
-      in Grammar.symbol and Sdf.debug_sdata
-
-    - what is up with get_params? it is basically a bunch of options
-      about how we build a grammar, but i think it is too specific to
-      a particular view of it. it would be better to just take some
-      functions, but what would they be?
-
-      - need(?) nonsense symbol and production to init live grammar
-      - need to make a symbol from every subcurve, which entails
-        picking straightcost, and getting debug info like the subcurve
-
-      - need to make a rule from every production of sdf, which
-        entails picking a shape model, getting debug info, getting
-        sids
-
-      - need to make LLL rules for some of the subcurves. if we are
-        going to change this to have scaled L's, this becomes kind of
-        scary. do we generate scaled L's on the fly during parsing, or
-        do we generate a whole bunch of statically scaled L's during
-        grammar creation, and just go down fairly far (thus making the
-        grammar far bigger than it is now) a compromise would be to
-        statically generate the L's but have them for a number of
-        scales, and link them all up appropriately (rounding the
-        scales a bit) that seems like it would work just fine.
-
-    - replace/merge/sample/prune/drawing might need to change very
-      slightly if the typedefs change, but not significantly
-
-    - a lot of drawing functions feel more like experiments and less
-      like library functions. they have a lot of arbitrary choices and
-      they are usually tailored to some particular use of them. it's
-      not clear what to do about this though
 
   - general rule of thumb(?) - the library files should not have
     serious choices in them, they should give enough support for the
@@ -269,11 +217,18 @@ out a different way to deal with variable length curves)
   - next thing to do: sample from this somehow, see if we like the
     generated subcurves
 
+  - ultimately, can bottom out the single-example grammars in this
+    way, sample from them, see what happens. it seems like different
+    classes would switch from shape to texture at different scales.
+
+    we could even explicitly allow a choice for this, i.e., have L->LL
+    rules even for nonterminals that do have rules. then EM could try
+    to decide about the global/local decision for us (although EM is
+    completely untrustable!!!!!)
+
   - a good start would be to just do some exploratory work, figure out
     what short curves tend to look like, then we know more about things...
 
-
-â
 ** TODO Have good shape models using more complex grammars
     - try building them by hand by hand-parsing example curves,
       choosing intuitively reasonable correspondences.

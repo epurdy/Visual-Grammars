@@ -1,5 +1,21 @@
 exception Parse_failure
 
+open Abstract
+
+
+type ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy = {
+  lexical_ok :  'tgt_sym symbol -> bool;
+  lexical_cost : 'mod_sym symbol -> 'tgt_sym symbol -> float;
+  binary_ok : 'tgt_sym symbol -> bool;
+  binary_cost : 'mod_comp composition -> 'tgt_comp composition -> float;
+  goal_ok : 'tgt_sym symbol -> bool;
+  goal_cost : 'tgt_glob -> 'tgt_sym symbol -> float;
+  compatible : 'mod_sym symbol -> 'tgt_sym symbol -> bool;
+  getshape : 'tgt_comp -> Shape.shape;
+  fit_midpoint_distro : 'mod_comp composition -> (float * Shape.shape) list -> Shape.shape option ->
+				       'mod_comp
+
+}
 
 type parse_table = {
   na: int;
@@ -29,12 +45,27 @@ val make_soft_counts : int -> int -> 'a sparse_counts_table
 
 val combine_soft_counts : 'a sparse_counts_table -> 'a sparse_counts_table -> 'a sparse_counts_table
 
-val inside : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> 
+val inside : 
+  ('mod_sym,'mod_comp,'mod_glob) frozen_grammar -> 
+  ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar -> 
+  ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy ->
   sparse_inside_table
 
-val sparse_inside_outside : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> 
-  Sdf.sdf_debug_cdata sparse_counts_table -> unit
+val sparse_inside_outside : 
+ ('mod_sym,'mod_comp,'mod_glob) frozen_grammar -> 
+  ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar -> 
+  Shape.shape sparse_counts_table ->
+  ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy ->
+  unit
 
-val sparse_parse_cost : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> float
+val sparse_parse_cost : 
+  ('mod_sym,'mod_comp,'mod_glob) frozen_grammar -> 
+  ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar -> 
+  ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy ->
+  float
 
-val viterbi : ('a,'b,'c) Grammar.grammar -> Sdf.debug_family -> float * (int * int) list
+val viterbi : 
+  ('mod_sym,'mod_comp,'mod_glob) frozen_grammar -> 
+  ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar -> 
+  ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy ->
+  float * (int * int) list

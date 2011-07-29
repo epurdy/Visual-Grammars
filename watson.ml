@@ -4,6 +4,11 @@ open Util.Cops
 
 module C = Complex
 
+type distro = {
+  mean: Shape.shape;
+  conc_ : float;
+}
+
 type watson_fit_data = {
   ssap: cpt * cpt * cpt * cpt;
   n: int;

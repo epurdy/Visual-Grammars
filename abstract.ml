@@ -3,376 +3,384 @@ open Util.Hops
 open Printf
 
 type sid = int
+(** Unique identifier for a symbol *)
+
 type cid = int
+(** Unique identifier for a composition *)
 
-type ('symbol,'composition) friend = {
-  __sym__: 'symbol;
-  __comp__: 'composition;
+(* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  sid_: 'symbol -> int; (* read sid *)
-  _sid: 'symbol -> int -> unit; (* set sid *)
-  dcompids_: 'symbol -> int list;
-  _dcompids: 'symbol -> int list -> unit;
-  lcompids_: 'symbol -> int list;
-  _lcompids: 'symbol -> int list -> unit;
-  rcompids_: 'symbol -> int list;
-  _rcompids: 'symbol -> int list -> unit;
+   It is >>> VERY IMPORTANT <<< that the data inside sdata and cdata
+   be immutable. The abstract grammar code is written under this
+   assumption, and violating it will cause shared reference bugs.
 
-  cid_: 'composition -> int;
-  _cid: 'composition -> int -> unit;
-  topsid_: 'composition -> int;
-  _topsid: 'composition -> int -> unit;
-  leftsid_: 'composition -> int;
-  _leftsid: 'composition -> int -> unit;
-  rightsid_: 'composition -> int;
-  _rightsid: 'composition -> int -> unit;
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  *)
 
-  copy_symbol: 'symbol -> 'symbol;
-  copy_comp: 'composition -> 'composition;
-
-  symbol_name: 'symbol -> string;
-  symbol_name_long: 'symbol -> string;
-  composition_name: 'composition -> string;
-
-  lexical_ok: 'symbol -> bool;
-  binary_ok: 'symbol -> bool;
-  goal_ok: 'symbol -> bool;
+type 'a symbol = {
+  mutable sid: sid;
+  mutable dcompids: cid list;
+  mutable lcompids: cid list;
+  mutable rcompids: cid list;
+  mutable sdata: 'a;
+  mutable startable: bool; (* can we use this symbol as a start symbol? *)
 }
 
-let change_labels_symbol x symbol sidmap cidmap =
-  x._sid symbol (sidmap (x.sid_ symbol));
-  x._dcompids symbol (List.map cidmap (x.dcompids_ symbol));
-  x._lcompids symbol (List.map cidmap (x.lcompids_ symbol));
-  x._rcompids symbol (List.map cidmap (x.rcompids_ symbol))
-
-let change_labels_composition x comp sidmap cidmap =
-  x._cid comp (cidmap (x.cid_ comp));
-  x._topsid comp (sidmap (x.topsid_ comp));
-  x._leftsid comp (sidmap (x.leftsid_ comp));
-  x._rightsid comp (sidmap (x.rightsid_ comp))
-
-(* let change_labels_symbol x symbol sidmap cidmap = *)
-(*   let apply_cidmap ls = List.map (fun old -> cidmap >> old) ls in *)
-(*     x._sid symbol (sidmap >> x.sid_ symbol); *)
-(*     x._dcompids symbol (apply_cidmap (x.dcompids_ symbol)); *)
-(*     x._lcompids symbol (apply_cidmap (x.lcompids_ symbol)); *)
-(*     x._rcompids symbol (apply_cidmap (x.rcompids_ symbol)) *)
-
-(* let change_labels_composition x comp sidmap cidmap = *)
-(*   x._cid comp (cidmap >> x.cid_ comp); *)
-(*   x._topsid comp (sidmap >> x.topsid_ comp); *)
-(*   x._leftsid comp (sidmap >> x.leftsid_ comp); *)
-(*   x._rightsid comp (sidmap >> x.rightsid_ comp) *)
-
-type ('symbol,'composition,'c,'self) grammar = {
-  mutable self: 'self;
-  mutable x: ('symbol,'composition) friend;
-  mutable get_gdata: unit -> 'c;
-  mutable num_symbols : unit -> int;
-  mutable num_compositions : unit -> int;
-  mutable get_symbol : sid -> 'symbol;
-  mutable get_composition : cid -> 'composition;
-  mutable get_lhs : 'composition -> 'symbol;
-  mutable get_rhs : 'composition -> 'symbol * 'symbol;
-  mutable get_decompositions : 'symbol -> 'composition list;
-  mutable iter_symbols : ('symbol -> unit) -> unit;
-  mutable iter_symbols_rev : ('symbol -> unit) -> unit;
-  mutable iter_decompositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_left_compositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_right_compositions : 'symbol -> ('composition -> unit) -> unit;
-  mutable iter_all_compositions : ('composition -> unit) -> unit;
-  mutable iter_all_decompositions : ('symbol -> 'composition -> unit) -> unit;
-  mutable start: unit -> 'symbol;
+type 'b composition = {
+  mutable cid: cid;
+  mutable topsid: sid;
+  mutable leftsid: sid;
+  mutable rightsid: sid;
+  mutable cdata: 'b;
 }
 
-type ('symbol,'composition,'c) frozen_grammar_data = {
-  f_gdata: 'c;
-  f_symbols: 'symbol array;
-  f_compositions: 'composition array;
+let copy_symbol sym = {
+  sid = sym.sid;
+  dcompids = sym.dcompids;
+  lcompids = sym.lcompids;
+  rcompids = sym.rcompids;
+  startable = sym.startable;
+  sdata = sym.sdata;
 }
-type ('symbol,'composition,'c) frozen_grammar = 
-    ('symbol,'composition,'c, ('symbol,'composition,'c) frozen_grammar_data) grammar
 
-let bind_frozen_grammar self x =
-  let get_gdata () = self.f_gdata in
-  let num_symbols () = Array.length self.f_symbols in
-  let num_compositions () = Array.length self.f_compositions in
-  let get_symbol sid = self.f_symbols.(sid) in
-  let get_composition cid = self.f_compositions.(cid) in
-  let get_lhs comp = get_symbol (x.topsid_ comp) in
-  let get_rhs comp = (get_symbol (x.leftsid_ comp), get_symbol (x.rightsid_ comp)) in
-  let get_decompositions sym = List.map get_composition (x.dcompids_ sym) in
-  let iter_symbols f = Array.iter f self.f_symbols in
-  let iter_symbols_rev f = 
-    let nsymbols = num_symbols () in
-      for i = (nsymbols-1) downto 0 do
-	f self.f_symbols.(i)
-      done
-  in
-  let iter_decompositions sym f = List.iter f (get_decompositions sym) in
-  let iter_left_compositions sym f = List.iter (fun i -> f (get_composition i)) (x.lcompids_ sym) in
-  let iter_right_compositions sym f = List.iter (fun i -> f (get_composition i)) (x.rcompids_ sym) in
-  let iter_all_compositions f = Array.iter f self.f_compositions in
-  let iter_all_decompositions f = 
-    Array.iter (fun sym -> iter_decompositions sym (f sym)) self.f_symbols in
-  let start () = self.f_symbols.(0) in
+let copy_composition comp = {
+  cid = comp.cid;
+  topsid = comp.topsid;
+  leftsid = comp.leftsid;
+  rightsid = comp.rightsid;
+  cdata = comp.cdata;
+}
 
-    {self = self;
-     x = x;
-     get_gdata = get_gdata;
-     num_symbols = num_symbols;
-     num_compositions = num_compositions;
-     get_symbol = get_symbol;
-     get_composition = get_composition;
-     get_lhs = get_lhs;
-     get_rhs = get_rhs;
-     get_decompositions = get_decompositions;
-     iter_symbols = iter_symbols; 
-     iter_symbols_rev = iter_symbols_rev;
-     iter_decompositions = iter_decompositions;
-     iter_left_compositions = iter_left_compositions;
-     iter_right_compositions = iter_right_compositions;
-     iter_all_compositions = iter_all_compositions;
-     iter_all_decompositions = iter_all_decompositions;
-     start = start
-    }
+let symbol_name sym = sprintf "State %d" sym.sid
+let composition_name comp = sprintf "Composition %d (s%d -> s%d s%d)"
+  comp.cid comp.topsid comp.leftsid comp.rightsid
 
-let new_frozen_grammar (x: ('symbol,'composition) friend) gdata 
-    (symbols: 'symbol array) (compositions: 'composition array) =
-  let self = {
-    f_gdata = gdata;
-    f_symbols = symbols;
-    f_compositions = compositions;
-  } in
-    bind_frozen_grammar self x
+let change_labels_symbol sym sidmap cidmap =
+  sym.sid <- sidmap sym.sid;
+  sym.dcompids <- List.map cidmap sym.dcompids;
+  sym.lcompids <- List.map cidmap sym.lcompids;
+  sym.rcompids <- List.map cidmap sym.rcompids
 
-let marshal_frozen_grammar 
-    (gram: ('symbol,'composition,'c) frozen_grammar) fname =
-  let file = open_out_bin fname in
-    Marshal.to_channel file gram.self [];
-    close_out file
+let change_labels_composition comp sidmap cidmap =
+  comp.cid <- cidmap comp.cid;
+  comp.topsid   <- sidmap comp.topsid;
+  comp.leftsid  <- sidmap comp.leftsid;
+  comp.rightsid <- sidmap comp.rightsid
 
-let unmarshal_frozen_grammar x fname =
-  let file = open_in fname in
-  let gram = Marshal.from_channel file in
-  let gram = (gram: ('symbol,'composition,'c) frozen_grammar_data) in
-    close_in file;
-    new_frozen_grammar x gram.f_gdata 
-      gram.f_symbols gram.f_compositions 
+let map_labels_symbol sym sidmap cidmap =
+  {sdata = sym.sdata;
+   sid = sidmap sym.sid;
+   dcompids = List.map cidmap sym.dcompids;
+   lcompids = List.map cidmap sym.lcompids;
+   rcompids = List.map cidmap sym.rcompids;
+   startable = sym.startable;
+  }
 
-let map_frozen_grammar newx
-    (gram: ('symbol,'composition,'c) frozen_grammar) fdata fsym fcomp =
-  new_frozen_grammar newx
-    (fdata (gram.get_gdata ()))
-    (Array.map fsym gram.self.f_symbols)
-    (Array.map fcomp gram.self.f_compositions)
+let map_labels_composition comp sidmap cidmap =
+  {cdata = comp.cdata;
+   cid = cidmap comp.cid;
+   topsid   = sidmap comp.topsid;
+   leftsid  = sidmap comp.leftsid;
+   rightsid = sidmap comp.rightsid
+  }
 
-type ('symbol,'composition,'c) live_grammar_data = {
+(***************************************************)
+(* Code that is common to frozen and live grammars *)
+(***************************************************)
+
+(* primitive operations supported by frozen and live grammars *)
+module type GRAMMAR = 
+sig 
+  type ('a,'b,'c) grammar
+
+  val get_gdata : ('a,'b,'c) grammar -> 'c
+  val num_symbols : ('a,'b,'c) grammar -> int
+  val num_compositions : ('a,'b,'c) grammar -> int
+  val get_symbol : ('a,'b,'c) grammar -> sid -> 'a symbol
+  val get_composition : ('a,'b,'c) grammar -> cid -> 'b composition
+  val start : ('a,'b,'c) grammar -> 'a symbol
+
+  val iter_symbols : ('a,'b,'c) grammar -> ('a symbol -> unit) -> unit
+  val iter_symbols_rev : ('a,'b,'c) grammar -> ('a symbol -> unit) -> unit
+end
+
+(* secondary operations common to frozen and live grammars *)
+module GramCommon = 
+  functor (Gram: GRAMMAR) ->
+struct 
+  type ('a,'b,'c) grammar = ('a,'b,'c) Gram.grammar
+
+  let get_gdata = Gram.get_gdata
+  let num_symbols = Gram.num_symbols
+  let num_compositions  = Gram.num_compositions
+  let get_symbol = Gram.get_symbol
+  let get_composition = Gram.get_composition
+  let start = Gram.start
+  let iter_symbols = Gram.iter_symbols
+  let iter_symbols_rev = Gram.iter_symbols_rev
+
+  let get_decompositions gram sym = 
+    List.map (fun cid -> get_composition gram cid) sym.dcompids
+  let get_left_compositions gram sym = 
+    List.map (fun cid -> get_composition gram cid) sym.lcompids
+  let get_right_compositions gram sym = 
+    List.map (fun cid -> get_composition gram cid) sym.rcompids
+
+  let iter_decompositions gram sym f = 
+    List.iter f (get_decompositions gram sym)
+  let iter_left_compositions gram sym f = 
+    List.iter f (get_left_compositions gram sym)
+  let iter_right_compositions gram sym f = 
+    List.iter f (get_right_compositions gram sym)
+
+  let get_lhs gram comp = get_symbol gram comp.topsid
+  let get_rhs gram comp = 
+    get_symbol gram comp.leftsid,
+    get_symbol gram comp.rightsid
+
+  let validate_sym gram sym =
+    iter_decompositions gram sym
+      begin fun dcomp ->
+	let left, right = get_rhs gram dcomp in
+	  assert(dcomp.topsid == sym.sid);
+	  assert(List.mem dcomp.cid sym.dcompids);
+	  assert(List.mem dcomp.cid left.lcompids);
+	  assert(List.mem dcomp.cid right.rcompids);
+      end
+
+  let sample_path gram =
+    let thesymbol = ref (Gram.start gram) in
+    let thesamples = ref [ !thesymbol ] in
+      while (List.length (!thesymbol).dcompids) > 0 do
+	let decompositions = get_decompositions gram !thesymbol in
+	let decompositions = Array.of_list decompositions in
+	let thecomp = random_choice decompositions in
+	  thesymbol := random_choice 
+	    [| Gram.get_symbol gram thecomp.leftsid;
+	       Gram.get_symbol gram thecomp.rightsid; |];
+	  thesamples := !thesymbol :: !thesamples;
+      done;
+      List.rev !thesamples
+
+  let print long_namer gram =
+    Gram.iter_symbols_rev gram
+      begin fun sym -> 
+	printf "%s:\n" (long_namer sym);
+	iter_decompositions gram sym
+	  begin fun dcomp ->
+	    let left,right = get_rhs gram dcomp in
+	      printf "  -> %s %s    [%s]\n"
+		(symbol_name left)
+		(symbol_name right)
+		(composition_name dcomp)	    
+	  end
+      end
+
+end
+
+(*****************)
+(* Live grammars *)
+(*****************)
+
+type ('a,'b,'c) live_grammar = {
   mutable l_gdata: 'c;
-  mutable l_symbols: (sid, 'symbol) hash;
-  mutable l_compositions: (cid, 'composition) hash;
+  mutable l_symbols: (int, 'a symbol) hash;
+  mutable l_compositions: (int, 'b composition) hash;
   mutable next_sid: int;
   mutable next_cid: int;
-  mutable insert_symbol : 'symbol -> 'symbol;
-  mutable insert_composition : 
-    'composition -> 'composition;
 }
-type ('symbol,'composition,'c) live_grammar = 
-    ('symbol,'composition,'c, ('symbol,'composition,'c) live_grammar_data) grammar
 
-let id x = x
+(* the primitive operations necessary to fulfill the GRAMMAR interface *)
+module Live_base = 
+struct
+  type ('a,'b,'c) grammar = ('a,'b,'c) live_grammar
 
-let new_live_grammar x gdata ex_a ex_b nsyms nrules =
-  let self = {
-    l_gdata = gdata;
-    l_symbols = mkhash nsyms; 
-    l_compositions = mkhash nrules;    
-    next_sid = 0;
-    next_cid = 0;
-    insert_symbol = id;
-    insert_composition = id;
-  } in
+  let get_gdata gram = gram.l_gdata
+  let num_symbols gram = Hashtbl.length gram.l_symbols
+  let num_compositions gram = Hashtbl.length gram.l_compositions
+  let get_symbol gram sid = gram.l_symbols >> sid
+  let get_composition gram cid = gram.l_compositions >> cid
+  let start gram = gram.l_symbols >> 0
 
-  let get_gdata () = self.l_gdata in
-  let num_symbols () = Hashtbl.length self.l_symbols in
-  let num_compositions () = Hashtbl.length self.l_compositions in
-  let get_symbol sid = self.l_symbols >> sid in
-  let get_composition cid = self.l_compositions >> cid in
-  let get_lhs comp = get_symbol (x.topsid_ comp) in
-  let get_rhs comp = (get_symbol (x.leftsid_ comp), get_symbol (x.rightsid_ comp)) in
-  let get_decompositions sym = List.map get_composition (x.dcompids_ sym) in
-  let start () = raise (Not_Implemented "live_grammar#start") in
-  let iter_symbols f = 
-    raise (Not_Implemented "live_grammar#iter_symbols (ordering would be problematic") in
-  let iter_symbols_rev f = 
-    raise (Not_Implemented "live_grammar#iter_symbols_rev (ordering would be problematic") in
-  let iter_decompositions sym f = List.iter f (get_decompositions sym) in
-  let iter_left_compositions sym f = List.iter (fun i -> f (get_composition i)) (x.lcompids_ sym) in
-  let iter_right_compositions sym f = List.iter (fun i -> f (get_composition i)) (x.rcompids_ sym) in
-  let iter_all_decompositions f =
-    raise (Not_Implemented "live_grammar#iter_all_decompositions (ordering would be problematic") in 
-  let iter_all_compositions f =
-    raise (Not_Implemented "live_grammar#iter_all_compositions (ordering would be problematic") in 
+  let iter_symbols gram f = Hashtbl.iter (fun k v -> f v) gram.l_symbols
+  let iter_symbols_rev gram f = 
+    fprintf stderr "iter_symbols_rev is not really reversed for live grammars!\n";
+    Hashtbl.iter (fun k v -> f v) gram.l_symbols
+end
 
-  let insert_symbol sym = 
-    assert ((x.dcompids_ sym) = []);
-    assert ((x.lcompids_ sym) = []);
-    assert ((x.rcompids_ sym) = []);
-    x._sid sym self.next_sid;
-    self.l_symbols << (self.next_sid, sym);
-    self.next_sid <- self.next_sid + 1;
-    sym
-  in
+module Live = GramCommon(Live_base)
 
-(*   let insert_symbol_squash sym =  *)
-(*     x._dcompids sym []; *)
-(*     x._lcompids sym []; *)
-(*     x._rcompids sym []; *)
-(*     x._sid sym self.next_sid; *)
-(*     self.l_symbols << (self.next_sid, sym); *)
-(*     self.next_sid <- self.next_sid + 1; *)
-(*     sym *)
-(*   in *)
+let new_live_grammar ?(nsyms=100) ?(ncomps=100) gdata = 
+  {l_gdata = gdata;
+   l_symbols = mkhash nsyms;
+   l_compositions = mkhash ncomps;
+   next_sid = 0;
+   next_cid = 0;}
 
-  let insert_composition comp = 
-    let cid = self.next_cid in
-    let top = (get_symbol (x.topsid_ comp)) in
-    let left = (get_symbol (x.leftsid_ comp)) in
-    let right = (get_symbol (x.rightsid_ comp)) in
-      x._cid comp cid;
-      self.l_compositions << (cid, comp);
-
-      x._dcompids top  (cid :: (x.dcompids_ top));
-      x._lcompids left  (cid :: (x.lcompids_ left));
-      x._rcompids right  (cid :: (x.rcompids_ right));
-
-      self.next_cid <- self.next_cid + 1;
-      comp
-  in
-
-    self.insert_symbol <- insert_symbol;
-    self.insert_composition <- insert_composition;
-
-    {self = self;
-     x = x;
-     get_gdata = get_gdata;
-     num_symbols = num_symbols;
-     num_compositions = num_compositions;
-     get_symbol = get_symbol;
-     get_composition = get_composition;
-     get_lhs = get_lhs;
-     get_rhs = get_rhs;
-     get_decompositions = get_decompositions;
-     iter_symbols = iter_symbols; 
-     iter_symbols_rev = iter_symbols_rev;
-     iter_decompositions = iter_decompositions;
-     iter_left_compositions = iter_left_compositions;
-     iter_right_compositions = iter_right_compositions;
-     iter_all_compositions = iter_all_compositions;
-     iter_all_decompositions = iter_all_decompositions;
-     start = start
-    }
-
-
-let sample_path gram =
-  let thesymbol = ref (gram.start ()) in
-  let thesamples = ref [ !thesymbol ] in
-    while (List.length (gram.x.dcompids_ !thesymbol)) > 0 do
-      let decompositions = gram.get_decompositions !thesymbol in
-      let decompositions = Array.of_list decompositions in
-      let thecomp = random_choice decompositions in
-	thesymbol := random_choice 
-	  [| gram.get_symbol (gram.x.leftsid_ thecomp); 
-	     gram.get_symbol (gram.x.rightsid_ thecomp) |];
-	thesamples := !thesymbol :: !thesamples;
-    done;
-    List.rev !thesamples
-
-let print gram =
-  gram.iter_symbols_rev
-    begin fun sym -> 
-      printf "%s:\n" (gram.x.symbol_name_long sym);
-      gram.iter_decompositions sym
-	begin fun dcomp ->
-	  let left,right = gram.get_rhs dcomp in
-	    printf "  -> %s %s    [%s]\n"
-	      (gram.x.symbol_name left)
-	      (gram.x.symbol_name right)
-	      (gram.x.composition_name dcomp)	    
-	end
-    end
-
-let validate_live g = 
+let validate_live gram = 
   Hashtbl.iter
     begin fun sid sym ->
-      g.iter_decompositions sym
-	begin fun dcomp ->
-	  let cid = g.x.cid_ dcomp in
-	  let left, right = g.get_rhs dcomp in
-	    assert( (g.x.topsid_ dcomp) == sid);
-	    assert( List.mem cid (g.x.lcompids_ left));
-	    assert( List.mem cid (g.x.rcompids_ right));
-	end
+      Live.validate_sym gram sym;
+      assert(sym.sid = sid);
+    end  
+    gram.l_symbols;
+  Hashtbl.iter
+    begin fun cid dcomp ->
+      assert(dcomp.cid = cid);
     end
-    g.self.l_symbols
+    gram.l_compositions
 
-let validate_froz g = 
+let make_new_symbol gram sdata startable = 
+  let sym = {
+    sdata = sdata;
+    startable = startable;
+    sid = gram.next_sid;
+    dcompids = [];
+    lcompids = [];
+    rcompids = [];
+  } in    
+    gram.l_symbols << (gram.next_sid, sym);
+    gram.next_sid <- gram.next_sid + 1;
+    sym
+
+let make_new_composition gram topsid (leftsid,rightsid) cdata = 
+  let comp = {
+    cdata = cdata;
+    cid = gram.next_cid;
+    topsid = topsid;
+    leftsid = leftsid;
+    rightsid = rightsid;
+  } in
+  let top = Live.get_symbol gram topsid in
+  let left = Live.get_symbol gram leftsid in
+  let right = Live.get_symbol gram rightsid in
+    gram.l_compositions << (gram.next_cid, comp);
+    top.dcompids   <- comp.cid :: top.dcompids;
+    left.lcompids  <- comp.cid :: left.lcompids;
+    right.rcompids <- comp.cid :: right.rcompids;
+    gram.next_cid <- gram.next_cid + 1;
+    comp
+
+let imake_new_symbol gram sdata startable = 
+  ignore (make_new_symbol gram sdata startable)
+
+let imake_new_composition gram topsid (leftsid, rightsid) cdata = 
+  ignore (make_new_composition gram topsid (leftsid,rightsid) cdata)
+
+
+(*******************)
+(* Frozen grammars *)
+(*******************)
+
+type ('a,'b,'c) frozen_grammar = {
+  f_gdata: 'c;
+  f_symbols: 'a symbol array;
+  f_compositions: 'b composition array;
+}
+
+(* the primitive operations necessary to fulfill the GRAMMAR interface *)
+module Frozen_base = 
+struct 
+  type ('a,'b,'c) grammar = ('a,'b,'c) frozen_grammar
+
+  let get_gdata gram = gram.f_gdata
+  let num_symbols gram = Array.length gram.f_symbols
+  let num_compositions gram = Array.length gram.f_compositions
+  let get_symbol gram sid = gram.f_symbols.(sid)
+  let get_composition gram cid = gram.f_compositions.(cid)
+  let start gram = gram.f_symbols.(0)
+
+  let iter_symbols gram f = Array.iter f gram.f_symbols
+
+  let iter_symbols_rev gram f = 
+    let nsymbols = num_symbols gram in
+      for i = (nsymbols-1) downto 0 do
+	f gram.f_symbols.(i)
+      done
+end
+
+module Frozen = GramCommon(Frozen_base)
+
+let new_frozen_grammar gdata symbols compositions =
+  {f_gdata = gdata;
+   f_symbols = symbols;
+   f_compositions = compositions;} 
+
+let validate_frozen gram = 
   Array.iteri
     begin fun sid sym ->
-      g.iter_decompositions sym
-	begin fun dcomp ->
-	  let cid = g.x.cid_ dcomp in
-	  let left, right = g.get_rhs dcomp in
-	    assert( (g.x.topsid_ dcomp) == sid);
-	    assert( List.mem cid (g.x.lcompids_ left));
-	    assert( List.mem cid (g.x.rcompids_ right));
-	end
+      Frozen.validate_sym gram sym;
+      assert(sym.sid = sid);
     end
-    g.self.f_symbols
-  
+    gram.f_symbols;
+  Array.iteri
+    begin fun cid dcomp ->
+      assert(dcomp.cid = cid);
+    end
+    gram.f_compositions
 
+let iter_all_compositions gram f = Array.iter f gram.f_compositions
+
+let iter_all_decompositions gram f = 
+  Array.iter (fun sym -> Frozen.iter_decompositions gram sym (f sym)) 
+    gram.f_symbols
+
+
+(********************************)
+(* Useful Functions on Grammars *)
+(********************************)
+
+(* works on frozen grams *)
+let map_frozen_grammar gram fdata fsym fcomp =
+  new_frozen_grammar 
+    (fdata gram.f_gdata)
+    (Array.map fsym gram.f_symbols)
+    (Array.map fcomp gram.f_compositions)
+
+(* works on live grams *)
 let compactify gram =
   validate_live gram;
-  let sids = List.sort compare (keys gram.self.l_symbols) in
+  let sids = List.sort compare (keys gram.l_symbols) in
   let new_old_sids = Array.of_list sids in
   let old_new_sids = fn_of_hash (invert_array new_old_sids) in
 
-  let cids = List.sort compare (keys gram.self.l_compositions) in
+  let cids = List.sort compare (keys gram.l_compositions) in
   let new_old_cids = Array.of_list cids in
   let old_new_cids = fn_of_hash (invert_array new_old_cids) in
 
-  let newsymbols = Hashtbl.create (Hashtbl.length gram.self.l_symbols) in
-  let newcomps = Hashtbl.create (Hashtbl.length gram.self.l_compositions) in
+  let newsyms = Hashtbl.create (Hashtbl.length gram.l_symbols) in
+  let newcomps = Hashtbl.create (Hashtbl.length gram.l_compositions) in
 
     Hashtbl.iter 
       begin fun oldsid sym ->
-	let new_symbol = gram.x.copy_symbol sym in
-	  change_labels_symbol gram.x new_symbol old_new_sids old_new_cids;
-	  newsymbols << (gram.x.sid_ new_symbol, new_symbol);	  	      
+	let new_sym = copy_symbol sym in
+	  change_labels_symbol new_sym old_new_sids old_new_cids;
+	  newsyms << (new_sym.sid, new_sym);	  	      
       end
-      gram.self.l_symbols;
+      gram.l_symbols;
 
     Hashtbl.iter
       begin fun oldcid comp ->
-	let new_comp = gram.x.copy_comp comp in
-	  change_labels_composition gram.x new_comp old_new_sids old_new_cids;
-	  newcomps << (gram.x.cid_ new_comp, new_comp);
+	let new_comp = copy_composition comp in
+	  change_labels_composition new_comp old_new_sids old_new_cids;
+	  newcomps << (new_comp.cid, new_comp);
 	  
       end
-      gram.self.l_compositions;
+      gram.l_compositions;
 
-    gram.self.l_symbols <- newsymbols;
-    gram.self.l_compositions <- newcomps
+    gram.l_symbols <- newsyms;
+    gram.l_compositions <- newcomps
 
+(* map live to frozen *)
 let finalize (gram: ('symbol,'composition,'c) live_grammar) =
   compactify gram;
   validate_live gram;
-  new_frozen_grammar gram.x (gram.get_gdata())
-    (Array.init gram.self.next_sid
-       (fun i -> gram.self.l_symbols >> i))
-    (Array.init gram.self.next_cid
-       (fun i -> gram.self.l_compositions >> i))
+  new_frozen_grammar gram.l_gdata
+    (Array.init gram.next_sid
+       (fun i -> gram.l_symbols >> i))
+    (Array.init gram.next_cid
+       (fun i -> gram.l_compositions >> i))
 
+(* This was never close to done *)
 (* let enliven (gram: ('symbol,'composition,'c) froz_grammar) = *)
 (*   validate_froz gram; *)
 (*   let live = new_live_grammar gram.x (gram.get_gdata()) *)
@@ -395,31 +403,43 @@ let finalize (gram: ('symbol,'composition,'c) live_grammar) =
 (*       (Array.init gram.self.next_cid *)
 (* 	 (fun i -> gram.self.l_compositions >> i)) *)
 
-let merge_frozen_grams grams =
-  printf "TODO: currently modifying grams in place!!!\n";
-  Array.iter validate_froz grams;
-  let allsymbols, allcomps = ref [], ref [] in
+(* only works on frozen grams *)
+let merge_frozen_grams grams new_gdata =
+  fprintf stderr "TODO: assumes start states are not special!!!\n";
+  Array.iter validate_frozen grams;
+  let allsyms, allcomps = ref [], ref [] in
   let sym_offset, comp_offset = ref 0, ref 0 in
     Array.iter
       begin fun g ->
-	let sidmap i = i + !sym_offset in
-	let cidmap i = i + !comp_offset in
-	  Array.iter (fun sym -> change_labels_symbol g.x sym sidmap cidmap) g.self.f_symbols;
-	  Array.iter (fun comp -> change_labels_composition g.x comp sidmap cidmap) 
-	    g.self.f_compositions;
-	  allsymbols := g.self.f_symbols :: !allsymbols;
-	  allcomps := g.self.f_compositions :: !allcomps;
-	  sym_offset := (g.num_symbols()) + !sym_offset;
-	  comp_offset := (g.num_compositions()) + !comp_offset;
+	let init_sym_offset, init_comp_offset = !sym_offset, !comp_offset in
+	let sidmap i = i + init_sym_offset in
+	let cidmap i = i + init_comp_offset in
+	let syms = Array.map
+	  begin fun sym -> 
+	    incr sym_offset;
+	    map_labels_symbol sym sidmap cidmap
+	  end
+	  g.f_symbols 
+	in
+	let comps = Array.map
+	  begin fun comp -> 
+	    incr comp_offset;
+	    map_labels_composition comp sidmap cidmap
+	  end
+	  g.f_compositions
+	in
+	  allsyms := syms :: !allsyms;
+	  allcomps := comps :: !allcomps;
       end
       grams;
-    new_frozen_grammar grams.(0).x (grams.(0).get_gdata())
-      (Array.concat (List.rev !allsymbols))
+
+    new_frozen_grammar new_gdata
+      (Array.concat (List.rev !allsyms))
       (Array.concat (List.rev !allcomps))
 
-let check_reachability frozen =
-  let x = frozen.x in
-  let reachable = Array.init (frozen.num_symbols()) (fun i -> false) in
+(* only works on frozen grams *)
+let check_reachability gram =
+  let reachable = Array.init (Frozen.num_symbols gram ) (fun i -> false) in
 
   let progress = ref true in
   let check sid = 
@@ -431,60 +451,46 @@ let check_reachability frozen =
     while !progress do
       progress := false;
       (* long first (by convention, really) *)
-      frozen.iter_symbols_rev
+      Frozen.iter_symbols_rev gram
 	begin fun symbol ->
-	  if x.goal_ok symbol || reachable.(x.sid_ symbol) then begin
-	    check (x.sid_ symbol);
-	    frozen.iter_decompositions symbol
+	  if symbol.startable || reachable.(symbol.sid) then begin
+	    check symbol.sid;
+	    Frozen.iter_decompositions gram symbol
 	      begin fun dcomp ->
-		check (x.leftsid_ dcomp);
-		check (x.rightsid_ dcomp);
+		check dcomp.leftsid;
+		check dcomp.rightsid;
 	      end
 	  end
 	end;
     done;
     reachable
 
-let ensure_reachability frozen =
-  (*   validate_froz frozen; *)
-  let x = frozen.x in
-  let reachable = Array.init (frozen.num_symbols()) (fun i -> false) in
-  let liveid = Array.init (frozen.num_symbols()) (fun i -> None) in
-  let live = new_live_grammar
-    x
-    (frozen.get_gdata())
-    frozen.self.f_symbols.(0)
-    frozen.self.f_compositions.(0)
-    (frozen.num_symbols())
-    (frozen.num_compositions()) in
+(* only works on frozen *)
+let ensure_reachability gram =
+  (*   validate_froz gram; *)
+  let nsymbols = Frozen.num_symbols gram in
+  let liveid = Array.init nsymbols (fun i -> None) in
+  let live = new_live_grammar gram.f_gdata in
 
-  let reachable = check_reachability frozen in
+  let reachable = check_reachability gram in
 
-    frozen.iter_symbols
-      begin fun symbol ->
-	if reachable.(x.sid_ symbol) then begin
-	  let newsym = x.copy_symbol symbol in
-	  let _ =
-	    x._dcompids newsym [];
-	    x._lcompids newsym [];
-	    x._rcompids newsym [];
-	  in
-	  let newsym = live.self.insert_symbol newsym in
-	    liveid.(x.sid_ symbol) <- Some (x.sid_ newsym);
+    Frozen.iter_symbols gram
+      begin fun sym ->
+	if reachable.(sym.sid) then begin
+	  let newsym = make_new_symbol live sym.sdata sym.startable in
+	    liveid.(sym.sid) <- Some (newsym.sid);
 	end
       end;
 
-    frozen.iter_symbols
-      begin fun symbol ->
-	if reachable.(x.sid_ symbol) then begin
-	  frozen.iter_decompositions symbol
+    Frozen.iter_symbols gram
+      begin fun sym ->
+	if reachable.(sym.sid) then begin
+	  Frozen.iter_decompositions gram sym
 	    begin fun dcomp ->
-	      let new_dcomp = x.copy_comp dcomp in
-
-		x._topsid new_dcomp (get liveid.(x.sid_ symbol));
-		x._leftsid new_dcomp (get liveid.(x.leftsid_ dcomp));
-		x._rightsid new_dcomp (get liveid.(x.rightsid_ dcomp));
-		ignore (live.self.insert_composition new_dcomp);
+	      let topsid = get liveid.(sym.sid) in
+	      let leftsid = get liveid.(dcomp.leftsid) in
+	      let rightsid = get liveid.(dcomp.rightsid) in
+		imake_new_composition live topsid (leftsid, rightsid) dcomp.cdata;
 	    end;
 	end
       end;
@@ -492,22 +498,19 @@ let ensure_reachability frozen =
 
     validate_live live;
     let froz = finalize live in
-      validate_froz froz;
+      validate_frozen froz;
       froz
 
-
-
-let filter_compositions frozen pred =
-  (* should be fixed -----v *)
-  (*   failwith "We're relying on ordering of symbols, which doesn't always hold."; *)
-  frozen.iter_symbols 
+(* works on frozen grams *)
+let filter_compositions gram pred =
+  Frozen.iter_symbols gram
     begin fun sym ->
-      let dcompids = frozen.x.dcompids_ sym in
-      let dcompids = List.filter
+      sym.dcompids <-
+	List.filter
 	begin fun cid ->
-	  pred (frozen.get_composition cid)
+	  pred (Frozen.get_composition gram cid)
 	end 
-	dcompids in
-	frozen.x._dcompids sym dcompids;
+	sym.dcompids
     end;
-  ensure_reachability frozen
+
+  ensure_reachability gram

@@ -62,9 +62,10 @@ let normalize_neglogs neglogs sparsefactor =
       probs
   end
 
-let get_soft_counts_parallel_worker gram family =
-  let soft = make_soft_counts (gram.num_symbols()) (gram.num_compositions()) in
-    sparse_inside_outside gram family soft;
+let get_soft_counts_parallel_worker gram family strat =
+  let soft = make_soft_counts (Frozen.num_symbols gram)
+    (Frozen.num_compositions gram) in
+    sparse_inside_outside gram family soft strat;
     soft
 
 let get_soft_counts_num_workers = 8
@@ -73,11 +74,13 @@ let get_soft_counts_parallel gram families =
   let families = Array.of_list families in
   let workers = Bundle.create get_soft_counts_num_workers in
   let magic = randstr 10 in
-    Grammar.marshal gram (sprintf "/var/tmp/epurdy/%s.gram" magic);
+  let file = open_out (sprintf "/var/tmp/epurdy/%s.gram" magic) in
+    Marshal.to_channel file gram [];
     Array.iteri
       begin fun i fam ->
 	let proc_fam fam = 
-	  Sdf.marshal fam (sprintf "/var/tmp/epurdy/%s.%d.fam" magic i);
+	  let file = open_out (sprintf "/var/tmp/epurdy/%s.%d.fam" magic i) in
+	    Marshal.to_channel file fam [];
 	  (* 	  let host = get_host () in *)
 	  doitq (sprintf "./do_soft_counts.native -gramfile /var/tmp/epurdy/%s.gram -famfile /var/tmp/epurdy/%s.%d.fam -countfile /var/tmp/epurdy/%s.%d.count"
 		  magic magic i magic i)
@@ -89,7 +92,7 @@ let get_soft_counts_parallel gram families =
     let softs = Array.init (Array.length families) 
       begin fun i -> 
 	let file = open_in (sprintf "/var/tmp/epurdy/%s.%d.count" magic i) in
-	let soft = (Marshal.from_channel file: 'b sparse_counts_table) in
+	let soft = (Marshal.from_channel file: Shape.shape (*'b*) sparse_counts_table) in
 	  close_in file;
 	  soft
       end
@@ -99,70 +102,74 @@ let get_soft_counts_parallel gram families =
     let soft = List.fold_right combine_soft_counts (List.tl softs) (List.hd softs) in
       soft
 
-let get_soft_counts_seq gram families =
-  let soft = make_soft_counts (gram.num_symbols()) (gram.num_compositions()) in
+let get_soft_counts_seq gram families strat =
+  let soft = make_soft_counts (Frozen.num_symbols gram)
+    (Frozen.num_compositions gram) in
     List.iter 
       begin fun family ->
-	sparse_inside_outside gram family soft;
+	sparse_inside_outside gram family soft strat;
       end
       families;
     soft
 
 let retrain
     ?(sparsefactor=0.)
-    ?(sigma = Con.default_sigma)
-    ?(baseline_sigma = Con.default_baseline_sigma)
-    gram families   = 
+    gram 
+    (families:     ('tgt_sym, 'tgt_comp, 'tgt_glob) Abstract.frozen_grammar list)
+    (strat:   (Grammar.sdata, Grammar.cdata, 'tgt_sym, 'tgt_comp, 'tgt_glob) 
+           Parsing.strategy)
+    = 
   (*   print gram; *)
 
   printf "starting retrain!\n%!";
 
-(*   let soft = get_soft_counts_seq gram families in *)
+  (*   let soft = get_soft_counts_seq gram families in *)
   let soft = get_soft_counts_parallel gram families in
 
     printf "TOTALQUAL %f\n%!" soft.qual__;
 
     (* use multinomial counts for each state *)
-    gram.iter_symbols 
+    Frozen.iter_symbols gram
       begin fun state ->
 	let scounts =
-	  List.map (fun prod -> soft.binary_counts.(prod.G.cid)) (gram.get_decompositions state) in
-	let scounts = soft.lexical_counts.(state.G.sid) :: scounts in
+	  List.map (fun prod -> soft.binary_counts.(prod.cid)) 
+	    (Frozen.get_decompositions gram state) in
+	let scounts = soft.lexical_counts.(state.sid) :: scounts in
 	let probs = normalize_neglogs scounts sparsefactor in
 	let prob_lex, probs_bin = List.hd probs, List.tl probs in
 
-	  state.G.straightprob <- prob_lex;
-	  state.G.straightcost <- -. log prob_lex;
+	  state.sdata <- {
+	    G.straightprob = prob_lex;
+	    G.straightcost = -. log prob_lex;
+	    G.closed = state.sdata.G.closed;
+	    G.curve = state.sdata.G.curve;
+	  };
 	  List.iter2
 	    begin fun prod probability ->
-	      prod.G.prob <- probability;
-	      prod.G.cost <- -. log probability;
+	      prod.cdata <- {
+		G.prob = probability;
+		G.cost = -. log probability;
+		G.geom = prod.cdata.G.geom;
+		G.ocurve = prod.cdata.G.ocurve;
+		G.lcurve = prod.cdata.G.lcurve;
+		G.rcurve = prod.cdata.G.rcurve;
+	      };
 	    end
-	    (gram.get_decompositions state)
+	    (Frozen.get_decompositions gram state)
 	    probs_bin;
       end;
 
-    gram.iter_all_decompositions
+    iter_all_decompositions gram
       begin fun state prod ->
-	if not state.G.closed then
-	  let getshape (nlw,cdata) = (nlw,cdata.S.dshape) in
-	  let samples = List.map getshape soft.mpchoices.(prod.G.cid) in
-	  let _,themode = soft.mpmodes.(prod.G.cid) in
+	if not state.sdata.G.closed then
+(* 	  let getshape (nlw, cdata) = (nlw, strat.getshape cdata) in *)
+	  let samples = (* List.map getshape *) soft.mpchoices.(prod.cid) in
+	  let _,themode = soft.mpmodes.(prod.cid) in
 
-	  (* make new midpoint distro *)
-	  let geom = Parzen.make_model_neglog_weighted (Array.of_list samples)
-	    sigma Con.default_granularity
-	    (begin match themode with
-		 None -> Shape.default_shape
-	       | Some cdata -> cdata.S.dshape 
-	     end, baseline_sigma) Con.default_baseline_weight
-	    true
-	  in
 
 	    (* replace midpoint distro *)
-	    prod.G.geom <- G.Parzen geom;
-
-      (* 	    printf "computed (some) midpoints for state #%d\n%!" state.G.sid	   *)
+	    prod.cdata <- strat.fit_midpoint_distro prod samples themode;
+	    (* 	    printf "computed (some) midpoints for state #%d\n%!" state.G.sid	   *)
       end;
 
     printf "done with geometry!\n%!";
