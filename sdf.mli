@@ -23,22 +23,28 @@ type cdata = {
 }
 
 (** Global metadata *)
-type sdf_gdata = { n : int; }
+type gdata = { n : int; }
 
-type ('a, 'b, 'c) family = ('a, 'b, 'c) frozen_grammar
+(* type ('a, 'b, 'c) family = ('a, 'b, 'c) frozen_grammar *)
+
+type family = (sdata, cdata, gdata) frozen_grammar
 
 (** {2 Functions} *)
 
-val is_closed : sdata Abstract.symbol -> bool
+val symbol_name_long : sdata symbol -> string
+
+val is_closed : sdata symbol -> bool
 
 val make_coarse_curves : int -> int -> int array array
 
 val print_levels : int array array -> unit
 
-val make_full_family :  int -> (sdata, cdata, sdf_gdata) family
+val make_full_family :  int -> family
+(* (\*  (sdata, cdata, sdf_gdata)  *\)family *)
 
-val make_restricted_family : int -> (int * int) list -> (int * int * int) list -> (sdata, cdata, sdf_gdata) family
+val make_restricted_family : int -> (int * int) list -> (int * int * int) list ->
+ family
 
-val make_sparse_family : int ->  int -> (sdata, cdata, sdf_gdata) family
+val make_sparse_family : int ->  int ->(* (sdata, cdata, sdf_gdata) *) family
 
-val load_family : string -> (sdata, cdata, sdf_gdata) family
+val load_family : string -> (* (sdata, cdata, sdf_gdata) *) family

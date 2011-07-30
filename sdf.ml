@@ -27,27 +27,31 @@ type cdata = {
   md : index;
   en : index;
 }
-type sdf_gdata = {n: int}
+type gdata = {n: int}
 
 let is_closed scurve = 
   (scurve.sdata.first = scurve.sdata.last)
 
 let symbol_name scurve = 
-  sprintf "[%d, %d]" scurve.first scurve.last
+  sprintf "[%d, %d]" scurve.sdata.first scurve.sdata.last
 let symbol_name_long scurve = symbol_name scurve
 
 let composition_name comp = 
-  sprintf "[%d, %d][%d, %d]" comp.bg comp.md comp.md comp.en
+  sprintf "[%d, %d][%d, %d]" 
+    comp.cdata.bg comp.cdata.md 
+    comp.cdata.md comp.cdata.en
 
 type live_family = {
-  gram: (sdata,cdata,sdf_gdata) live_grammar;
+  gram: (sdata,cdata,gdata) live_grammar;
   sclookup: (index*index,sdata symbol) hash;
   make_new_scurve: int * int -> int -> sdata symbol;
   make_new_comp: int * int * int -> cdata composition;
   imake_new_scurve: int * int -> int -> unit;
   imake_new_comp: int * int * int -> unit;
 }    
-type ('a, 'b, 'c) family = ('a, 'b, 'c) Abstract.frozen_grammar
+
+(* type ('a, 'b, 'c) family = ('a, 'b, 'c) Abstract.frozen_grammar *)
+type family = (sdata,cdata,gdata) Abstract.frozen_grammar
 
 let make_live_family n nsyms =
   let gram = new_live_grammar {n=n}  in
