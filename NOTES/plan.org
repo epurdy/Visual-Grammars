@@ -86,13 +86,15 @@
 
 ** Time Series datasets
 
+
 * 1. grammatical shape models
 ** TODO compare grammars to markov models
   - implement markov models (already done somewhere?)
   - parse with markov models? this is probably easy, but it would
     require a bunch of coding.
   - alternatively, we found a paper that shoehorns a markov model into
-    a bingham distro or some such
+    a bingham distro or some such. Also, Mardia and Dryden have
+    something like this.
 ** TODO PLAN compare grammars to procrustes / watson / bingham as baseline
   - need to implement whatever, which will require figuring out the
     math for it
@@ -277,37 +279,17 @@ L->LL
 General notes: want to do each goal for both a hand-built and
 auto-generated single-example grammars.
 
-** TODO PLAN given fixed parses and hand-selected grammar, EM retrains midpoint distros well
+** TODO PLAN given hand-selected grammar, EM retrains midpoint distros well
  - [ ] take 1 curve
  - [ ] impose perfect grammar,
  - [ ] parse the other curve
  - [ ] reestimate midpoints
       
-** TODO given fixed parses, EM retrains midpoint distros well
-  - retrain various single-example grammars by using fixed parses of
-    similar curves
-
-** TODO given fixed parses, EM tunes length-related rules well
-  - length-related: L->LL and X->l. 
-  - this is a retarded goal, since these parameters are essentially
-    just measures of scale, and thus it is not very meaningful to
-    learn them
-
-** TODO given fixed parses, EM tunes rich grammars correctly
-  - this should already work, just verifying that EM behaves
-    correctly given fixed parses
-
-** TODO given bad parses, EM fails in some way
-  - impose bad grammar, see what happens
-
 
 ** TODO EM retrains midpoint distros well
-
-** TODO EM tunes length-related rules well
-  - again, retarded
-
-** TODO WORKING EM tunes grammars well
-  - test_em.ml is at least trying to do this
+  - do with fixed parses, retrain various single-example grammars by
+    using fixed parses of similar curves
+  - do without fixed parses
 
   - it works!
     
@@ -319,14 +301,22 @@ auto-generated single-example grammars.
     to do this, enliven and then walk over the compositions, inserting
     duplicates as we go. watson.ml could have a jittering function.
 
+** TODO EM tunes length-related rules well
+  - do with fixed parses
+  - do without fixed parses
+  - length-related: L->LL and X->l. 
+  - this is a retarded goal, since these parameters are essentially
+    just measures of scale, and thus it is not very meaningful to
+    learn them
+
 ** TODO EM tunes rich grammars correctly
-  - basically just making sure that if parsing works on its own, and
-    retraining works on its own, then we can combine them: we both
-    find the correct parses, and are sure enough about them to do our
-    updates correctly
+  - do with fixed parses
+  - do without fixed parses
 
   - think about discriminative training vs. EM
 
+** TODO given bad parses, EM fails in some way
+  - impose bad grammar, see what happens
 
 
 * 4. Parsing in Real Images
