@@ -60,15 +60,15 @@ val subsample_ultracrude : 'a array -> int -> 'a array
 (** [load fname] loads a curve from a file named [fname]. *)
 val load : string -> t
 
+(** Input a set of curves.  [load_all name first num] loads [num]
+    curves, where [name] is a formatting string that evaluates to
+    all of the filenames, and [first] is the index of the first. *)
+val load_all : (int -> string) -> int -> int -> t array
+
 (** [save fname c] saves the curve [c] to a file named [fname]. *)
 val save : string -> t -> unit
 
 val save_all : (int -> string) -> t array -> unit
-
-(** Input a set of curves.  [input name first num] loads [num]
-    curves, where [name] is a formatting string that evaluates to
-    all of the filenames, and [first] is the index of the first. *)
-val input : (int -> string) -> int -> int -> t array
 
 (** Output a set of curves. [output curves name] saves each curve in
     [curves] to a different save file, which is named using [name]

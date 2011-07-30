@@ -321,7 +321,7 @@ let draw_closed (curve : t) (off : 'a) (on : 'a) :
     draw (Array.append curve first) off on
 
 (* input a set of curves *)
-let input namer (first : int) (num : int) : t array =
+let load_all namer (first : int) (num : int) : t array =
   let load i = load (namer (i+first)) in
     Array.init num load
 
