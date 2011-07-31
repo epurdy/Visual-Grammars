@@ -335,9 +335,12 @@ let draw_all (curves : t array) namer : unit =
     done
 
 
-let normalize c =
+let normalize ?(scale=1.0) c =
   let bounds = Bounds.nice_curve_bounds c in
-    Array.map (fun z -> Bounds.map_to_unit_square_strict bounds z) c 
+  let c = Array.map (fun z -> Bounds.map_to_unit_square_strict bounds z) c in
+  let c = Array.map (fun z -> (cxre scale) *& z) c in
+    c
+
 
 (* align two curves *)
 let align a b =

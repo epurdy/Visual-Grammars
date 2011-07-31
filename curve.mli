@@ -36,7 +36,7 @@ val align : t -> t -> t
 
 (** Scale and translate curve coordinates so that entire curve is inside the
     unit square. *)
-val normalize : t -> t
+val normalize : ?scale:float -> t -> t
 
 (** {2 Subsampling curves} *)
 
