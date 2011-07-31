@@ -13,8 +13,17 @@ let get_pt shape = shape.p
 
 let get_scale shape = shape.scale
 
+let place_unsafe shape a b = 
+  let rv = (shape.p *& (b -& a)) +& a in
+    rv
+
 let place shape a b =
   let rv = (shape.p *& (b -& a)) +& a in
+(*     printf "---\n";  *)
+(*     Geometry.print_cpt a; *)
+(*     Geometry.print_cpt b; *)
+(*     Geometry.print_cpt rv; *)
+(*     printf "---\n%!";  *)
     assert(rv <> a && rv <> b);
     rv
 

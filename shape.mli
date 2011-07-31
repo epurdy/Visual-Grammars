@@ -24,6 +24,7 @@ val straight : shape
 (** Given the shape of a triangle, and its two endpoints, where should
     the third point be? *)
 val place : shape -> Geometry.cpt -> Geometry.cpt -> Geometry.cpt
+val place_unsafe : shape -> Geometry.cpt -> Geometry.cpt -> Geometry.cpt
 
 val string_of_shape : shape -> string 
 
