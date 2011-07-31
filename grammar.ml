@@ -218,6 +218,10 @@ let sample_prod prod p q =
 	  (p,r,q)
     | Improper ->
 	(p,q,p)
+    | Watson geom ->
+	let shape = Watson.sample geom in
+	let r = Shape.place shape p q in
+	  (p,r,q)
 
 (** sample curve starting at a particular state *)
 let rec sample_state gram state p q =
@@ -225,17 +229,25 @@ let rec sample_state gram state p q =
     assert(d2 = d2); (* nan check *)
     assert(d2 < infinity);
     assert(d2 > 0.);
+(*     printf "s%d ->> (%s,%s)\n" state.sid *)
+(*       (Geometry.string_of_cpt p) *)
+(*       (Geometry.string_of_cpt q); *)
     if (Geometry.dist2 p q < sampling_thresh) ||
       (Random.float 1.0 < state.sdata.straightprob) then
 	[p; q]
     else
       let productions = Array.of_list (Frozen.get_decompositions gram state) in
-      let dist = Array.map (fun prod -> prod.cdata.prob) productions in
-      let i = Sample.choose dist 0 (Array.length dist - 1) in
-      let prod = productions.(i) in
-      let left,right = Frozen.get_rhs gram prod in
-      let (p',r',q') = sample_prod prod p q in
-	sample_state gram left p' r' @ sample_state gram right r' q'    
+	if Array.length productions = 0 then begin 
+	  [p; q]
+	end
+	else begin
+	  let dist = Array.map (fun prod -> prod.cdata.prob) productions in
+	  let i = Sample.choose dist 0 (Array.length dist - 1) in
+	  let prod = productions.(i) in
+	  let left,right = Frozen.get_rhs gram prod in
+	  let (p',r',q') = sample_prod prod p q in
+	    sample_state gram left p' r' @ sample_state gram right r' q'    
+	end
 
 let sample gram p q =
   let rv = sample_state gram (Frozen.start gram) p q in
