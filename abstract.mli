@@ -172,6 +172,8 @@ val compactify : ('sdata, 'cdata, 'gdata) live_grammar -> unit
 
 val finalize : ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata, 'cdata, 'gdata) frozen_grammar
 
+val enliven : ('sdata, 'cdata, 'gdata) frozen_grammar -> ('sdata, 'cdata, 'gdata) live_grammar
+
 val merge_frozen_grams :
   ('sdata, 'cdata, 'gdata) frozen_grammar array -> 'gdata -> 
   ('sdata, 'cdata, 'gdata) frozen_grammar

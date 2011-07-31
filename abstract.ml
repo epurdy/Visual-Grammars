@@ -380,28 +380,25 @@ let finalize (gram: ('symbol,'composition,'c) live_grammar) =
     (Array.init gram.next_cid
        (fun i -> gram.l_compositions >> i))
 
-(* This was never close to done *)
-(* let enliven (gram: ('symbol,'composition,'c) froz_grammar) = *)
-(*   validate_froz gram; *)
-(*   let live = new_live_grammar gram.x (gram.get_gdata()) *)
-(*     gram.self.f_symbols.(0) gram.self.f_compositions.(0) *)
-(*     (gram.num_symbols()) (gram.num_compositions()) *)
-(*   in *)
-(*     gram.iter_symbols *)
-(*       begin fun sym -> *)
-(* 	let nsym = gram.x.copy_symbol sym in *)
-(* 	let nsym = live.insert_symbol_squash nsym in *)
-(* 	  gram.iter_decompositions sym *)
-(* 	    begin fun dcomp -> *)
-(* 	      let ndcomp = gram.x.copy_comp dcomp in *)
-(* 		insert_composition ndcomp *)
-(* 	    end *)
-(*       end *)
-(* ... this was never close to done *)
-(*       (Array.init gram.self.next_sid *)
-(* 	 (fun i -> gram.self.l_symbols >> i)) *)
-(*       (Array.init gram.self.next_cid *)
-(* 	 (fun i -> gram.self.l_compositions >> i)) *)
+let enliven froz =
+  validate_frozen froz;
+  let live = new_live_grammar
+    ~nsyms:(Frozen.num_symbols froz)
+    ~ncomps:(Frozen.num_compositions froz)
+    froz.f_gdata
+  in
+    Frozen.iter_symbols froz
+      begin fun sym ->
+	let newsym = make_new_symbol live sym.sdata sym.startable in
+	  assert(newsym.sid = sym.sid);
+      end;
+    iter_all_compositions froz
+      begin fun comp ->
+	let newcomp = make_new_composition live 
+	  comp.topsid (comp.leftsid, comp.rightsid) comp.cdata in
+	  assert(newcomp.cid = comp.cid);
+      end;
+    live
 
 (* only works on frozen grams *)
 let merge_frozen_grams grams new_gdata =
