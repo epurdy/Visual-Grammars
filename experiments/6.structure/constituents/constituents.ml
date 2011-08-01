@@ -1,18 +1,19 @@
 open Printf
 open Util.Hops
+open Util.Cops
 open Abstract
 open Sdf
 open Geometry
-open Util.Cops
+open Models.Simple
+open Parsing
 
 module C = Complex
-module S = Sdf
 
 let _ = 
   let x = Svg.create Sys.argv.(1) in
 
   let excurve = Curve.load "romer/ann/curve0000.curve" in
-  let doubled = Array.append excurve excurve in
+
 
   (* note that excurve is being included below! *)
   let curves = Array.init 16
@@ -26,22 +27,25 @@ let _ =
 
   let n = Array.length excurve in
   let family = Sdf.make_full_family n in
+  let family = Models.Simple.add_curve_data_to_family excurve family in
+
+  let strat = Models.Simple.strat in
     
   let tab = mkhash 100 in
   let bestdcomp = mkhash 100 in
   let best = ref 0. in
   let besttop = ref 0 in
 
-    family.iter_symbols
+    Frozen.iter_symbols family
       begin fun scurve ->
-	if family.x.lexical_ok scurve then begin
-	  tab << (scurve.S.sid, 0.);
+	if strat.lexical_ok scurve then begin
+	  tab << (scurve.sid, 0.);
 	end;
 
-	if family.x.binary_ok scurve then begin
-	  family.iter_decompositions scurve
+	if strat.binary_ok scurve then begin
+	  Frozen.iter_decompositions family scurve
 	    begin fun dcomp ->
-	      let bg, md, en = dcomp.bg, dcomp.md, dcomp.en in
+	      let bg, md, en = dcomp.cdata.bg_, dcomp.cdata.md_, dcomp.cdata.en_ in
 
 	      let triples = Array.map 
 		(fun c -> (c.(bg), c.(md), c.(en)))
@@ -52,17 +56,17 @@ let _ =
 	      let cost = wdata.Watson.cost +.
 		(tab >> dcomp.leftsid) +. (tab >> dcomp.rightsid) in
 
-		if cost <= (tab >>! (scurve.S.sid, infinity)) then begin
-		    tab << (scurve.S.sid, cost);
-		    bestdcomp << (scurve.S.sid, dcomp.S.cid);
+		if cost <= (tab >>! (scurve.sid, infinity)) then begin
+		    tab << (scurve.sid, cost);
+		    bestdcomp << (scurve.sid, dcomp.cid);
 		  end
 	    end
 	end;
 	
-	if family.x.goal_ok scurve then begin
-	  if tab >>! (scurve.S.sid,infinity) < !best then begin 
-	    best := tab >> scurve.S.sid;
-	    besttop := scurve.S.sid;
+	if strat.goal_ok scurve then begin
+	  if tab >>! (scurve.sid,infinity) < !best then begin 
+	    best := tab >> scurve.sid;
+	    besttop := scurve.sid;
 	  end
 	end
       end;
@@ -70,20 +74,20 @@ let _ =
     let excurve = Curve.normalize excurve in
     let doubled = Array.append excurve excurve in
 
-    let scurves = ref [] in
-    let midpoints = ref [] in
+    let stuff = ref [] in
 
     let rec visit sid = 
-      let scurve = family.get_symbol sid in
+      let scurve = Frozen.get_symbol family sid in
 	if bestdcomp >>? sid then begin
 	  let dcompid = bestdcomp >> sid in
-	  let dcomp = family.get_composition dcompid in
-	  let thecurve = Array.sub doubled scurve.first (scurve.len + 1) in
+	  let dcomp = Frozen.get_composition family dcompid in
+	  let thecurve = Array.sub doubled scurve.sdata.first_ (scurve.sdata.len_ + 1) in
 	  let thecurve = Curve.flip_xy thecurve in
-	    scurves := thecurve :: !scurves;
-	    midpoints := [| Geometry.flip_xy excurve.(dcomp.md) |] :: !midpoints;
+	  let themidpoints = [| Geometry.flip_xy excurve.(dcomp.cdata.md_) |] in
+
+	    stuff := (scurve.sdata.len_, thecurve, themidpoints) :: !stuff;
 	    printf "[%d,%d] -> [%d,%d] [%d,%d]\n" 
-	      dcomp.bg dcomp.en dcomp.bg dcomp.md dcomp.md dcomp.en;
+	      dcomp.cdata.bg_ dcomp.cdata.en_ dcomp.cdata.bg_ dcomp.cdata.md_ dcomp.cdata.md_ dcomp.cdata.en_;
 	    visit dcomp.leftsid;
 	    visit dcomp.rightsid;
 	end
@@ -94,7 +98,13 @@ let _ =
     in
       visit !besttop;
 
+      let stuff = List.sort (fun (l1, _, _) (l2, _, _) -> compare l2 l1) !stuff in
+      let stuff = Array.of_list stuff in
+      let scurves = Array.map (fun (len, thecurve, themidpoints) -> thecurve) stuff in
+      let midpoints = Array.map (fun (len, thecurve, themidpoints) -> themidpoints) stuff in
+
+
       Viz.show_samples_midpoints x "" 6 (Curve.flip_xy excurve)
-	(Array.of_list (List.rev !scurves), Array.of_list (List.rev !midpoints)) 1.0;
+	(scurves, midpoints) 1.0;
       Svg.finish x;
 ;;

@@ -3,6 +3,10 @@ open Util.Hops
 open Printf
 module C = Complex
 open Cops
+open Abstract
+open Grammar
+open Sdf
+open Models.Simple
 
 let one_to_one incurve_name excurve_name sdf_name out_name = 
   let x = Svg.create out_name in
@@ -10,15 +14,14 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
   let curve = Curve.load incurve_name in
   let n = Array.length curve in
   let family = Sdf.make_full_family n in
-  let family = Sdf.add_curve_data_to_family_debug curve family in
-
-  let excurve = Curve.load excurve_name in
-  let exfamily = Sdf.load_family sdf_name in
-  let exfamily = Sdf.add_curve_data_to_family_debug excurve exfamily in
-  let gram = Grammar.grammar_of_family exfamily in
+  let family = Models.Simple.add_curve_data_to_family curve family in
     
+  let excurve = Curve.load excurve_name in
+  let gram = Models.Simple.make_grammar 
+    (excurve, Sdf.load_family sdf_name) in
 
-    let qual, pairs = Parsing.viterbi gram family in
+
+    let qual, pairs = Parsing.viterbi gram family Models.Simple.strat in
       printf "qual = %f\n#pairs = %d\n%!" qual (List.length pairs);
 
       let find x arr = 
@@ -31,16 +34,16 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
 	  end arr;
 	  get !rv
       in
-      let thebigcurve = (gram.Abstract.get_symbol 0).Grammar.sdata.Sdf.curve in
+      let thebigcurve = (Frozen.get_symbol gram 0).sdata.curve in
       let labels = mkhash 100 in
 
       List.iter 
 	begin fun (sid, scid) ->
-	  let symbol = gram.Abstract.get_symbol sid in
- 	  let scurve = family.Abstract.get_symbol scid in 
-	  let thecurve = symbol.Grammar.sdata.Sdf.curve in
+	  let symbol = Frozen.get_symbol gram sid in
+ 	  let scurve = Frozen.get_symbol family scid in 
+	  let thecurve = symbol.sdata.curve in
 	  let bg, en = 
-	    if symbol.Grammar.closed then 
+	    if symbol.startable then 
 	      thecurve.(0), thecurve.(0)
 	    else
 	      thecurve.(0), thecurve.(Array.length thecurve - 1) 
@@ -49,12 +52,13 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
 
 (* 	    labels <<+ (ibg, scurve.Sdf.first); *)
 (* 	    labels <<+ (ien, scurve.Sdf.last); *)
-	    labels <<+ (scurve.Sdf.first, ibg);
-	    labels <<+ (scurve.Sdf.last, ien);
-	    printf "s%d (%d,%d) -> sc%d (%s)\n" sid
+	    labels <<+ (scurve.sdata.first_, ibg);
+	    labels <<+ (scurve.sdata.last_, ien);
+	    printf "s%d (%d,%d) -> sc%d (%d,%d)\n" sid
 	      ibg ien
 	      scid
-	      (Sdf.symbol_name (family.Abstract.get_symbol scid));
+	      (Frozen.get_symbol family scid).sdata.first_
+	      (Frozen.get_symbol family scid).sdata.last_;
 	    Geometry.print_cpt bg;
 	    Geometry.print_cpt en;
 	    printf "---\n%!";

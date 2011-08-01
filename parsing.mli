@@ -13,7 +13,8 @@ type ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy = {
   compatible : 'mod_sym symbol -> 'tgt_sym symbol -> bool;
   getshape : 'tgt_comp -> Shape.shape;
   fit_midpoint_distro : 'mod_comp composition -> (float * Shape.shape) list -> Shape.shape option ->
-				       'mod_comp
+				       'mod_comp;
+  tgt_sym_namer : 'tgt_sym symbol -> string;
 
 }
 

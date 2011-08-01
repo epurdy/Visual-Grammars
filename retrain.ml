@@ -3,6 +3,7 @@ open Util.Misc
 module Bundle = Util.Bundle
 open Printf
 
+
 open Abstract
 open Parsing
 module G = Grammar
@@ -76,11 +77,13 @@ let get_soft_counts_parallel gram families =
   let magic = randstr 10 in
   let file = open_out (sprintf "/var/tmp/epurdy/%s.gram" magic) in
     Marshal.to_channel file gram [];
+    close_out file;
     Array.iteri
       begin fun i fam ->
 	let proc_fam fam = 
 	  let file = open_out (sprintf "/var/tmp/epurdy/%s.%d.fam" magic i) in
 	    Marshal.to_channel file fam [];
+	    close_out file;
 	  (* 	  let host = get_host () in *)
 	  doitq (sprintf "./do_soft_counts.native -gramfile /var/tmp/epurdy/%s.gram -famfile /var/tmp/epurdy/%s.%d.fam -countfile /var/tmp/epurdy/%s.%d.count"
 		  magic magic i magic i)
@@ -117,13 +120,13 @@ let retrain
     gram 
     (families:     ('tgt_sym, 'tgt_comp, 'tgt_glob) Abstract.frozen_grammar list)
     (strat:   (Grammar.sdata, Grammar.cdata, 'tgt_sym, 'tgt_comp, 'tgt_glob) 
-           Parsing.strategy)
+       Parsing.strategy)
     = 
   (*   print gram; *)
 
   printf "starting retrain!\n%!";
 
-  (*   let soft = get_soft_counts_seq gram families in *)
+  (*   let soft = get_soft_counts_seq gram families strat in *)
   let soft = get_soft_counts_parallel gram families in
 
     printf "TOTALQUAL %f\n%!" soft.qual__;
@@ -162,7 +165,7 @@ let retrain
     iter_all_decompositions gram
       begin fun state prod ->
 	if not state.sdata.G.closed then
-(* 	  let getshape (nlw, cdata) = (nlw, strat.getshape cdata) in *)
+	  (* 	  let getshape (nlw, cdata) = (nlw, strat.getshape cdata) in *)
 	  let samples = (* List.map getshape *) soft.mpchoices.(prod.cid) in
 	  let _,themode = soft.mpmodes.(prod.cid) in
 
@@ -176,6 +179,7 @@ let retrain
 
     Grammar.print_grammar gram;
 
-    Grammar.prune gram 0.0001
+    gram
+(*     Grammar.prune gram 0.0001 *)
 
       

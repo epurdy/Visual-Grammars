@@ -31,7 +31,6 @@ let show_labeled_curve x curve labels =
       labels;
     X.translate x.ctx (0.5 *. radius) (-. 0.5 *. radius)
 
-  
 
 let show_samples x ?(bottom_buffer=4.5) title ncols samples =
   Svg.show_title x title;
@@ -62,56 +61,3 @@ let show_samples_midpoints x title ncols basecurve (samples,mpchoices) buffer =
 
       end;
     Cairo.translate x.Svg.ctx 0. buffer
-
-let save_samples dir i samples =
-  (* let samples = Array.map (fun c -> Curve.align c training.(0)) samples in *)
-  let samples = Array.map
-    (fun c -> Array.map 
-       (fun z -> 
-	  {C.re=1000. *. z.C.re;C.im=1000. *. z.C.im})
-       c) 
-    samples in
-
-    Curve.save_all ((sprintf "%s/sample.%04d.curve") dir) samples;
-    begin try
-      doit (sprintf "mkdir %s/iter.%d" dir i);
-    with 
-	_ -> (); 
-    end;
-    doit (sprintf "mv %s/sample.*.curve %s/iter.%d/" dir dir i)
-
-
-
-
-(* let show_samples_old gram = *)
-
-(*   (\** draw several random samples *\) *)
-(*   let samples = Array.init nsamples (fun i -> Grammar.sample gram p q) in *)
-(*   let samples = Array.map *)
-(*     begin fun samp -> *)
-(*       let bds = Bounds.nice_curve_bounds samp in *)
-(* 	Array.map (fun pt -> map_to_unit_square_strict bds pt) curve *)
-(*     end *)
-(*     samples  *)
-(*   in *)
-
-(*     (\** represent each sample as a flip book somehow *\) *)
-(*     Array.iter *)
-(*       begin fun sample -> *)
-(*   	Cairo.translate x.Svg.ctx (2. *. w) h; *)
-(*   	Svg.draw_closed_curve_wt x sample 1.; *)
-(*   	Cairo.translate x.Svg.ctx (-. 2. *. w) h; *)
-(*   	(\* Array.iteri *\) *)
-(*   	(\*   begin fun i ex -> *\) *)
-(*   	(\*     Svg.draw_closed_curve_wt x ex 0.5; *\) *)
-(*   	(\*     Svg.draw_closed_curve_wt x (Curve.align sample ex) 1.; *\) *)
-(*   	(\*     Cairo.translate x.Svg.ctx w 0.; *\) *)
-(*   	(\*     if (i+1) mod ncols = 0 then begin *\) *)
-(*   	(\* 	Cairo.translate x.Svg.ctx (-. (float_of_int ncols) *. w) (h); *\) *)
-(*   	(\*     end *\) *)
-(*   	(\*   end  *\) *)
-(*   	(\*   training; *\) *)
-(*   	(\* Cairo.translate x.Svg.ctx (-. (float_of_int (ntrain mod ncols)) *. w) (h); *\) *)
-(*       end *)
-(*       samples *)
-

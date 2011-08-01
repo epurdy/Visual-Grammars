@@ -8,7 +8,7 @@ open Abstract
 
 exception Parse_failure
 
-let strict_parsing = false
+let strict_parsing = true
 let inside_verbose = false
 let outside_verbose = false
 let count_verbose = false
@@ -24,7 +24,9 @@ type ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy = {
   compatible : 'mod_sym symbol -> 'tgt_sym symbol -> bool;
   getshape : 'tgt_comp -> Shape.shape;
   fit_midpoint_distro : 'mod_comp composition -> (float * Shape.shape) list -> Shape.shape option ->
-				       'mod_comp
+				       'mod_comp;
+
+  tgt_sym_namer : 'tgt_sym symbol -> string;
 }
 
 
@@ -82,11 +84,11 @@ let inside gram family strat =
   let table = new_parse_table (Frozen.num_symbols gram)
     (Frozen.num_symbols family) "sparse inside" inside_verbose in
 
-(*   let print_entry symbol scurve = *)
-(*     print_parse_table_entry table  *)
-(*       (gram.x.symbol_name symbol) (family.x.symbol_name scurve) *)
-(*       symbol.G.sid scurve.S.sid *)
-(*   in *)
+  let print_entry symbol scurve =
+    print_parse_table_entry table
+      (symbol_name symbol) (strat.tgt_sym_namer scurve)
+      symbol.sid scurve.sid
+  in
 
     Frozen.iter_symbols family
       begin fun scurve -> 
@@ -95,7 +97,7 @@ let inside gram family strat =
 	    begin fun symbol -> 
 	      let cost = strat.lexical_cost symbol scurve in
 		set table (symbol.sid, scurve.sid) cost;
-(* 		print_entry symbol scurve;  *)
+		print_entry symbol scurve;
 	    end
 	end;
 
@@ -112,7 +114,7 @@ let inside gram family strat =
 		    in
 		      linc table (symbol.sid, scurve.sid) cost;
 		  end;
-(* 		print_entry symbol scurve; *)
+		print_entry symbol scurve;
 	      end
 	    end
 
