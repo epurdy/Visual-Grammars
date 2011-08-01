@@ -1,6 +1,7 @@
 open Printf
 module C = Complex
 open Util.Cops
+open Util.Misc
 open Abstract
 open Sdf
 open Grammar
@@ -146,7 +147,12 @@ struct
       | Parzen model ->
 	  comp.cdata.cost +. (Parzen.cost model shape)
       | Watson model ->
-	  comp.cdata.cost +. Watson.cost model shape
+	  begin
+	    let watsoncost = Watson.cost model shape in
+	      if not (isfinite watsoncost) then
+		printf "watsoncost = %f\n" watsoncost;
+	      comp.cdata.cost +. watsoncost
+	  end
 
   let sigma = Con.default_sigma
   let baseline_sigma = Con.default_baseline_sigma

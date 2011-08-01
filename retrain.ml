@@ -117,6 +117,7 @@ let get_soft_counts_seq gram families strat =
 
 let retrain
     ?(sparsefactor=0.)
+    ?(prunethresh=0.)
     gram 
     (families:     ('tgt_sym, 'tgt_comp, 'tgt_glob) Abstract.frozen_grammar list)
     (strat:   (Grammar.sdata, Grammar.cdata, 'tgt_sym, 'tgt_comp, 'tgt_glob) 
@@ -179,7 +180,9 @@ let retrain
 
     Grammar.print_grammar gram;
 
-    gram
-(*     Grammar.prune gram 0.0001 *)
+    if prunethresh > 0. then
+      Grammar.prune gram prunethresh 
+    else
+      gram
 
       

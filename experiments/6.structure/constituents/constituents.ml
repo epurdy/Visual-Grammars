@@ -49,7 +49,7 @@ let _ =
 
 	      let triples = Array.map 
 		(fun c -> (c.(bg), c.(md), c.(en)))
-		   curves
+		curves
 	      in
 
 	      let wdata = Watson.fit_watson triples in
@@ -57,9 +57,9 @@ let _ =
 		(tab >> dcomp.leftsid) +. (tab >> dcomp.rightsid) in
 
 		if cost <= (tab >>! (scurve.sid, infinity)) then begin
-		    tab << (scurve.sid, cost);
-		    bestdcomp << (scurve.sid, dcomp.cid);
-		  end
+		  tab << (scurve.sid, cost);
+		  bestdcomp << (scurve.sid, dcomp.cid);
+		end
 	    end
 	end;
 	
@@ -103,8 +103,15 @@ let _ =
       let scurves = Array.map (fun (len, thecurve, themidpoints) -> thecurve) stuff in
       let midpoints = Array.map (fun (len, thecurve, themidpoints) -> themidpoints) stuff in
 
+	fprintf stderr "constituents.ml: Want to show this grammar!\n";  
+(*       let _ =  *)
+(* 	let file = open_out "tmp/constituents.gram" in *)
+(* 	  Marshal.to_channel gram file []; *)
+(* 	  close_out file; *)
+(* 	  doit (sprintf "./show_grammar.native -gramfile tmp/constituents.gram -dir %s/constituents.d -latexdir %s/constituents.d -title '' " dir latexdir); *)
+(*       in *)
 
-      Viz.show_samples_midpoints x "" 6 (Curve.flip_xy excurve)
-	(scurves, midpoints) 1.0;
-      Svg.finish x;
+	Viz.show_samples_midpoints x "" 6 (Curve.flip_xy excurve)
+	  (scurves, midpoints) 1.0;
+	Svg.finish x;
 ;;

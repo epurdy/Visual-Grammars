@@ -3,6 +3,7 @@ open Abstract
 
 val retrain :
   ?sparsefactor:float ->
+  ?prunethresh:float ->
   Grammar.grammar -> 
   ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar list ->
   (Grammar.sdata, Grammar.cdata, 'tgt_sym, 'tgt_comp, 'tgt_glob) Parsing.strategy ->

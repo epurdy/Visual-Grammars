@@ -4,6 +4,9 @@ open Printf
 open Abstract
 open Grammar
 
+let nperpage = 6
+
+
 let prod_cost comp shape =
   match comp.cdata.geom with
       Improper ->
@@ -186,33 +189,42 @@ let _ =
 
 	if !draw_rules then begin
 	  draw_grammar (comp_namer) gram;
-	  draw_distorted_curves gram comp_sample_namer 10;
-
 	  (*     draw_grammar_best_rules (sprintf "%s/best.rk%03d.ct%d.pid%04d.ppm" !dir) gram; *)
-
-	  let nperpage = 6 in
-
-	    fprintf tex "here are the rules\n\n";
-	    fprintf tex "\\begin{tabular}{|l|c|c|}\n\\hline\n";
-	    iter_all_compositions gram
-	      begin fun prod ->
-		fprintf tex "$S_{%d} \\to S_{%d} S_{%d}$ & " prod.topsid prod.leftsid prod.rightsid;
-		doit (sprintf "convert %s %s" (comp_namer prod.cid) (comp_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s} & " (comp_namer_eps_latex prod.cid);
-
-		if prod.cdata.geom != Improper then begin
-		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s}\\\\\n\\hline\n" (comp_sample_namer_eps_latex prod.cid);
-		end
-		else begin 
-		fprintf tex "\\\\\n\\hline\n";
-		end;
-
-		if prod.cid mod nperpage = nperpage - 1 then
-		  fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|c|}\n\n\\hline\n"
-	      end;
-	    fprintf tex "\\end{tabular}\n";
 	end;
+
+	draw_distorted_curves gram comp_sample_namer 10;
+
+
+	fprintf tex "here are the rules\n\n";
+	if !draw_rules then
+	  fprintf tex "\\begin{tabular}{|l|c|c|}\n\\hline\n"
+	else
+	  fprintf tex "\\begin{tabular}{|l|c|}\n\\hline\n";
+	iter_all_compositions gram
+	  begin fun prod ->
+	    fprintf tex "$S_{%d} \\to S_{%d} S_{%d}$ & " prod.topsid prod.leftsid prod.rightsid;
+
+	    if !draw_rules then begin
+	      doit (sprintf "convert %s %s" (comp_namer prod.cid) (comp_namer_eps prod.cid));
+	      fprintf tex "\\includegraphics[height=1in]{%s} & " (comp_namer_eps_latex prod.cid);
+	    end;
+
+	    if prod.cdata.geom != Improper then begin
+	      doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_eps prod.cid));
+	      fprintf tex "\\includegraphics[height=1in]{%s}\\\\\n\\hline\n" (comp_sample_namer_eps_latex prod.cid);
+	    end
+	    else begin 
+	      fprintf tex "\\\\\n\\hline\n";
+	    end;
+
+	    if prod.cid mod nperpage = nperpage - 1 then begin
+	      if !draw_rules then
+		fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|c|}\n\n\\hline\n"
+	      else
+		fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|}\n\n\\hline\n"
+	    end
+	  end;
+	fprintf tex "\\end{tabular}\n";
 
 	close_out tex;
 	()

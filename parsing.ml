@@ -12,7 +12,7 @@ let strict_parsing = true
 let inside_verbose = false
 let outside_verbose = false
 let count_verbose = false
-let viterbi_verbose = true
+let viterbi_verbose = false
 
 type ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy = {
   lexical_ok :  'tgt_sym symbol -> bool;
