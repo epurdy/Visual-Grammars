@@ -6,8 +6,8 @@ open Abstract
 open Sdf
 open Grammar
 
-let dir = "experiments/1.grammars/hand_built/hand_built.d";;
-let latexdir = "./1.grammars/hand_built/hand_built.d";;
+let dir = "experiments/1.grammars/hand_built/output.d";;
+let latexdir = "./1.grammars/hand_built/output.d";;
 let nsamples = 20;;
 
 let _ = 
@@ -27,7 +27,7 @@ let _ =
     doit "./show_curve.native tmp/flipped.curve tmp/hand_built_curve.svg";
 
     doit_ok "mkdir -p tmp/hand_built.d";
-    (*    doit (sprintf "./show_grammar.native -gramfile tmp/hand_built.gram -dir %s -title '' -rules" dir);  *)
+(*        doit (sprintf "./show_grammar.native -gramfile tmp/hand_built.gram -dir %s -latexdir %s -title '' -rules" dir latexdir); *)
     doit (sprintf "./show_grammar.native -gramfile tmp/hand_built.gram -dir %s -latexdir %s -title ''" dir latexdir);
 
     ()

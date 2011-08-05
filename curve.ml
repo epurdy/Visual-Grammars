@@ -205,7 +205,7 @@ let subsample_dp (curve : t) (nump : int) ?maxlen (minlen : int) =
 
     (* pick the best place for the first segment to start *)
     for i = 0 to maxlen-1 do
-      (*       printf "i=%d, n=%d, dptab.(%d).(%d) = %f\n" i n i (i+n) dptab.(i).(i+n); *)
+(*       printf "i=%d, n=%d, dptab.(%d).(%d) = %f\n" i n i (i+n) dptab.(i).(i+n); *)
       if dptab.(i).(i+n) < !bestval then begin
 	bestsplit := Some i;
 	bestval := dptab.(i).(i+n);

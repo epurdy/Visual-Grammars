@@ -172,6 +172,9 @@ let merge_leaves gram =
   let leaves = ref [] in
   let _ = Array.iter
     begin fun sym ->
+      if List.length sym.dcompids = 0 then
+	leaves := sym :: !leaves;
+
       Frozen.iter_decompositions gram sym
 	begin fun comp ->
 	  if comp.leftsid = sym.sid then
@@ -182,7 +185,7 @@ let merge_leaves gram =
   let leaves = List.rev !leaves in
   let leaf, leaves = List.hd leaves, List.tl leaves in
     List.iter (fun sym -> replace_symbol gram leaf sym) leaves;
-    gram
+    ensure_reachability gram
 
 let merge_tops grams =
   let gram = merge_frozen_grams grams grams.(0).f_gdata in

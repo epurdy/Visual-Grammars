@@ -75,34 +75,7 @@ struct
 
     let gram = Grammar.grammar_of_family fam {closed=true; straightprob=0.; straightcost=infinity; curve=c} sdata_maker cdata_maker in
 
-
-
-      (* vvvv Adding L->LL rules vvvv *)
-      (*   let gram = enliven gram in *)
-      (*     Live.iter_symbols gram *)
-      (*       begin fun sym -> *)
-      (* 	if sym.dcompids = [] then begin  *)
-      (* 	  let scale = 1. /. fn in *)
-      (* 	  let prob = 1. -. sym.sdata.straightprob in *)
-      (* 	  let cdata = { *)
-      (* 	    prob = prob; *)
-      (* 	    cost = -. log prob; *)
-      (* 	    geom = Watson { *)
-      (* 	      Watson.mean = Shape.default_shape; *)
-      (* 	      Watson.conc_ = scale *. 10.; *)
-      (* 	    }; *)
-      (* 	    lcurve = sym.sdata.curve; *)
-      (* 	    rcurve = sym.sdata.curve; *)
-      (* 	    ocurve = [| |]; (\* TODO this is wrong, but i'm lazy *\) *)
-      (*  	  } in *)
-      (* 	    imake_new_composition gram sym.sid (sym.sid,sym.sid) cdata; *)
-      (* 	end *)
-      (*       end; *)
-
-      (*     finalize gram *)
       gram
-
-
 
   let add_curve_data_to_family curve fam =
     let n = Array.length curve in
@@ -167,7 +140,10 @@ struct
 
     Parsing.lexical_cost = (fun sym scurve -> sym.sdata.straightcost);
     Parsing.binary_cost = (fun comp dcomp -> prod_cost comp dcomp.cdata.shape_);
-    Parsing.goal_cost = (fun gdata scurve -> 0. (*log (float_of_int gdata.n) *));
+    Parsing.goal_cost = 
+      (fun gdata scurve -> 
+	 fprintf stderr "This should probably be log n, not 0\n";
+	 0. (*log (float_of_int gdata.n) *));
 
     Parsing.compatible = (fun sym scurve -> sym.sdata.closed = scurve.startable);
     Parsing.getshape = (fun cdata -> cdata.shape_);
@@ -193,6 +169,81 @@ struct
     end;
 
   }
+
+
+end
+
+module LLL_shorter = 
+struct
+  let add_curve_data_to_family = Simple.add_curve_data_to_family
+  let strat = Simple.strat
+  let make_grammar (c, fam) = 
+    let fn = float_of_int (Array.length c) in
+    let gram = Simple.make_grammar (c, fam) in
+      Frozen.iter_symbols gram
+	begin fun sym ->
+	  let scale = Array.length (sym.sdata.curve) - 1 in
+	  let scale = (float_of_int scale) /. fn in
+	  let straightcost = 
+	    if sym.sdata.closed then
+	      infinity
+	    else
+	      100. *. scale *. scale 
+	  in
+	    sym.sdata <- {
+	      closed = sym.sdata.closed;
+	      straightcost = straightcost;
+	      straightprob = exp (-. straightcost); (* TODO should renormalize, but I'm lazy *)
+	      curve = sym.sdata.curve
+	    };
+	end;
+      gram
+	
+end
+
+module LLL_longer = 
+struct
+
+  let add_curve_data_to_family = Simple.add_curve_data_to_family
+  let strat = Simple.strat
+
+  let make_grammar (c, fam) =
+    let fn = float_of_int (Array.length c) in
+    let gram = Simple.make_grammar (c, fam) in
+      (* vvvv Adding L->LL rules vvvv *)
+    let gram = enliven gram in
+      Live.iter_symbols gram
+        begin fun sym ->
+      	  if sym.dcompids = [] then begin
+      	    let scale = 1. /. fn in
+	    let straightcost = 100. *. scale *. scale in
+	    let sdata = {
+	      closed = sym.sdata.closed;
+	      straightcost = straightcost;
+	      straightprob = exp (-. straightcost);
+	      curve = sym.sdata.curve; (* note the conflict with below *)
+	    } 
+	    in
+      	    let prob = 1. -. sdata.straightprob in
+      	    let cdata = {
+      	      prob = prob;
+      	      cost = -. log prob;
+      	      geom = Watson {
+      		Watson.mean = Shape.default_shape;
+      		Watson.conc_ = scale *. 10.;
+      	      };
+	      (* A reasonable enough depiction of L->LL: 
+		 o-o-o
+		 How does it interact with grammar drawing code? *)
+      	      lcurve = [| c0; c1 |];
+      	      rcurve = [| c1; c1 +& c1 |];
+      	      ocurve = [| |];
+       	    } in
+	      sym.sdata <- sdata;
+      	      imake_new_composition gram sym.sid (sym.sid,sym.sid) cdata;
+      	  end
+        end;
+      finalize gram
 
 
 end

@@ -7,6 +7,24 @@ module Cops = Cops
 
 exception Not_Implemented of string
 
+(* unpack an option *)
+let get (z : 'a option) : 'a = 
+  match z with
+      Some x -> x
+    | None -> failwith "Got None, expected Some"
+
+let find x arr = 
+  let rv = ref None in
+    Array.iteri
+      begin fun i y ->
+	if x = y then begin
+	  rv := Some i
+	end
+      end arr;
+    get !rv
+
+
+
 type ('a,'b) hash = ('a,'b) Hashtbl.t
 
 let fn_of_hash hash = (fun k -> hash >> k)
@@ -233,11 +251,6 @@ let title (s : string) : unit =
 
 (** Miscellaneous *)
 
-(* unpack an option *)
-let get (z : 'a option) : 'a = 
-  match z with
-      Some x -> x
-    | None -> failwith "Got None, expected Some"
 
 (* placeholder for unimplemented functions *)
 let placeholder (name : string) (x : 'a) : unit = 

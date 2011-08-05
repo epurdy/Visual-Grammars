@@ -29,12 +29,18 @@ let multi_tuning excurve_name sdf_name training_fnames =
       iter_all_compositions gram
 	begin fun comp ->
 	  for i = 1 to ncopies do
-	    let newgeom = match comp.cdata.geom with
-		Watson watson ->  
-		  Watson {
-		    Watson.mean = Watson.sample watson; 
-		    Watson.conc_ = watson.Watson.conc_}
-	      | Improper -> Improper
+	    let newgeom = 
+	      if i=1 then begin
+		comp.cdata.geom
+	      end
+	      else begin
+		match comp.cdata.geom with
+		    Watson watson ->  
+		      Watson {
+			Watson.mean = Watson.sample watson; 
+			Watson.conc_ = watson.Watson.conc_}
+		  | Improper -> Improper
+	      end
 	    in
 	    let cdata = 
 	      {prob = comp.cdata.prob /. fncopies;

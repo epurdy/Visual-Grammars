@@ -4,6 +4,8 @@ exception Not_Implemented of string
 
 type ('a,'b) hash = ('a,'b) Hashtbl.t
 
+val find : 'a -> 'a array -> int
+
 val fn_of_hash : ('a,'b) hash -> ('a -> 'b)
 val invert_array : 'a array -> ('a, int) Hashtbl.t
 

@@ -199,7 +199,10 @@ struct
   let num_compositions gram = Hashtbl.length gram.l_compositions
   let get_symbol gram sid = gram.l_symbols >> sid
   let get_composition gram cid = gram.l_compositions >> cid
-  let start gram = gram.l_symbols >> 0
+  let start gram = 
+    let sym = gram.l_symbols >> 0 in
+      assert(sym.startable);
+      sym
 
   let iter_symbols gram f = Hashtbl.iter (fun k v -> f v) gram.l_symbols
   let iter_symbols_rev gram f = 
@@ -287,7 +290,10 @@ struct
   let num_compositions gram = Array.length gram.f_compositions
   let get_symbol gram sid = gram.f_symbols.(sid)
   let get_composition gram cid = gram.f_compositions.(cid)
-  let start gram = gram.f_symbols.(0)
+  let start gram = 
+    let sym = gram.f_symbols.(0) in
+      assert(sym.startable);
+      sym
 
   let iter_symbols gram f = Array.iter f gram.f_symbols
 
@@ -330,11 +336,29 @@ let iter_all_decompositions gram f =
 (********************************)
 
 (* works on frozen grams *)
-let map_frozen_grammar gram fdata fsym fcomp =
+let map_frozen_grammar gram fglob fsym fcomp =
   new_frozen_grammar 
-    (fdata gram.f_gdata)
+    (fglob gram.f_gdata)
     (Array.map fsym gram.f_symbols)
     (Array.map fcomp gram.f_compositions)
+
+let map_frozen_grammar_data gram fglob fsym fcomp =
+  new_frozen_grammar 
+    (fglob gram.f_gdata)
+    (Array.map 
+       begin fun sym -> 
+	 let sym2 = copy_symbol sym in
+	   sym2.sdata <- fsym sym.sdata;
+	   sym2
+       end
+       gram.f_symbols)
+    (Array.map 
+       begin fun comp ->
+	 let comp2 = copy_composition comp in
+	   comp2.cdata <- fcomp comp.cdata;
+	   comp2
+       end
+       gram.f_compositions)
 
 (* works on live grams *)
 let compactify gram =

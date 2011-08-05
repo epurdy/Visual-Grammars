@@ -6,9 +6,12 @@ _build
 *.dvi
 *.aux
 *.log
+*.toc
+*.out
 *.eps
 *.pgm
 *.ppm
 *.PGM
 *.PPM
 romer/
+output.d

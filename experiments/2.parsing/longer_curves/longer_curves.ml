@@ -8,34 +8,42 @@ open Grammar
 open Sdf
 open Models.Simple
 
-let one_to_one incurve_name excurve_name sdf_name out_name = 
+let do_parse incurve_name excurve_name sdf_name out_name = 
   let x = Svg.create out_name in
 
   let curve = Curve.load incurve_name in
+  let curve = Curve.flip_xy curve in
+
   let n = Array.length curve in
   let family = Sdf.make_full_family n in
-  let family = Models.Simple.add_curve_data_to_family curve family in
+
+  let family = Models.LLL_longer.add_curve_data_to_family curve family in
     
   let excurve = Curve.load excurve_name in
-  let gram = Models.Simple.make_grammar 
+
+  let gram = Models.LLL_longer.make_grammar 
     (excurve, Sdf.load_family sdf_name) in
 
 
-    let qual, pairs = Parsing.viterbi gram family Models.Simple.strat in
-      printf "qual = %f\n#pairs = %d\n%!" qual (List.length pairs);
+  let qual, pairs = Parsing.viterbi gram family Models.Simple.strat in
+    printf "qual = %f\n#pairs = %d\n%!" qual (List.length pairs);
 
-      let find x arr = 
-	let rv = ref None in
+    let find x arr = 
+      let rv = ref None in
 	Array.iteri
 	  begin fun i y ->
 	    if x = y then begin
 	      rv := Some i
 	    end
 	  end arr;
+	try 
 	  get !rv
-      in
-      let thebigcurve = (Frozen.start gram).sdata.curve in
-      let labels = mkhash 100 in
+	with Failure "Got None, expected Some" ->
+	  fprintf stderr "longer_curves: x was not in array!\n";
+	  get !rv
+    in
+    let thebigcurve = (Frozen.start gram).sdata.curve in
+    let labels = mkhash 100 in
 
       List.iter 
 	begin fun (sid, scid) ->
@@ -50,8 +58,8 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
 	  in
 	  let ibg, ien = find bg thebigcurve, find en thebigcurve in
 
-(* 	    labels <<+ (ibg, scurve.Sdf.first); *)
-(* 	    labels <<+ (ien, scurve.Sdf.last); *)
+	    (* 	    labels <<+ (ibg, scurve.Sdf.first); *)
+	    (* 	    labels <<+ (ien, scurve.Sdf.last); *)
 	    labels <<+ (scurve.sdata.first_, ibg);
 	    labels <<+ (scurve.sdata.last_, ien);
 	    printf "s%d (%d,%d) -> sc%d (%d,%d)\n" sid
@@ -65,29 +73,29 @@ let one_to_one incurve_name excurve_name sdf_name out_name =
 	end
 	pairs;
 
-	Hashtbl.iter 
-	  begin fun k v ->
-	    printf "%d -> %d\n%!" k v;
-	  end
-	  labels;
+      Hashtbl.iter 
+	begin fun k v ->
+	  printf "%d -> %d\n%!" k v;
+	end
+	labels;
 
-	let labels = 
-	  Array.init (Array.length curve)
+      let labels = 
+	Array.init (Array.length curve)
 	  begin fun i ->
 	    if labels >>? i then 
 	      (sprintf "%d" (labels >> i))
 	    else
 	      ""
 	  end
-	in
+      in
 
-	let excurve = Curve.flip_xy excurve in
-	let curve = Curve.flip_xy curve in
-	  
-	  Viz.show_labeled_curve x excurve (Array.init (Array.length excurve) (sprintf "%d"));
-	  Cairo.translate x.Svg.ctx 10. 0.;
-	  Viz.show_labeled_curve x curve labels;
-	  Svg.finish x;
+      let excurve = Curve.flip_xy excurve in
+      let curve = Curve.flip_xy curve in
+	
+	Viz.show_labeled_curve x excurve (Array.init (Array.length excurve) (sprintf "%d"));
+	Cairo.translate x.Svg.ctx 10. 0.;
+	Viz.show_labeled_curve x curve labels;
+	Svg.finish x;
 
 ;;    
 
@@ -99,4 +107,4 @@ let _ =
       printf "usage: ./%s in.curve ex.curve ex.sdf out.svg" Sys.argv.(0);
       "", "", "", ""
   in
-    one_to_one incurve_name excurve_name sdf_name out_name
+    do_parse incurve_name excurve_name sdf_name out_name

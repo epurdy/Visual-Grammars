@@ -6,9 +6,7 @@ open Abstract
 open Sdf
 open Grammar
 
-let niters = 2;;
-
-let simple_tuning excurve_name sdf_name training_fnames =
+let simple_tuning excurve_name sdf_name training_fnames niters =
   let excurve = Curve.load excurve_name in
   let exfamily = excurve, Sdf.load_family sdf_name in
   let gram = Models.Simple.make_grammar exfamily in
@@ -46,11 +44,13 @@ let _ =
   let example = ref "NONE.curve" in
   let sdf = ref "NONE.sdf" in
   let curves = ref [] in
+  let niters = ref 0 in
 
   let add_curve fname = (curves := fname :: !curves;) in
 
   let _ = Arg.parse [
     "-example", Arg.Set_string example, "Example curve.";
+    "-niters", Arg.Set_int niters, "Number of EM iterations.";
     "-sdf", Arg.Set_string sdf, "SDF for decomposing example.";]
     add_curve
     "./prog -example example -sdf sdf curve1 curve2 curve3..."
@@ -58,4 +58,4 @@ let _ =
 
   let curves = Array.of_list (List.rev !curves) in
     
-    simple_tuning !example !sdf curves
+    simple_tuning !example !sdf curves !niters

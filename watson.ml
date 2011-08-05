@@ -223,6 +223,7 @@ let mle_conc eval fn =
     conc
 
 let fit_watson triples = 
+  assert(Array.length triples > 0);
   let smat = ssap triples in
   let n = Array.length triples in
   let fn = float_of_int n in

@@ -40,6 +40,12 @@ val (-&) : t -> t -> t
 (** Multiplication. [z1 *& z2] *)
 val ( *&) : t -> t -> t
 
+(** Multiplication by a scalar. [s *.& z] *)
+val ( *.&) : float -> t -> t
+
+(** Multiplication by a scalar. [z *&. s] *)
+val ( *&.) : t -> float -> t
+
 (** Multiplicative inverse. [~/& z = 1 /& z] *)
 val (~/&) : t -> t 
 

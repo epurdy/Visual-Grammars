@@ -16,6 +16,12 @@ let (+&) (a : C.t) (b : C.t) : C.t = C.add a b
 
 let (-&) (a : C.t) (b : C.t) : C.t = C.sub a b
 
+let ( *&.) (a : C.t) (b : float) : C.t = 
+  {C.re = a.C.re *. b; C.im = a.C.im *. b;}
+
+let ( *.&) (b : float) (a : C.t) : C.t = 
+  {C.re = a.C.re *. b; C.im = a.C.im *. b;}
+
 let ( *&) (a : C.t) (b : C.t) : C.t = C.mul a b
 
 let (~/&) (a : C.t) : C.t = C.inv a
