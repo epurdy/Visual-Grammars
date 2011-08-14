@@ -3,7 +3,7 @@ let scale = 100.
 
 let _ = 
   let fname = ref "foo.svg" in
-  let title = ref "NO TITLE SELECTED" in
+  let title = ref "" in
   let curves = ref [] in
 
   let add_curve fname = 

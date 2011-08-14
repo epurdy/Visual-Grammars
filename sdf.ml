@@ -138,6 +138,21 @@ let print_levels curves =
     end
     curves
 
+let save_family fam fname =
+  let chan = open_out fname in
+    fprintf chan "%d\n" fam.f_gdata.n;
+    iter_all_compositions fam
+      begin fun comp -> 
+	fprintf chan "[%d,%d] -> [%d,%d] [%d,%d]\n" 
+	  comp.cdata.bg
+	  comp.cdata.en
+	  comp.cdata.bg
+	  comp.cdata.md
+	  comp.cdata.md
+	  comp.cdata.en;
+      end;
+    close_out chan
+
 let load_family fname = 
   let chan = open_in fname in
   let line = input_line chan in

@@ -84,6 +84,34 @@ let nms (imgmag : float image) (imgdx : float image) (imgdy : float image) =
     iterc aux imgmag (1, 1) (width img'-2, height img'-2);
     img'
 
+let nms_in_place (imgmag : float image) (imgdx : float image) (imgdy : float image) = 
+  let aux img x y = 
+    let p = get imgmag (x, y)
+    and (dx, dy) = ( get imgdx (x, y), get imgdy (x, y)) in
+    let theta = atan2 dy dx in 
+    let theta' = ( (int_of_float (theta *. 8.0 /. (2.0 *. pi)) ) + 8 ) mod 8 in
+    let theta'' = ( theta' + 4 ) mod 8 in
+    let p' = 
+      (let (x', y') = offset_tbl.(theta') in
+       let x' = min (max (x+x') 0) (width imgmag-1)
+       and y' = min (max (y+y') 0) (height imgmag-1) in
+	 get imgmag (x', y'))
+    and p'' = 
+      (let (x', y') = offset_tbl.(theta'') in
+       let x' = min (max (x+x') 0) (width imgmag-1)
+       and y' = min (max (y+y') 0) (height imgmag-1) in
+	 get imgmag (x', y'))
+    in
+    let edge = (p > p' && p >= p'') || (p > p'' && p >= p') in
+      if edge then begin 
+	set imgmag 0. (x,y);
+	set imgdx 0. (x,y);
+	set imgdy 0. (x,y);
+      end
+  in
+    iterc aux imgmag (1, 1) (width imgmag-2, height imgmag-2);
+    ()
+
 (* hysteresis *)
 let hysteresis (img : bool image) (imgmag : float image) (hi : float) (lo : float) = 
   let img' = create (width img) (height img) false in

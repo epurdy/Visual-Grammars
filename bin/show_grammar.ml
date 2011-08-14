@@ -144,6 +144,7 @@ let _ =
   let latexdir = ref "NODIR" in
   let nsamples = ref 20 in
   let title = ref "NO TITLE SELECTED" in
+  let show_rules = ref false in
   let draw_rules = ref false in
   let draw_midpoints = ref false in
 
@@ -155,6 +156,7 @@ let _ =
 		     "-title", Arg.Set_string title, "Title to put above grammar samples.";
 		     "-nsamples", Arg.Set_int nsamples, "How many samples? (default=20)";
 		     "-rules", Arg.Set draw_rules, "Make pictures of rules";
+		     "-showrules", Arg.Set show_rules, "Write rules out";
 		     "-midpoints", Arg.Set draw_midpoints, "Make pictures of midpoint distributions (need -rules)";
 		    ]
     (placeholder "Arg.parse")
@@ -189,42 +191,46 @@ let _ =
       let comp_sample_namer_eps = sprintf "%s/gram.%04d.sample.eps" !dir in
       let comp_sample_namer_eps_latex = sprintf "%s/gram.%04d.sample.eps" !latexdir in
 
-	if !draw_midpoints then begin
-	  draw_grammar (comp_namer) gram;
-	  (*     draw_grammar_best_rules (sprintf "%s/best.rk%03d.ct%d.pid%04d.ppm" !dir) gram; *)
-	end;
+	if !show_rules then begin
 
-	if !draw_rules then begin
-	  draw_distorted_curves gram comp_sample_namer 10;
+	  if !draw_midpoints then begin
+	    draw_grammar (comp_namer) gram;
+	    (*     draw_grammar_best_rules (sprintf "%s/best.rk%03d.ct%d.pid%04d.ppm" !dir) gram; *)
+	  end;
 
+	  if !draw_rules then begin
+	    draw_distorted_curves gram comp_sample_namer 10;
+	  end;
 
 	  fprintf tex "here are the rules\n\n";
-	  if !draw_midpoints then
-	    fprintf tex "\\begin{tabular}{|l|c|c|}\n\\hline\n"
-	  else
-	    fprintf tex "\\begin{tabular}{|l|c|}\n\\hline\n";
+	  fprintf tex "\\begin{tabular}{|l|c|c|}\n\\hline\n";
+
 	  iter_all_compositions gram
 	    begin fun prod ->
-	      fprintf tex "$S_{%d} \\to S_{%d} S_{%d}$ & " prod.topsid prod.leftsid prod.rightsid;
+	      fprintf tex "$S_{%d} \\to S_{%d} S_{%d}, P=%f$ & " prod.topsid prod.leftsid prod.rightsid prod.cdata.prob;
 
 	      if !draw_midpoints then begin
 		doit (sprintf "convert %s %s" (comp_namer prod.cid) (comp_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s} & " (comp_namer_eps_latex prod.cid);
+		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_namer_eps_latex prod.cid);
 	      end;
+	      fprintf tex " & ";
 
-	      if prod.cdata.geom != Improper then begin
+	      if !draw_rules && (prod.cdata.geom != Improper) then begin
 		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s}\\\\\n\\hline\n" (comp_sample_namer_eps_latex prod.cid);
-	      end
-	      else begin 
-		fprintf tex "\\\\\n\\hline\n";
+		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_sample_namer_eps_latex prod.cid);
 	      end;
+	      fprintf tex "\\\\\n\\hline\n";
 
 	      if prod.cid mod nperpage = nperpage - 1 then begin
-		if !draw_midpoints then
-		  fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|c|}\n\n\\hline\n"
-		else
-		  fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|}\n\n\\hline\n"
+		fprintf tex "\\end{tabular}\n\n\\begin{tabular}{|l|c|c|}\n\n\\hline\n"
+	      end
+	    end;
+	  fprintf tex "\\end{tabular}\n";
+	  fprintf tex "\\begin{tabular}{|l|c|}\n\n\\hline\n";
+	  Frozen.iter_symbols gram
+	    begin fun sym ->
+	      if sym.sdata.straightprob > 0.01 then begin
+		fprintf tex "$S_{%d} \\to \\ell, P=%f$ & \\\\\n\\hline\n" sym.sid sym.sdata.straightprob;
 	      end
 	    end;
 	  fprintf tex "\\end{tabular}\n";

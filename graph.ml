@@ -73,7 +73,7 @@ let add_edge_and_vertices gf v1 v2 edata =
   let v1, v2 = canonical v1 v2 in
   let id1 = add_vertex gf v1 in
   let id2 = add_vertex gf v2 in
-    gf.ledges <<+ ((id1,id2), data)
+    gf.ledges <<+ ((id1,id2), edata)
 
 let finalize gf = 
   let n = gf.next_vid in
@@ -102,7 +102,7 @@ let finalize gf =
 
 type ('v,'e) iface = {
   loader: string -> 'v * 'v * 'e;
-  saver: 'v * 'v * 'e -> string;
+  saver: 'v -> 'v -> 'e -> string;
 }       
 
 let load_graph fname iface = 
@@ -128,16 +128,18 @@ let point_float_iface = {
 	v2 := Some (x2,y2);
 	edata := Some w;
       in
-	try
+	begin try
 	  sscanf s "%d,%d %d,%d [%f]" get_stuff;
 	with _ -> 
-	  sscanf line "%d,%d %d,%d [inf]" 
+	  sscanf s "%d,%d %d,%d [inf]" 
 	    (fun x1 y1 x2 y2 -> get_stuff x1 y1 x2 y2 infinity);
-
-	  (get v1, get v2, get edata)
+	end;
+	(get !v1, get !v2, get !edata)
     end;
 
-  saver = (fun x -> "");
+  saver = begin fun (px,py) (qx,qy) edata -> 
+    sprintf "%d,%d %d,%d [%f]" px py qx qy edata;
+  end;
 }
 
 let point_unit_iface = {
@@ -148,7 +150,7 @@ let point_unit_iface = {
       v2 := Some (x2,y2);
     in
       sscanf s "%d,%d %d,%d" get_stuff;
-      (get v1, get v2, ())
+      (get !v1, get !v2, ())
   end;
 
   saver = begin fun (px,py) (qx,qy) () -> 
@@ -174,12 +176,14 @@ let save_graph gf fname iface =
 
 let save_point_unit_graph gf fname = save_graph gf fname point_unit_iface
 
+let save_point_float_graph gf fname = save_graph gf fname point_float_iface
+
 let live_graph_of_curve c vl =
   let c = Array.map Geometry.point_of_complex c in
   let gf = new_live_graph () in
   let n = Array.length c in
     for i = 0 to n-1 do
-      add_edge_and_points gf c.(i) c.((i+1) mod n) vl;
+      add_edge_and_vertices gf c.(i) c.((i+1) mod n) vl;
     done;
     gf
 

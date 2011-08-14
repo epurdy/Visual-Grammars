@@ -168,6 +168,8 @@ val map_frozen_grammar :
   ('cdata composition -> 'cdata2 composition) -> 
   ('sdata2, 'cdata2, 'gdata2) frozen_grammar
 
+val reorder_symbols : ('sdata, 'cdata, 'gdata) frozen_grammar -> unit
+
 val compactify : ('sdata, 'cdata, 'gdata) live_grammar -> unit
 
 val finalize : ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata, 'cdata, 'gdata) frozen_grammar

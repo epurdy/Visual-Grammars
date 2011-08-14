@@ -9,22 +9,8 @@ open Parsing
 
 module C = Complex
 
-let _ = 
-  let x = Svg.create Sys.argv.(1) in
-
-  let excurve = Curve.load "romer/ann/curve0000.curve" in
-
-
-  (* note that excurve is being included below! *)
-  let curves = Array.init 16
-    begin fun i -> 
-      let idx = i * 10 in
-      let fname = sprintf "romer/ann/curve%04d.curve" idx in
-	printf "romer/ann/curve%04d.curve\n%!" idx;
-	Curve.load fname
-    end
-  in
-
+let optimal_constituents curves outname = 
+  let excurve = curves.(0) in
   let n = Array.length excurve in
   let family = Sdf.make_full_family n in
   let family = Models.Simple.add_curve_data_to_family excurve family in
@@ -34,7 +20,7 @@ let _ =
   let tab = mkhash 100 in
   let bestdcomp = mkhash 100 in
   let best = ref 0. in
-  let besttop = ref 0 in
+  let besttop = ref (-1) in
 
     Frozen.iter_symbols family
       begin fun scurve ->
@@ -71,47 +57,37 @@ let _ =
 	end
       end;
 
-    let excurve = Curve.normalize excurve in
-    let doubled = Array.append excurve excurve in
+    let lfam = Sdf.make_live_family n 100 in
 
-    let stuff = ref [] in
-
-    let rec visit sid = 
+    let rec visit sid =
       let scurve = Frozen.get_symbol family sid in
-	if bestdcomp >>? sid then begin
+	lfam.imake_new_scurve (scurve.sdata.first_, scurve.sdata.last_) 
+	  scurve.sdata.len_;
+
+	if not (strat.lexical_ok scurve) then begin 
 	  let dcompid = bestdcomp >> sid in
 	  let dcomp = Frozen.get_composition family dcompid in
-	  let thecurve = Array.sub doubled scurve.sdata.first_ (scurve.sdata.len_ + 1) in
-	  let thecurve = Curve.flip_xy thecurve in
-	  let themidpoints = [| Geometry.flip_xy excurve.(dcomp.cdata.md_) |] in
-
-	    stuff := (scurve.sdata.len_, thecurve, themidpoints) :: !stuff;
-	    printf "[%d,%d] -> [%d,%d] [%d,%d]\n" 
-	      dcomp.cdata.bg_ dcomp.cdata.en_ dcomp.cdata.bg_ dcomp.cdata.md_ dcomp.cdata.md_ dcomp.cdata.en_;
 	    visit dcomp.leftsid;
 	    visit dcomp.rightsid;
+	    lfam.imake_new_comp
+	      (dcomp.cdata.bg_, dcomp.cdata.md_, dcomp.cdata.en_);
 	end
-	else begin
-	  (* 	let scurve = family.get_symbol sid in *)
-	  (* 	  printf "[%d,%d] x\n" scurve.first scurve.last *)
-	end
-    in
+    in 
       visit !besttop;
 
-      let stuff = List.sort (fun (l1, _, _) (l2, _, _) -> compare l2 l1) !stuff in
-      let stuff = Array.of_list stuff in
-      let scurves = Array.map (fun (len, thecurve, themidpoints) -> thecurve) stuff in
-      let midpoints = Array.map (fun (len, thecurve, themidpoints) -> themidpoints) stuff in
+    let newfam = finalize lfam.gram in
+      save_family newfam outname
 
-	fprintf stderr "constituents.ml: Want to show this grammar!\n";  
-(*       let _ =  *)
-(* 	let file = open_out "tmp/constituents.gram" in *)
-(* 	  Marshal.to_channel gram file []; *)
-(* 	  close_out file; *)
-(* 	  doit (sprintf "./show_grammar.native -gramfile tmp/constituents.gram -dir %s/constituents.d -latexdir %s/constituents.d -title '' " dir latexdir); *)
-(*       in *)
+let _ = 
+  let curves = Array.init 16
+    begin fun i -> 
+      let idx = i * 10 in
+      let fname = sprintf "romer/ann/curve%04d.curve" idx in
+	printf "romer/ann/curve%04d.curve\n%!" idx;
+	Curve.load fname 
+    end
+  in
+    optimal_constituents curves "tmp/optimal.sdf"
 
-	Viz.show_samples_midpoints x "" 6 (Curve.flip_xy excurve)
-	  (scurves, midpoints) 1.0;
-	Svg.finish x;
-;;
+
+

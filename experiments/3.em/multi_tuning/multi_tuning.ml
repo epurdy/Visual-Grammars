@@ -6,12 +6,13 @@ open Abstract
 open Sdf
 open Grammar
 
-let niters = 5;;
 let ncopies = 5;;
 let fncopies = float_of_int ncopies;;
-let lfncopies = log fncopies;;
 
-let multi_tuning excurve_name sdf_name training_fnames =
+(* let orig_prob = 0.8;; *)
+let orig_prob = 1. /. fncopies;;
+
+let multi_tuning excurve_name sdf_name training_fnames niters =
   let excurve = Curve.load excurve_name in
   let exfamily = excurve, Sdf.load_family sdf_name in
   let gram = Models.Simple.make_grammar exfamily in
@@ -29,22 +30,23 @@ let multi_tuning excurve_name sdf_name training_fnames =
       iter_all_compositions gram
 	begin fun comp ->
 	  for i = 1 to ncopies do
-	    let newgeom = 
+	    let newgeom, prob = 
 	      if i=1 then begin
-		comp.cdata.geom
+		comp.cdata.geom, comp.cdata.prob *. orig_prob
 	      end
 	      else begin
-		match comp.cdata.geom with
+		(match comp.cdata.geom with
 		    Watson watson ->  
 		      Watson {
 			Watson.mean = Watson.sample watson; 
 			Watson.conc_ = watson.Watson.conc_}
-		  | Improper -> Improper
+		  | Improper -> Improper), 
+		comp.cdata.prob *. (1. -. orig_prob) /. (fncopies -. 1.)
 	      end
 	    in
 	    let cdata = 
-	      {prob = comp.cdata.prob /. fncopies;
-	       cost = comp.cdata.cost +. lfncopies;
+	      {prob = prob;
+	       cost = -. log prob;
 	       geom = newgeom;
 	       ocurve = comp.cdata.ocurve;
 	       lcurve = comp.cdata.lcurve;
@@ -91,12 +93,14 @@ let multi_tuning excurve_name sdf_name training_fnames =
 let _ = 
   let example = ref "NONE.curve" in
   let sdf = ref "NONE.sdf" in
+  let niters = ref 0 in
   let curves = ref [] in
 
   let add_curve fname = (curves := fname :: !curves;) in
 
   let _ = Arg.parse [
     "-example", Arg.Set_string example, "Example curve.";
+    "-niters", Arg.Set_int niters, "Number of EM iterations.";
     "-sdf", Arg.Set_string sdf, "SDF for decomposing example.";]
     add_curve
     "./prog -example example -sdf sdf curve1 curve2 curve3..."
@@ -104,4 +108,4 @@ let _ =
 
   let curves = Array.of_list (List.rev !curves) in
     
-    multi_tuning !example !sdf curves
+    multi_tuning !example !sdf curves !niters

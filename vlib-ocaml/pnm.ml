@@ -1,4 +1,4 @@
-exception Bad_file
+exception Bad_file of string
     
 let rec input_word chan = 
   let rec iter chan s = 
@@ -17,11 +17,12 @@ let get_header chan =
   let width = int_of_string(input_word chan) in
   let height = int_of_string(input_word chan) in
     (* ignore the maxval for pgms and ppms *)
-    (match magic_num with
+    begin match magic_num with
 	 "P4" -> ()
        | "P5" -> ignore(input_word chan)
        | "P6" -> ignore(input_word chan)
-       | _ -> raise Bad_file);
+       | _ -> raise (Bad_file ("unknown magic_num: " ^ magic_num))
+    end;
     (magic_num, width, height)
      
 let write_header chan magic_num width height = 
@@ -45,7 +46,12 @@ let load_pgm name =
       done
     done 
   in
-    if magic_num <> "P5" then raise Bad_file; 
+    if magic_num <> "P5" then raise
+      (if magic_num = "P6" then
+	 Bad_file "load_pgm called on PPM file"
+       else
+	 Bad_file "load_pgm called on non-PGM file"
+      );
     read (); 
     close_in chan; 
     img
@@ -77,7 +83,12 @@ let load_ppm name =
       done
     done 
   in
-    if magic_num <> "P6" then raise Bad_file;
+    if magic_num <> "P6" then raise
+      (if magic_num = "P5" then
+	 Bad_file "load_ppm called on PGM file"
+       else
+	 Bad_file "load_ppm called on non-PPM file"
+      );
     read (); 
     close_in chan; 
     img

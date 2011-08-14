@@ -50,6 +50,8 @@ let flip (curve : t) : t =
 let flip_xy (curve : t) : t =
   Array.map Geometry.flip_xy curve
 
+  
+
 
 (* remove duplicates *)
 let uniqify (curve : 'a array) : 'a array =
@@ -334,13 +336,20 @@ let draw_all (curves : t array) namer : unit =
 	Pnm.save_pgm im name
     done
 
+let flip_best curve =
+  let bounds = Bounds.nice_curve_bounds curve in
+  let width = bounds.Bounds.xmax -. bounds.Bounds.xmin in
+  let height = bounds.Bounds.ymax -. bounds.Bounds.ymin in
+    if width < height then
+      curve
+    else
+      flip_xy curve
 
 let normalize ?(scale=1.0) c =
   let bounds = Bounds.nice_curve_bounds c in
   let c = Array.map (fun z -> Bounds.map_to_unit_square_strict bounds z) c in
   let c = Array.map (fun z -> (cxre scale) *& z) c in
     c
-
 
 (* align two curves *)
 let align a b =

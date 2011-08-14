@@ -30,6 +30,9 @@ val flip : t -> t
 (** Flip x and y coordinates *)
 val flip_xy : t -> t
 
+(** If it's wider than it is tall, apply flip_xy *)
+val flip_best : t -> t
+
 (** [align a b] rotates, scales, translates, and flips [a] so that it
     lines up more or less with [b] *)
 val align : t -> t -> t

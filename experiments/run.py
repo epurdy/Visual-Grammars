@@ -58,7 +58,7 @@ def run_ex(name, d, exes):
   if os.system('ls %s/output.d/generated.flag' % d) != 0:
 
     if not compiled:
-      doit('ocamlbuild ' + ' '.join(exes))
+      doit('ocamlbuild -cflags \'-warn-error -Ayxp\' ' + ' '.join(exes))
       compiled = 1
 
     doit('rm -rf %s/output.d/*' % d)

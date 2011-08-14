@@ -335,6 +335,51 @@ let iter_all_decompositions gram f =
 (* Useful Functions on Grammars *)
 (********************************)
 
+let swap_symbols gram asym bsym = 
+  let aid, bid = asym.sid, bsym.sid in
+  let swapsids i = 
+    if i = aid then bid
+    else
+      if i = bid then aid
+      else i
+  in
+  let idty x = x in
+    change_labels_symbol asym swapsids idty;
+    change_labels_symbol bsym swapsids idty;
+    Array.iter
+      begin fun comp ->
+	change_labels_composition comp swapsids idty;
+      end
+      gram.f_compositions;
+    gram.f_symbols.(aid) <- bsym;
+    gram.f_symbols.(bid) <- asym;
+    validate_frozen gram
+
+let reorder_symbols gram = 
+  let notdone = ref true in
+    while !notdone do 
+      notdone := false;
+      Array.iter
+	begin fun comp ->
+	  if comp.topsid > comp.leftsid then begin 
+	    swap_symbols gram
+	      (Frozen.get_symbol gram comp.topsid) 
+	      (Frozen.get_symbol gram comp.leftsid);
+	    notdone := true;
+	  end
+	  else begin
+	    if comp.topsid > comp.rightsid then begin
+	      swap_symbols gram
+		(Frozen.get_symbol gram comp.topsid) 
+		(Frozen.get_symbol gram comp.rightsid);
+		notdone := true;
+	    end
+	  end
+	end
+	gram.f_compositions
+    done;
+    validate_frozen gram
+
 (* works on frozen grams *)
 let map_frozen_grammar gram fglob fsym fcomp =
   new_frozen_grammar 

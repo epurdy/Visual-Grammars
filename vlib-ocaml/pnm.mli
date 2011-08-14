@@ -1,6 +1,6 @@
 (** PNM image I/O *)
 
-exception Bad_file
+exception Bad_file of string
 
 val load_pgm : string -> int Image.t
   (** [load_pgm name] reads a gray image from a PGM file. *)

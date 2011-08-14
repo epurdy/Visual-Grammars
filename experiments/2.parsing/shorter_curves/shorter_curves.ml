@@ -8,7 +8,7 @@ open Grammar
 open Sdf
 open Models.Simple
 
-let do_parse incurve_name excurve_name out_name = 
+let do_parse incurve_name excurve_name out_name sdf_name = 
   let x = Svg.create out_name in
 
   let curve = Curve.load incurve_name in
@@ -20,8 +20,13 @@ let do_parse incurve_name excurve_name out_name =
     
   let excurve = Curve.load excurve_name in
   let excurve = Curve.flip_xy excurve in
+  let exsdf = Sdf.make_sparse_family (Array.length excurve) 2 in    
+  let _ = 
+    Sdf.save_family exsdf "tmp/shorter.sdf";
+    doit (sprintf "./show_sdf.native -sdf tmp/shorter.sdf -curve %s -fname %s" excurve_name sdf_name);
+  in
   let gram = Models.LLL_shorter.make_grammar 
-    (excurve, Sdf.make_sparse_family (Array.length excurve) 2) in
+    (excurve, exsdf) in
 
   let qual, pairs = Parsing.viterbi gram family Models.Simple.strat in
     printf "qual = %f\n#pairs = %d\n%!" qual (List.length pairs);
@@ -98,11 +103,11 @@ let do_parse incurve_name excurve_name out_name =
 ;;    
 
 let _ =
-  let incurve_name, excurve_name, out_name = 
+  let incurve_name, excurve_name, out_name, sdf_name = 
     try
-     Sys.argv.(1), Sys.argv.(2), Sys.argv.(3)
+     Sys.argv.(1), Sys.argv.(2), Sys.argv.(3), Sys.argv.(4)
     with _ ->
-      printf "usage: ./%s in.curve ex.curve out.svg" Sys.argv.(0);
-      "", "", ""
+      printf "usage: ./%s in.curve ex.curve out.svg sdf.svg" Sys.argv.(0);
+      "", "", "", ""
   in
-    do_parse incurve_name excurve_name out_name
+    do_parse incurve_name excurve_name out_name sdf_name

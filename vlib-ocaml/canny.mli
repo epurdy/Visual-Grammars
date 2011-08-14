@@ -29,3 +29,6 @@ val edge_list : bool Image.t -> (int * int) list
 val canny : float Image.t -> float -> float -> bool Image.t
 (** [canny img thresh] computes canny edge detection of
     [img]. *)
+
+
+val nms_in_place : float Image.t -> float Image.t -> float Image.t -> unit

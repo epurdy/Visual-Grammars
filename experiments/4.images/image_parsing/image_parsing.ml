@@ -6,6 +6,8 @@ open Abstract
 open Grammar
 open Graph
 
+module I = Image
+
 let dist2 (x1,y1) (x2,y2) = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)
 let canon p q = if p > q then q,p else p,q
 
@@ -137,6 +139,13 @@ let draw_changing_segments im segments closed =
     end
     segments
 
+let draw_segments im segments closed = 
+  Array.iteri
+    begin fun i (p,q) -> 
+      Draw.draw_line im p q (0,128,255);
+    end
+    segments
+
 let new_parse_data () = 
   {costs = mkhash 1000;
    split = mkhash 1000;
@@ -164,8 +173,8 @@ let parse_image gram nets pdatas maxlen imname prefix =
   in
     
   let display sym nt (bg,en) final =
-    let im = Pnm.load_pgm imname in
-    let im = Image.map Image.color_of_gray im in
+    let im = Pnm.load_ppm imname in
+(*     let im = Image.map Image.color_of_gray im in *)
     let ptree = harvest_best_tree gram pdatas nt (Array.length pdatas - 1) (bg,en) in
     let segments = List.map 
       begin fun (p,q) -> 
@@ -177,7 +186,7 @@ let parse_image gram nets pdatas maxlen imname prefix =
       if final then (sprintf "%s.iter%d.nt%d.ppm" prefix !iter nt)
       else (sprintf "%s.final.ppm" prefix)
     in
-      draw_changing_segments im (Array.of_list segments) sym.startable;
+      draw_segments im (Array.of_list segments) sym.startable;
       Pnm.save_ppm im fname
   in
 
@@ -347,20 +356,31 @@ let coarsen ptable net step =
     coarse_ptable, (Graph.finalize coarse_net)
 
 let _ = 
-  (*   let granularity = 16 in *)
-  let granularity = 32 in
-  let size = 256 in
-  let step = size / granularity in
-  let maxlen = 8 (* 5 *) in
 
-  let curve = Curve.load Sys.argv.(1) in
   let excurve = Curve.load Sys.argv.(2) in
   let sdf = Sdf.load_family Sys.argv.(3) in
-  let imname = Sys.argv.(4) in
+  let netname = Sys.argv.(4) in
   let yieldprefix = Sys.argv.(5) in
   let parseprefix = Sys.argv.(6) in
     
+  (*   let granularity = 16 in *)
+  let granularity = 32 in
+  let maxlen = 8 (* 5 *) in
+
   let net = Graph.load_point_float_graph Sys.argv.(7) in
+  let size = 
+    let size = ref 0 in
+      Array.iter 
+	begin fun (x,y) ->
+	  size := max !size x;
+	  size := max !size y;
+	end
+	net.vertices;
+      printf "size=%d\n%!" (!size + granularity);
+      !size + granularity (* hopefully? *)
+  in
+
+  let step = size / granularity in
 
   let gram = Models.Simple.make_grammar (excurve, sdf) in
   let gram = merge_leaves gram in
@@ -373,10 +393,10 @@ let _ =
   let thegran = ref granularity in
 
 
-  let report final = 
+  let report () = 
     let ptree = harvest_best_tree_overall gram !ptables in
-    let im = Pnm.load_pgm Sys.argv.(4) in
-    let im = Image.map Image.color_of_gray im in 
+    let im = Pnm.load_ppm Sys.argv.(4) in
+      (*     let im = Image.map Image.color_of_gray im in  *)
       save_parse_tree ptree !nets (sprintf "%s.%d.parse" parseprefix !thegran) step;
       draw_parse_tree ptree !nets im step;
       Pnm.save_ppm im (sprintf "%s.%d.ppm" parseprefix !thegran);
@@ -389,7 +409,7 @@ let _ =
 
 	printf "Doing scale %d\n%!" !thegran;
 	parse_image gram !nets !ptables (* !lift_ptables *)
-	  (maxlen * thestep) imname prefix;
+	  (maxlen * thestep) netname prefix;
 
 	report ();
 

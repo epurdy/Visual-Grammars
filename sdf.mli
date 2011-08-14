@@ -25,8 +25,6 @@ type cdata = {
 (** Global metadata *)
 type gdata = { n : int; }
 
-(* type ('a, 'b, 'c) family = ('a, 'b, 'c) frozen_grammar *)
-
 type family = (sdata, cdata, gdata) frozen_grammar
 
 (** {2 Functions} *)
@@ -40,11 +38,23 @@ val make_coarse_curves : int -> int -> int array array
 val print_levels : int array array -> unit
 
 val make_full_family :  int -> family
-(* (\*  (sdata, cdata, sdf_gdata)  *\)family *)
 
 val make_restricted_family : int -> (int * int) list -> (int * int * int) list ->
  family
 
-val make_sparse_family : int ->  int ->(* (sdata, cdata, sdf_gdata) *) family
+val make_sparse_family : int ->  int -> family
 
-val load_family : string -> (* (sdata, cdata, sdf_gdata) *) family
+type live_family = {
+  gram: (sdata,cdata,gdata) live_grammar;
+  sclookup: (index*index,sdata symbol) Hashtbl.t;
+  make_new_scurve: int * int -> int -> sdata symbol;
+  make_new_comp: int * int * int -> cdata composition;
+  imake_new_scurve: int * int -> int -> unit;
+  imake_new_comp: int * int * int -> unit;
+}    
+
+val make_live_family : int -> int -> live_family
+
+val load_family : string -> family
+
+val save_family : family -> string -> unit 
