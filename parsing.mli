@@ -69,4 +69,4 @@ val viterbi :
   ('mod_sym,'mod_comp,'mod_glob) frozen_grammar -> 
   ('tgt_sym, 'tgt_comp, 'tgt_glob) frozen_grammar -> 
   ('mod_sym,'mod_comp,'tgt_sym,'tgt_comp,'tgt_glob) strategy ->
-  float * (int * int) list
+  float * (int * int * int option * int option) list

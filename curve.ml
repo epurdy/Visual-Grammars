@@ -272,6 +272,77 @@ let load (name : string) : t =
     Array.map Geometry.complex_of_point
       (Array.of_list (List.rev (read [])))
 
+let load_from_xml name =
+  let chan = open_in name in
+  let points = ref [] in
+
+  let read_tag () =
+    let tagname = ref "" in
+    let intagname = ref true in
+      while !intagname do 
+	let d = input_char chan in
+	  if d = '>' then begin 
+	    intagname := false;
+	  end
+	  else begin
+	    tagname := !tagname ^ (Char.escaped d);
+	  end
+      done;
+      !tagname
+  in
+
+  let find_next_tag () =
+    let found = ref false in
+    let tagname = ref "" in
+      while not !found do 
+	let c = input_char chan in
+	  if c = '<' then begin 
+	    found := true;
+	    tagname := read_tag ();
+	  end
+      done;
+      !tagname
+  in
+
+  let read_int () =
+    let finished = ref false in
+    let intstring = ref "" in
+      while not !finished do 
+	let c = input_char chan in
+	  if c = '<' then begin 
+	    finished := true;
+	    ignore (read_tag ()); (* burn </x>, </y> *)
+	  end
+	  else begin
+	    intstring := !intstring ^ (Char.escaped c);
+	  end
+      done;
+      int_of_string !intstring
+  in
+    
+    begin try
+      while true do 
+	let tagname = find_next_tag () in
+	  if tagname = "pt" then begin 
+	    let tagname_x = find_next_tag () in
+	    let x = read_int () in
+	    let tagname_y = find_next_tag () in
+	    let y = read_int () in
+	      assert(tagname_x = "x");
+	      assert(tagname_y = "y");
+	      points := (x,y) :: !points;
+	  end
+      done
+    with End_of_file ->
+      close_in chan;
+    end;
+
+    let curve = List.rev !points in
+    let curve = Array.of_list curve in
+    let curve = Array.map Geometry.complex_of_point curve in
+      curve
+      
+
 (* save curve to file *)
 let save (name : string) (curve : t) : unit =
   let curve = Array.map Geometry.point_of_complex curve in

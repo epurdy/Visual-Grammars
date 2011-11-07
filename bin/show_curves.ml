@@ -17,7 +17,7 @@ let _ =
 		     "./prog -fname fname curve1 curve2 curve3..."
   in
 
-  let curves = Array.of_list !curves in 
+  let curves = Array.of_list (List.rev !curves) in 
   let curves = Array.map Curve.normalize curves in
   let ncurves = Array.length curves in
     

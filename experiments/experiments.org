@@ -8,6 +8,16 @@
 #+LATEX_HEADER: \newcommand{\bow}[1]{\colorbox{black}{\color{white} #1}}
 #+LATEX_HEADER: \newcommand{\experiment}[1]{\bow{This section's results can be recreated by running #1}}
 
+* What do I have to do?
+
+ - define etc. models
+ - find objects in images
+   - why is this so hard???
+
+ - do something with time series
+ - learn parameters
+ - show some sort of performance gain in classification?
+ - learn structure
 
 * Plan
 #+LATEX: \setcounter{section}{-1}
@@ -199,6 +209,28 @@ This question is pretty orthogonal to everything else.
 #+LATEX: \setcounter{section}{-1}
 
 ** Assembling Datasets
+*** Synthetic Datasets
+  - Polygons:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/polygons.eps]]
+
+  - Stars:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/stars.eps]]
+
+  - A shape with an articulating arm:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/articulator.eps]]
+
+  - These are 6-armed shapes, where each arm can have one of two
+    shapes.
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/narms.eps]]
+
 *** Romer
   - We have hand-annotated a simplified version of Romer by
     hand-marking 27 points on a number of images
@@ -213,6 +245,68 @@ This question is pretty orthogonal to everything else.
 #+ATTR_LaTeX: width=4in
 [[./0.datasets/romer/output.d/romerII.eps]]
   - The images themselves
+
+*** Swedish Leaves
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_01.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_02.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_03.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_04.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_05.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_06.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_07.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_08.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_09.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_10.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_11.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_12.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_13.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_14.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_15.eps]]
 
 ** Grammatical Shape Models
 *** Make sure Watson distribution is reasonable
@@ -420,6 +514,48 @@ We show training data again for comparison with final samples
 #+ATTR_LaTeX: width=3in
 [[./3.em/correlated_tuning/output.d/training.eps]]
 
+*** Adding in multiple midpoints as needed
+
+Here is the training data:
+
+#+ATTR_LaTeX: width=3in
+[[./3.em/incremental/output.d/training.eps]]
+
+**** Initial
+\input{./3.em/incremental/output.d/gram.0.d/foo}
+
+**** Round 1
+\input{./3.em/incremental/output.d/gram.1.d/foo}
+**** Round 2
+\input{./3.em/incremental/output.d/gram.2.d/foo}
+**** Round 3
+\input{./3.em/incremental/output.d/gram.3.d/foo}
+**** Round 4
+\input{./3.em/incremental/output.d/gram.4.d/foo}
+**** Round 5
+\input{./3.em/incremental/output.d/gram.5.d/foo}
+**** Round 6
+\input{./3.em/incremental/output.d/gram.6.d/foo}
+**** Round 7
+\input{./3.em/incremental/output.d/gram.7.d/foo}
+**** Round 8
+\input{./3.em/incremental/output.d/gram.8.d/foo}
+**** Round 9
+\input{./3.em/incremental/output.d/gram.9.d/foo}
+**** Round 19
+\input{./3.em/incremental/output.d/gram.19.d/foo}
+
+**** Round 20
+\input{./3.em/incremental/output.d/gram.20.d/foo}
+
+**** Round 30
+\input{./3.em/incremental/output.d/gram.30.d/foo}
+**** Training
+We show training data again for comparison with final samples
+ 
+#+ATTR_LaTeX: width=3in
+[[./3.em/incremental/output.d/training.eps]]
+
 ** Parsing in Cluttered Images
 *** Finding obvious curve
 
@@ -532,6 +668,150 @@ Here is the decomposition found using this heuristic.
 
 #+ATTR_LATEX: width=4in
 [[./6.structure/constituency_heuristics/output.d/decay_sdf.eps]]
+
+*** Shock graph
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/Bone-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/Comma-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/Glas-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/HCircle-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/Heart-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/Misk-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/apple-10.eps]]
+# #+ATTR_LATEX: width=5in
+[[# ./6.structure/shock_graph/output.d/bat-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/beetle-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/bell-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/bird-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/bottle-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/brick-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/butterfly-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/camel-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/car-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/carriage-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/cattle-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/cellular_phone-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/chicken-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/children-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/chopper-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/classic-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/crown-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/cup-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/deer-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device0-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device1-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device2-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device3-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device4-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device5-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device6-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device7-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device8-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/device9-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/dog-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/elephant-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/face-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/fish-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/flatfish-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/fly-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/fork-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/fountain-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/frog-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/guitar-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/hammer-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/hat-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/horse-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/horseshoe-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/jar-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/key-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/lizzard-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/lmfish-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/octopus-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/pencil-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/personal_car-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/pocket-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/rat-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/ray-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/sea_snake-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/shoe-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/spoon-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/spring-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/stef-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/teddy-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/tree-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/truck-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/turtle-10.eps]]
+%% #+ATTR_LATEX: width=5in
+%% [[./6.structure/shock_graph/output.d/watch-10.eps]]
+
+
 
 ** Learning Texture
 *** Trying to learn a texture-only grammar
@@ -715,60 +995,66 @@ Samples:
 
 
 
+* Working notes - new front burner (limit 5, each should fit on one emacs page)
+** Shock graphs and adaptive SDF's to get good constituents
+  - getting somewhat OK constituents, but getting far too many very
+    similar ones
+  - probably want to incorporate information from the outside skeleton
+    at some point, but it's unclear how to mix the two (maybe we don't
+    have to do anything, can just mix the two)
+  - setting the threshold to -5 makes it crash on the spoon, should
+    figure that out
+  - having a lot of trouble with markov-style rules. it seems like
+    this is kind of a weakness of shock graphs in general. how do we
+    defeat it? 
+    - deleting vertices of degree 2 helps some, but there are cases
+      where we don't want to do that.
+    - some markov-style rules come from singleton branches. how do we
+      detect those???
+
+** 2D parsing
+  - datacosts
+    - seemed to be workign somewhat OK, thresholding was not doing well though
+  - low-level curves available
+    - currently i believe we are just thresholding
+    - we were thinking about a thinning strategy, it seemed somewhat reasonable?
+  - search strategy
+    - standard CKY is on the edge of acceptability, depending on how
+      sparse the set of curves is
+    - we had fuzzy_cky, which worked sort of ok but was probably too messy
+    - we came up with an elaborate multipass strategy that should
+      optimize the same thing as standard cky, except that it had
+      trouble with d(p,r) < d(p,q), d(q,r)
+
+** Discriminative EM
+  - subsample the leaves to be smallish
+  - make a niceish sdf with bottom_out function
+  - make the initial grammars
+  - get the viterbi parses and/or soft counts
+  - make a vector with on entry for every X->l rule and one entry for every midpoint
+
+  - write an svm
+    - use stochastic gradient descent, pedro thinks it should work
+    - give it some reasonably separable dataset from bishop or something to test
 * Working notes - front burner (limit 5)
-** Multiple jittered midpoints in EM
-  - Next step: try upweighting the original midpoint, might keep parses less
-    insane (if that helps, it tells us a *lot* about the weaknesses of
-    EM)
-
-  - some of the ugliness might come from the 3rd to last
-    hand-annotated romer curve. try training on less data
-
-  - weird bullshit went away, but there is less geometric
-    variability. maybe just kill that one particular example.
-
-  - OK, the weird flips are gone, and there is still a lot of
-    variability. 
-
-  - took out upweighting, it reintroduced a small flip at the end of
-    the arm when the arm is crossed. It seems like this is comes from
-    a flip in the data. The grammar has not learned that the inside of
-    the arm should be flipped if the outside of the arm is... this
-    suggests that we just need more EM iterations, because that should
-    be an easy enough thing to learn. If it doesn't work, then we
-    might need to keep rules alive longer, presumably by adding
-    artificial counts
-
-  - actually, it's impossible to learn. You have to duplicate
-    nonterminals to achieve that, since it needs to associate the
-    context of a symbol with a different distribution on the rules of
-    the symbol.
-
-  - how do you do that? we could have 5 copies of the entire grammar
-    with disjoint symbols, but that prevents factorization. we could
-    have 5 copies of each symbol, and give a different midpoint to
-    each one. but then we kind of want each of them to have 25 rules
-    so that it can go to all symbols at the next level. We could give
-    it ~3 random rules to the next level, each with the same midpoint.
-  
-    higher up, we should maybe have more rules (all of them?) so that
-    we don't lose any of the grammar.
-
-    should start a new experiment for this thought, call it
-    correlated_tuning? the point is that we want to get rid of the
-    independence
-
-  - it seems to be alternating between two grammars at the end...
-
-  - upweighting did not help much. it might have helped some?
-
-  - works sort of OK, need to think about what's going wrong, but
-    pretty respectable
-
-  - might also want to use fewer copies, or somehow delete more rules?
 ** Adaptive SDF's
   - Next step: unfuck the subsampling code to the point where it will
     give us an intelligent subsampling that has like 8-10 points.
+
+    easiest is to search on a trellis so that we know exactly how long
+    the curve is that we are constructing. then we can pick the one we
+    like best among the available lengths. This will run in time tl,
+    where t is old time and l is max length. Therefore, we want to
+    limit it to the last iteration or so.
+
+    this is kind of hard to think about. how do we know what length we
+    want? some curves are just more open to being approximated by
+    fewer lines.
+
+    in fact, this seems like a bad idea. We should just construct the
+    full family on the coarsest curve. If we want to have fewer
+    compositions there, we will just have to do it with constituency
+    heuristics
 
   - can just have the subsampler call itself again with a higher
     regularization weight if it is above a hard maximum length
@@ -813,6 +1099,39 @@ Samples:
     length balance terms than data terms, probably
 
 ** 2D approximate parsing
+  - thoughts on the curve network
+    - we want a curve network that contains some representative of
+      every reasonable segment, but that doesn't have many
+      representatives of each (i.e., nms). We also want to make sure
+      that every pair of reasonable curves C_pq, C_qr has a
+      representative pair C_p'q', C_q'r', so that we do not lose any
+      compositions. If we have both of those things, we should be OK
+      during parsing.
+
+    - Make a list of all line segments which have some evidence under
+      them.
+
+    - Remove C_pq if there is a nearby segment C_pq' which has more
+      evidence, and such that, for every C_qr, there is a C_q'r which
+      has more evidence than C_qr, with q~q'. Might be sufficient if
+      there is a C_q'r for which C_pq', C_q'r together have more
+      evidence than C_pq, C_qr together, with q~q'.
+
+      Question: Do we have to fix p? Imagine taking our favorite curve
+      and trying to prove that it was not thrown out. We can move any
+      one point q by considering p,r on either side of it, and finding
+      the relevant q' such that C_pq', C_q'r were preserved. 
+
+      But then we want to fix both p and q...
+
+      i thought of a way out of this, just have to remember. involved
+      thinking of the curve evolving over time as we remove things, as
+      long as we can always move the curve to something that still
+      exists, is close, and has better qual, then we're OK
+
+      could think of just queuing everything up and somehow counting
+      references or otherwise making sure we have what we want
+
   - How do we make a better curve network for an image? This sounds promising:
     - take gradients, calculate costs as now
     - look at (avg_gradient*length + A)/length as a way to reward
@@ -1260,64 +1579,163 @@ them and the other.
   - If we had such a rule, then would it be important to only add in
     segments once they were long enough?
 
-** Datasets: Finish annotating romer I
-  - Have to line up the points correctly.
-  - Make an experiment that just shows romer I with labeled curve
-    drawing
+** Incremental incorporation
+  - can think of adding one additional midpoint each round. we can
+    look at the viterbi parses. (we will have to add in the rule id as
+    well as the symbol id). one of the rules used will have the most
+    unhappy midpoint. we can then add a new rule centered at the
+    observed midpoint (what is the concentration? can just copy that
+    of the other one). if we want to get something that really works,
+    we need to somehow duplicate symbols... suppose we duplicate the
+    two symbols on the rhs of the new rule, and duplicate their rules,
+    but leave the targets of those rules the same. So, we turn two
+    symbols into four symbols, and double however many rules. 
 
+  - we're missing something. we want to know about correlations with
+    siblings, but we only know about correlations with children
 
-** Constituents in MPEG-7
-  - Running a full evaluation means doing matching 1400 * 1400 =
-    1,960,000 times. We can start with a simpler version by limiting
-    ourselves to two similar classes, which would mean doing parsing
-    only 40*40=1600 times. We can further simplify things by examining
-    only 10 from each class, which brings the number down to 100,
-    which we should be able to run in less than a day.
+    how would we figure out correlation with parents? let's say that
+    instead of just having a new rule, we also copy the top
+    symbol. then any rule targeting it gets copied. then if we do both
+    siblings, we'll get 4 copies of the rule, 2 of which will be right.
 
-  - We would like to approximate each curve by a very short curve
-    whose interior has small symmetric difference with the true
-    interior.
+  - still not working all that well. why? it has two compatible leg
+    bending rules, but doesn't know they go together. this is
+    happening because the sdf we gave it puts one of the leg bends a
+    level lower than the other. since the rule above it it never
+    particularly unhappy, it's impossible for one leg-bending rule to
+    see the other one
 
-  - We can extract curves from binary images now
+  - we could switch to copying the whole subtree of the parent of the
+    bad rule's lhs symbol, or picking an optimal subtree
+    somehow... but how do we choose an optimal tree when their parse
+    scores will not be comparable? could look at score / (number of
+    rules + 1), on the assumption that score is proportional to that
 
-  - We can drop points if they lie on the line connecting the points
-    before and after them.
-      
+  - could take grammar from the bad curve, with same sdf, choose a
+    particular subtree, and then merge it with the corresponding
+    subtree. how to pick the subtree? could pick one with a good
+    midpoint as root.
 
-* Working notes - back burner
-** Datasets: synthetic
-  - n-armed shape
-  - polygons
-  - stars
-  - articulator
+  - could take grammar from the bad curve, with same sdf, and merge
+    the tops, and then do KL-based merging
 
-** General thoughts on 2D parsing
-|-------------------------+---------------------------------------|
-| Grammar source          | Data cost                             |
-|-------------------------+---------------------------------------|
-| hand-built              | take fixed curve, make cost very low  |
-|                         | for segment close to a curve segment, |
-|                         | very high o/w                         |
-|-------------------------+---------------------------------------|
-| automatically generated | draw filled curve in black, run canny |
-|                         | to get edge quality, charge cost      |
-|                         | accordingly                           |
-|-------------------------+---------------------------------------|
-|                         | Take image, run canny or PB           |
-|-------------------------+---------------------------------------|
-
-  - think about how to only look at midpoints close to the Watson mode
-
-  - can speed up parsing by only considering X\to C_{p,q} when p and q
-    are "about the right distance apart" given that we know the global
-    scale approximately, and that we know how far apart they tend to
-    be relative to that (can answer that by sampling, or learn it)
-
-  - work only with a fixed parse tree for now, since L\to LL was the
-    source of more than half our woes. as long as we have $P(X\to
-    \ell_{p,q})$ for all $p,q$, and we think that our segments are
-    straight, it's fine to do this.
+  - aside: could we make a nicer picture of parses by just matching up
+    the model subcurve with the target subcurve for every pair in the
+    viterbi parse?
 ** Structure: Constituency heuristics
+  - evaluating this
+    - need to finish the sdf's
+    - build a grammar
+    - parse as in shorter_curves
+    - should think about trimming sdf by finding compositions that are
+      too similar and deleting them
+
+  - computing shock graphs
+    - compute signed distance function (we've done this before)
+    - compute flux at each interior point
+    - get a priority queue
+    - enqueue points on boundary
+    - iteratively dequeue and remove based on tests
+
+    - [X] fix branch point detection
+    - [ ] figure out 2x2 problem
+    - [X] assign boundary points to nearest shock point
+    - [X] build graph on shock points
+    - [ ] contract away shock points of degree 2
+    - [ ] copy the graph
+    - [ ] iteratively delete leaves of the shock graph, choosing the one
+      which, together with the edge connecting it to the graph, is
+      responsible for the fewest points
+    - [ ] (should we be thinking about edges of boundary instead of
+      vertices of boundary?)
+    - [ ] when the root is found, go back to the old graph and compute
+      responsibilities by dfs.
+    - [ ] for every non-leaf vertex of the graph, create a symbol
+      representing its responsibility, and the necessary
+      decompositions to represent the responsibilities of each of its
+      subtrees.
+    - [ ] look at the resulting sdf?
+
+  - getting constituents from shock graphs
+    - the subtree of any branch point is often a good
+      constituent. but look at the hand, sometimes one of the
+      endpoints is at a natural boundary and the other one
+      isn't. Also, look at the thumb, sometimes the shock graph has a
+      huge bend in it that does not have any associated branch points,
+      and that looks like it should generate a constituent
+
+      we can simplify the shock graph by assuming that all edges are
+      straight lines, and introducing bend points when this creates
+      too much of a difference. (Think of the CDT paper's approach to
+      that.) This captures some of the constituents that seemed to be
+      missing before. It should detect discontinuities arising from
+      the circle turning a corner and having more freedom to
+      grow. Have to think about how to pick a threshold or whatever to
+      decide to insert a bend.
+
+      actually, just setting the flux threshold relatively high seems
+      to result in pretty straight bends
+
+      as for getting rid of the extras, unclear. maybe we don't care
+      all that much?
+
+      we're missing some branch points. we have to think harder about
+      the condition. also have to watch out for 2x2's?
+
+      how do we extract actual constituents from the shock graph? we
+      can assign every boundary point to the nearest point in the
+      shock graph. we can then say, for every branch point, look at
+      the division it induces in the boundary. how would we compute
+      that? we have a list of endpoints, and a list of branch
+      points. we can compute the degrees of branch points pretty
+      easily. with the threshold where it is, it seems like the
+      closest point is usually one of the roads to the endpoint
+
+      we can compute a list of nodes and edges, and every boundary
+      point will be closest to some node or some edge. We can then
+      look at the graph. (We can construct the graph by making every
+      shock point into a vertex, and then removing vertices with
+      degree two and preserving the path. If every initial vertex
+      remembers the boundary points it owns, we can update this and
+      store these with the new edge. )
+
+      Once we have a graph where all vertices have degree 1 or >= 3,
+      we can pick an arbitrary root and do dfs from it to assign a set
+      of boundary points to each subtree. (think about this.)
+
+      where to put the root? we could continue the thinning procedure
+      without protecting the endpoints, presumably the last point left
+      would be a reasonable root.
+
+      we could also try to pick the root which splits the tree most
+      evenly, or gives the most balanced tree somehow.
+
+      if instead of dfs from a root, we delete leaves iteratively,
+      always deleting the leaf responsible for the least amount of
+      stuff, then we would get a very reasonable root.
+
+      once we have a root, this gives us a decomposition family. it is
+      close to unambiguous, ambiguity only comes when we have branch
+      points, and it's kind of meaningless ambiguity resulting from
+      CNF-ification.
+
+      I think we get another df from the outside skeleton? think about
+      it. outside skeleton seems to have multiple components...
+      
+      once we have a df, we can construct a grammar.
+
+  - should also look at the outside skeleton, it might tell us how to
+    omit holes intelligently, which is something we need to know about
+
+  - shock graphs offer a natural transition to thinking about
+    constellations, which is nice
+
+  - ***********************
+
+  - a thought about constituency: maybe think about shock graphs? They
+    certainly have the property that protuberances are constituents
+
   - Arguably this has to wait until after we can find a really good
     "optimal" set of constituents, since the easiest way to evaluate
     these is by comparing them to the actual optimum.
@@ -1377,17 +1795,138 @@ them and the other.
     really much more about constituency than about adaptive SDF's now,
     though.
 
+** EM: discriminative training
+Think about doing discriminative training a la LSVM. Once we have the
+soft counts of a parse, we can use that as an x-vector in a
+discriminative setting. This should work to retrain rule costs.
+
+Imagine that we have two classes of curves.
+
+We want to make sure that the relative values of $P(C|G_1)$ and
+$P(C|G_2)$ are consistent with the labels.
+
+For every curve $C$, we wish to compute vectors $X_{C, G_1}$, $X_{C,
+G_2}$ such that $\log P(C|G_1) = \langle X_{C, G_1} | \theta_1 \rangle$ and
+$\log P(C|G_2) = \langle X_{C, G_2} | \theta_2 \rangle$, where $\theta_1,
+\theta_2$ are vectors derivable from the grammar parameters.
+
+If we consider the midpoint distributions to have fixed means, but not
+fixed concentrations, then $X_{C, G_1}$ can just be a vector of rule
+counts, and a sum of $|z^* \mu|^2$ values, while the $\theta$ vectors
+can have the corresponding rule costs and concentrations.
+
+* Working notes - back burner
+** Structure: Merge and Replace
+  - compute merge and replace heuristics on Romer I hand-built
+    grammar, apply, sample. Limit to nt's with scale > thresh (1/4,
+    1/8?) to avoid triviality
+
+  - we might want a grammar copying function as part of this
+
+** Constituents in MPEG-7
+  - Running a full evaluation means doing matching 1400 * 1400 =
+    1,960,000 times. We can start with a simpler version by limiting
+    ourselves to two similar classes, which would mean doing parsing
+    only 40*40=1600 times. We can further simplify things by examining
+    only 10 from each class, which brings the number down to 100,
+    which we should be able to run in less than a day.
+
+  - We would like to approximate each curve by a very short curve
+    whose interior has small symmetric difference with the true
+    interior.
+
+  - We can extract curves from binary images now
+
+  - We can drop points if they lie on the line connecting the points
+    before and after them.
+      
+** Multiple jittered midpoints in EM
+  - Next step: try upweighting the original midpoint, might keep parses less
+    insane (if that helps, it tells us a *lot* about the weaknesses of
+    EM)
+
+  - some of the ugliness might come from the 3rd to last
+    hand-annotated romer curve. try training on less data
+
+  - weird bullshit went away, but there is less geometric
+    variability. maybe just kill that one particular example.
+
+  - OK, the weird flips are gone, and there is still a lot of
+    variability. 
+
+  - took out upweighting, it reintroduced a small flip at the end of
+    the arm when the arm is crossed. It seems like this is comes from
+    a flip in the data. The grammar has not learned that the inside of
+    the arm should be flipped if the outside of the arm is... this
+    suggests that we just need more EM iterations, because that should
+    be an easy enough thing to learn. If it doesn't work, then we
+    might need to keep rules alive longer, presumably by adding
+    artificial counts
+
+  - actually, it's impossible to learn. You have to duplicate
+    nonterminals to achieve that, since it needs to associate the
+    context of a symbol with a different distribution on the rules of
+    the symbol.
+
+  - how do you do that? we could have 5 copies of the entire grammar
+    with disjoint symbols, but that prevents factorization. we could
+    have 5 copies of each symbol, and give a different midpoint to
+    each one. but then we kind of want each of them to have 25 rules
+    so that it can go to all symbols at the next level. We could give
+    it ~3 random rules to the next level, each with the same midpoint.
+  
+    higher up, we should maybe have more rules (all of them?) so that
+    we don't lose any of the grammar.
+
+    should start a new experiment for this thought, call it
+    correlated_tuning? the point is that we want to get rid of the
+    independence
+
+  - it seems to be alternating between two grammars at the end...
+
+  - upweighting did not help much. it might have helped some?
+
+  - works sort of OK, need to think about what's going wrong, but
+    pretty respectable
+
+  - might also want to use fewer copies, or somehow delete more rules?
+** General thoughts on 2D parsing
+|-------------------------+---------------------------------------|
+| Grammar source          | Data cost                             |
+|-------------------------+---------------------------------------|
+| hand-built              | take fixed curve, make cost very low  |
+|                         | for segment close to a curve segment, |
+|                         | very high o/w                         |
+|-------------------------+---------------------------------------|
+| automatically generated | draw filled curve in black, run canny |
+|                         | to get edge quality, charge cost      |
+|                         | accordingly                           |
+|-------------------------+---------------------------------------|
+|                         | Take image, run canny or PB           |
+|-------------------------+---------------------------------------|
+
+  - think about how to only look at midpoints close to the Watson mode
+
+  - can speed up parsing by only considering X\to C_{p,q} when p and q
+    are "about the right distance apart" given that we know the global
+    scale approximately, and that we know how far apart they tend to
+    be relative to that (can answer that by sampling, or learn it)
+
+  - work only with a fixed parse tree for now, since L\to LL was the
+    source of more than half our woes. as long as we have $P(X\to
+    \ell_{p,q})$ for all $p,q$, and we think that our segments are
+    straight, it's fine to do this.
 ** Structure: Constituency
   - Next step: draw the grammar we selected, show samples
 
   - Load the hand-built sdf, highlight agreements
 
+  - run on articulator, run on n-armed shape 
+
 ** Datasts: mpeg7
-** Datasets: swedish leaves
 ** Datasets: horses
 ** Datasets: labelme polygons
 ** Datasets: ETHZ
-** look for constituents in stars, polygons, n-armed shapes
 ** recover a grammar
   - build some simple grammar, see what we learn
   - maybe have to measure KL divergence or some such if recovering the
@@ -1561,12 +2100,6 @@ them and the other.
     then do something a little annoying during sampling (take (p,q) ->
     (p,q,markov(p,q)) instead of (p,q) -> (p, watson(p,q), q))
 
-** Structure: Merge and Replace
-  - compute merge and replace heuristics on Romer I hand-built
-    grammar, apply, sample. Limit to nt's with scale > thresh (1/4,
-    1/8?) to avoid triviality
-
-  - we might want a grammar copying function as part of this
 
 
 ** Parsing: One-to-one
@@ -1780,12 +2313,13 @@ really good part filters for mnist.
 ** Parsing scenes in real images
 
 
-** constituency and shock graphs
-a thought about constituency: maybe think about shock graphs? They
-    certainly have the property that protuberances are constituents
-
 ** javascript annotation tool, 
   - figure out labelme's 
+
+** Image Parsing: 2-D Parsing with part filters
+  - Center a part filter around every point of the curve
+  - Could also try to center a part filter around the base of every
+    constituent's triangle
 
 * Working notes - attic
 ** Datasets: Correcting Romer "ground truth"
@@ -2064,26 +2598,6 @@ L->LL
     anything pops out, it should for various sawtooth-like curves
 
 
-** EM: discriminative training
-Think about doing discriminative training a la LSVM. Once we have the
-soft counts of a parse, we can use that as an x-vector in a
-discriminative setting. This should work to retrain rule costs.
-
-Imagine that we have two classes of curves.
-
-We want to make sure that the relative values of $P(C|G_1)$ and
-$P(C|G_2)$ are consistent with the labels.
-
-For every curve $C$, we wish to compute vectors $X_{C, G_1}$, $X_{C,
-G_2}$ such that $\log P(C|G_1) = \langle X_{C, G_1} | \theta_1 \rangle$ and
-$\log P(C|G_2) = \langle X_{C, G_2} | \theta_2 \rangle$, where $\theta_1,
-\theta_2$ are vectors derivable from the grammar parameters.
-
-If we consider the midpoint distributions to have fixed means, but not
-fixed concentrations, then $X_{C, G_1}$ can just be a vector of rule
-counts, and a sum of $|z^* \mu|^2$ values, while the $\theta$ vectors
-can have the corresponding rule costs and concentrations.
-
 ** EM: Tuning with curves of variable length
   - do with fixed parses
   - do without fixed parses
@@ -2149,10 +2663,6 @@ like a hierarchical segmentation.
 
 
 
-** Image Parsing: 2-D Parsing with part filters
-  - Center a part filter around every point of the curve
-  - Could also try to center a part filter around the base of every
-    constituent's triangle
 ** Image Parsing: More 2D Parsing notes
 
 

@@ -63,6 +63,10 @@ val subsample_ultracrude : 'a array -> int -> 'a array
 (** [load fname] loads a curve from a file named [fname]. *)
 val load : string -> t
 
+(** [load fname] loads a curve in LabelMe XML format from a file named
+    [fname]. *)
+val load_from_xml : string -> t
+
 (** Input a set of curves.  [load_all name first num] loads [num]
     curves, where [name] is a formatting string that evaluates to
     all of the filenames, and [first] is the index of the first. *)

@@ -6,33 +6,32 @@ open Cops
 open Abstract
 open Grammar
 open Sdf
-open Models.Simple
 
-let do_parse incurve_name excurve_name out_name sdf_name = 
+module Model = Models.Mpeg7
+open Model
+
+let do_parse incurve_name excurve_name sdf_name out_name qual_name = 
   let x = Svg.create out_name in
 
   let curve = Curve.load incurve_name in
+  let curve = Curve.flip_xy curve in
 
   let n = Array.length curve in
   let family = Sdf.make_full_family n in
 
-  let family = Models.LLL_longer.add_curve_data_to_family curve family in
+  let family = Model.add_curve_data_to_family curve family in
     
   let excurve = Curve.load excurve_name in
-  let excurve = Curve.flip_xy excurve in
-(*   let exsdf = Sdf.load_family "shock-romer-0080/shock.sdf" in *)
-(*   let exsdf = bottom_out_family exsdf in *)
-  let exsdf = Sdf.make_sparse_family (Array.length excurve) 2 in
 
-  let _ = 
-    Sdf.save_family exsdf "tmp/shorter.sdf";
-    doit (sprintf "./show_sdf.native -sdf tmp/shorter.sdf -curve %s -fname %s" excurve_name sdf_name);
-  in
-  let gram = Models.LLL_shorter.make_grammar 
-    (excurve, exsdf) in
+  let gfamily = Sdf.load_family sdf_name in
+  let gfamily = Sdf.bottom_out_family gfamily in
+  let gram = Model.make_grammar (excurve, gfamily) in
 
-  let qual, pairs = Parsing.viterbi gram family Models.Simple.strat in
+  let qual, pairs = Parsing.viterbi gram family Model.strat in
+  let qualfile = open_out qual_name in 
     printf "qual = %f\n#pairs = %d\n%!" qual (List.length pairs);
+    fprintf qualfile "%f\n%!" qual;
+    close_out qualfile;
 
     let find x arr = 
       let rv = ref None in
@@ -106,11 +105,11 @@ let do_parse incurve_name excurve_name out_name sdf_name =
 ;;    
 
 let _ =
-  let incurve_name, excurve_name, out_name, sdf_name = 
+  let incurve_name, excurve_name, sdf_name, out_name, qual_name = 
     try
-     Sys.argv.(1), Sys.argv.(2), Sys.argv.(3), Sys.argv.(4)
+     Sys.argv.(1), Sys.argv.(2), Sys.argv.(3), Sys.argv.(4), Sys.argv.(5)
     with _ ->
-      printf "usage: ./%s in.curve ex.curve out.svg sdf.svg" Sys.argv.(0);
-      "", "", "", ""
+      printf "usage: ./%s in.curve ex.curve ex.sdf out.svg out.qual" Sys.argv.(0);
+      "", "", "", "", ""
   in
-    do_parse incurve_name excurve_name out_name sdf_name
+    do_parse incurve_name excurve_name sdf_name out_name qual_name

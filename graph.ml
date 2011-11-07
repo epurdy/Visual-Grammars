@@ -59,6 +59,12 @@ let add_vertex gf v =
   end;
   gf.lvertices >> v
 
+let add_vertex_strict gf v =
+  assert( not (gf.lvertices >>? v) );
+  gf.lvertices << (v, gf.next_vid);
+  gf.next_vid <- gf.next_vid + 1;
+  gf.lvertices >> v
+
 let is_edge gf v1 v2 =
   let v1, v2 = canonical v1 v2 in
     gf.ledges >>? (gf.lvertices >> v1, gf.lvertices >> v2)

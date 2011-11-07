@@ -36,7 +36,14 @@ let box (x,y) r =
 
 let draw_pts img points value = 
   List.iter
-    (fun (x,y) -> Image.set img value (x,y) )
+    begin fun (x,y) -> 
+      if Image.inside img (x,y) then
+	Image.set img value (x,y) 
+    end
     points
 
-let draw_line img p1 p2 value = draw_pts img (line p1 p2) value
+let draw_line img p1 p2 value = 
+  draw_pts img (line p1 p2) value
+
+let draw_box img p r value = 
+  draw_pts img (box p r) value

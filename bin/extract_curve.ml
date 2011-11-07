@@ -31,30 +31,40 @@ let _ =
     [ x+1,y; x,y+1; x-1,y; x,y-1; ]
   in
 
-  let rec visit (x,y) = 
-    let tot = ref 1 in
-      I.set color 1 (x,y);
-      I.set out (255,255,255) (x,y);
+  let visit p = 
+    let stack = ref [p] in
+    let count = ref 0 in
 
-      List.iter 
-	begin fun (x',y') ->
-	  if I.inside im (x',y') && I.get im (x',y') = 0 then begin
-	    I.set color 2 (x,y);
-	    I.set out (255,0,0) (x,y);
-	  end
-	end
-	(nbrs4 (x,y));
+      while !stack <> [] do 
+	let q = List.hd !stack in
+	  stack := List.tl !stack;
+	  incr count;
 
-      List.iter
-	begin fun (x',y') ->
-	  if I.inside im (x',y') && 
-	    I.get im (x',y') != 0 && 
-	    I.get color (x',y') = 0 then 
-	      tot := !tot + visit (x',y');
-	end
-	(nbrs4 (x,y));
+	  I.set color 1 q;
+	  I.set out (255,255,255) q;
 
-      !tot
+	  List.iter 
+	    begin fun r ->
+	      if I.inside im r && I.get im r = 0 then begin
+		I.set color 2 q;
+		I.set out (255,0,0) q;
+	      end
+	    end
+	    (nbrs4 q);
+
+	  List.iter
+	    begin fun r ->
+	      if I.inside im r && 
+		I.get im r != 0 && 
+		I.get color r = 0 then begin
+		  stack := r :: !stack;
+		end
+	    end
+	    (nbrs4 q);
+
+      done;
+
+      !count
   in
 
   let rec walk head cur prev =

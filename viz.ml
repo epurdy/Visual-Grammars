@@ -48,6 +48,7 @@ let show_samples_midpoints x title ncols basecurve (samples,mpchoices) buffer =
       begin fun x i ->
 
 	let n = Array.length samples.(i) in
+	  assert(n >= 1);
 	  Array.iter
 	    begin fun mp ->
 	      Svg.draw_circle_filled x mp radius;

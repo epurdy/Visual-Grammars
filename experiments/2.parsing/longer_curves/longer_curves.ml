@@ -46,7 +46,7 @@ let do_parse incurve_name excurve_name sdf_name out_name =
     let labels = mkhash 100 in
 
       List.iter 
-	begin fun (sid, scid) ->
+	begin fun (sid, scid, _, _) ->
 	  let symbol = Frozen.get_symbol gram sid in
  	  let scurve = Frozen.get_symbol family scid in 
 	  let thecurve = symbol.sdata.curve in

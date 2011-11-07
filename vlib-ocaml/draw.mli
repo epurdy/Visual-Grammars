@@ -9,3 +9,5 @@ val box : (int * int) -> int -> (int * int) list
       radius [r] centered at [(x,y)]. *)
 
 val draw_line : 'a Image.t -> (int * int) -> (int * int) -> 'a -> unit
+
+val draw_box : 'a Image.t -> (int * int) -> int -> 'a -> unit

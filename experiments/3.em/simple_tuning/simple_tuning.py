@@ -11,9 +11,10 @@ niters = 2
 dir = 'experiments/3.em/simple_tuning/output.d'
 latexdir = './3.em/simple_tuning/output.d'
 
-example = 'romer/ann/curve0000.curve'
+#example = 'romer/ann/curve0000.curve'
+example = 'romer/newann/IMG0000.curve'
 sdf = 'romer/misc/romer1.sdf'
-training = [ 'romer/ann/curve%03d0.curve' % i for i in xrange(16) ]
+training = [ 'romer/newann/IMG%03d0.curve' % i for i in xrange(28) ]
 
 doit('./show_curves.native -fname %s/examples.svg -title \'\' %s' % (
     dir, example))

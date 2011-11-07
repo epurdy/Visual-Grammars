@@ -11,3 +11,8 @@
 <util/*.cmx>: for-pack(Util)
 <examples/*.cmx>: for-pack(Examples)
 "cdt": not_hygienic
+"xstage": -traverse
+"DATA": -traverse
+"leaves": -traverse
+"romer": -traverse
+"synth": -traverse

@@ -170,6 +170,8 @@ val map_frozen_grammar :
 
 val reorder_symbols : ('sdata, 'cdata, 'gdata) frozen_grammar -> unit
 
+val reorder_compositions : ('sdata, 'cdata, 'gdata) frozen_grammar -> unit
+
 val compactify : ('sdata, 'cdata, 'gdata) live_grammar -> unit
 
 val finalize : ('sdata, 'cdata, 'gdata) live_grammar -> ('sdata, 'cdata, 'gdata) frozen_grammar
@@ -183,11 +185,23 @@ val merge_frozen_grams :
 val check_reachability :
   ('sdata, 'cdata, 'gdata) frozen_grammar -> bool array
 
+val check_realizability :
+  ('sdata, 'cdata, 'gdata) frozen_grammar -> ('sdata symbol -> bool) -> bool array
+
 val ensure_reachability :
-  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('sdata, 'cdata, 'gdata) frozen_grammar -> 
+  ('sdata, 'cdata, 'gdata) frozen_grammar
+
+val ensure_realizability :
+  ('sdata, 'cdata, 'gdata) frozen_grammar -> ('sdata symbol -> bool) -> 
   ('sdata, 'cdata, 'gdata) frozen_grammar
 
 val filter_compositions :
   ('sdata, 'cdata, 'gdata) frozen_grammar ->
   ('cdata composition -> bool) ->
+  ('sdata, 'cdata, 'gdata) frozen_grammar
+
+val filter_symbols :
+  ('sdata, 'cdata, 'gdata) frozen_grammar ->
+  ('sdata symbol -> bool) ->
   ('sdata, 'cdata, 'gdata) frozen_grammar

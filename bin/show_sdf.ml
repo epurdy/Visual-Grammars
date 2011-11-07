@@ -24,37 +24,40 @@ let _ =
   let doubled = Array.append curve curve in
   let sdf = Sdf.load_family !sdf in
 
-  let scurves = 
-    Array.map
-      begin fun dcomp ->
-	let scurve = Frozen.get_symbol sdf dcomp.topsid in
-	let thecurve = Array.sub doubled 
-	  scurve.sdata.first
-	  (scurve.sdata.len + 1)
-	in
-	  thecurve
-      end
-      sdf.f_compositions
-  in
-  let midpoints = 
-    Array.map
-      begin fun dcomp ->
-	[| curve.(dcomp.cdata.md) |]
-      end
-      sdf.f_compositions
-  in
+    reorder_symbols sdf;
+    reorder_compositions sdf;
 
-  let nrules = Array.length midpoints in
+    let scurves = 
+      Array.map
+	begin fun dcomp ->
+	  let scurve = Frozen.get_symbol sdf dcomp.topsid in
+	  let thecurve = Array.sub doubled 
+	    scurve.sdata.first
+	    (scurve.sdata.len + 1)
+	  in
+	    assert(scurve.sdata.len > 0) ;
+	    thecurve
+	end
+	sdf.f_compositions
+    in
+    let midpoints = 
+      Array.map
+	begin fun dcomp ->
+	  [| curve.(dcomp.cdata.md) |]
+	end
+	sdf.f_compositions
+    in
 
-    
-  let x = Svg.create_sized !fname
-    ((float_of_int ncols) *. 1.5 *. scale, 
-     float_of_int (5 + (nrules/ncols)) *. 4.0 *. scale) in
-  let _ = Cairo.scale x.Svg.ctx scale scale in
+    let nrules = Array.length midpoints in
+      
+    let x = Svg.create_sized !fname
+      ((float_of_int ncols) *. 1.5 *. scale, 
+       float_of_int (5 + (nrules/ncols)) *. 4.0 *. scale) in
+    let _ = Cairo.scale x.Svg.ctx scale scale in
 
 
-    Viz.show_samples_midpoints x "" 6 curve
-      (scurves, midpoints) 1.0;
-    Svg.finish x;
+      Viz.show_samples_midpoints x "" 5 curve
+	(scurves, midpoints) 1.0;
+      Svg.finish x
 
-    printf "\n>>> I was supposed to save to file %s, but maybe I didn't?\n\n" !fname
+

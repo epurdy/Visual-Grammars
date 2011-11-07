@@ -164,8 +164,10 @@ let load_family fname =
   let lfamily = make_live_family n (n*n) in
 
   let thelen i j = 
-    let x = j - i + n + 1 in
-      (x mod n) - 1
+    let x = j - i + n - 1 in
+    let rv = (x mod n) + 1 in
+      assert(rv > 0);
+      rv
   in
 
   let seen = mkhash 100 in
@@ -209,23 +211,84 @@ let make_full_family n =
     done;
     finalize lfamily.gram
 
+(* let make_restricted_family n scurves comps = *)
+(*   let lfamily = make_live_family n (List.length scurves) in *)
+(*     for len = 1 to n do *)
+(*       for i = 0 to (n-1) do *)
+(* 	let k' = (i + len) in *)
+(* 	let k = k' mod n in *)
+(* 	  if List.mem (i,k) scurves then begin *)
+(* 	    lfamily.imake_new_scurve (i, k) len; *)
+(* 	    for j' = i+1 to k'-1 do *)
+(* 	      let j = j' mod n in *)
+(* 		if List.mem (i,j,k) comps then  *)
+(* 		  lfamily.imake_new_comp (i, j, k); *)
+(* 	    done; *)
+(* 	  end; *)
+(*       done; *)
+(*     done; *)
+(*     finalize lfamily.gram *)
+
 let make_restricted_family n scurves comps =
   let lfamily = make_live_family n (List.length scurves) in
-    for len = 1 to n do
-      for i = 0 to (n-1) do
-	let k' = (i + len) in
-	let k = k' mod n in
-	  if List.mem (i,k) scurves then begin
-	    lfamily.imake_new_scurve (i, k) len;
-	    for j' = i+1 to k'-1 do
-	      let j = j' mod n in
-		if List.mem (i,j,k) comps then 
-		  lfamily.imake_new_comp (i, j, k);
-	    done;
-	  end;
-      done;
-    done;
+  let scurve_seen = mkhash 100 in
+  let comp_seen = mkhash 100 in
+    List.iter
+      begin fun (i,j) ->
+	if not (scurve_seen >>? (i,j)) then begin
+	  let len = j-i in
+	  let len = ((n-1 + len) mod n) + 1 in
+	    lfamily.imake_new_scurve (i,j) len;
+	    scurve_seen << ((i,j), ());
+	end
+      end
+      scurves;
+
+    List.iter
+      begin fun (i,j,k) ->
+	if not (comp_seen >>? (i,j,k)) then begin
+	  lfamily.imake_new_comp (i,j,k);
+	  comp_seen << ((i,j,k), ());
+	end
+      end
+      comps;
     finalize lfamily.gram
+
+let bottom_out_family family =
+  let n = family.f_gdata.n in
+  let lfamily = make_live_family n (Frozen.num_symbols family) in
+    Frozen.iter_symbols family
+      begin fun sym ->
+	lfamily.imake_new_scurve (sym.sdata.first, sym.sdata.last) sym.sdata.len;
+      end;
+
+    iter_all_compositions family
+      begin fun comp ->
+	lfamily.imake_new_comp (comp.cdata.bg, comp.cdata.md, comp.cdata.en);
+      end;
+
+    Frozen.iter_symbols family
+      begin fun sym ->
+	if List.length sym.dcompids = 0 && sym.sdata.len > 1 then begin 
+	  let rec split (x,y) =
+	    let x,y = if y <= x then (x,y+n) else x,y in
+	    let z = (x+y)/2 in
+	    let xz, zy = z-x, y-z in
+	    let x,y,z = x mod n, y mod n, z mod n in
+	      if x <> z then begin
+		lfamily.imake_new_scurve (x,z) xz;
+		lfamily.imake_new_scurve (z,y) zy;
+		lfamily.imake_new_comp (x,z,y);
+		split (x,z);
+		split (z,y);
+	      end	      
+	  in
+	    split (sym.sdata.first, sym.sdata.last)
+	end
+      end;
+
+    finalize lfamily.gram
+
 
 let make_sparse_family n k =
   let lfamily = make_live_family n n in

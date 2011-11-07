@@ -7,6 +7,8 @@ module Cops = Cops
 
 exception Not_Implemented of string
 
+let dist2 (x1,y1) (x2,y2) = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)
+
 (* unpack an option *)
 let get (z : 'a option) : 'a = 
   match z with

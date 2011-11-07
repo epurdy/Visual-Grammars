@@ -42,6 +42,8 @@ val make_full_family :  int -> family
 val make_restricted_family : int -> (int * int) list -> (int * int * int) list ->
  family
 
+val bottom_out_family : family -> family
+
 val make_sparse_family : int ->  int -> family
 
 type live_family = {

@@ -362,15 +362,19 @@ let viterbi gram family strat =
 
     let pairs = ref [] in
     let rec visit (symbolid, scurveid) = 
-      pairs := (symbolid, scurveid) :: !pairs;
       let symbol, scurve = Frozen.get_symbol gram symbolid, 
 	Frozen.get_symbol family scurveid in
 	if foo >>? (symbol.sid, scurve.sid) then begin
 	  let prodid, dcompid = foo >> (symbol.sid, scurve.sid) in
 	  let prod, dcomp = Frozen.get_composition gram prodid, 
 	    Frozen.get_composition family dcompid in
+
+	    pairs := (symbolid, scurveid, Some prodid, Some dcompid) :: !pairs;
 	    visit (prod.leftsid, dcomp.leftsid);
 	    visit (prod.rightsid, dcomp.rightsid);
+	end
+	else begin 
+	  pairs := (symbolid, scurveid, None, None) :: !pairs;
 	end
     in
     let toplevel = 

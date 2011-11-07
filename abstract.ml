@@ -355,6 +355,35 @@ let swap_symbols gram asym bsym =
     gram.f_symbols.(bid) <- asym;
     validate_frozen gram
 
+let reorder_compositions gram =
+  let comps = Array.map (fun x -> (x.cid, x)) gram.f_compositions in
+  let cidmap = mkhash 100 in
+  let idty x = x in
+  let do_cidmap i = cidmap >> i in
+    Array.sort (fun (xcid,x) (ycid,y) -> compare x.topsid y.topsid) comps;
+    Array.iteri
+      begin fun i (xcid, x) ->
+	cidmap << (xcid, i);
+	gram.f_compositions.(i) <- x;
+      end
+      comps;
+
+    Array.iter
+      begin fun sym ->
+	change_labels_symbol sym idty do_cidmap;
+      end
+      gram.f_symbols;
+
+    Array.iter
+      begin fun comp ->
+	change_labels_composition comp idty do_cidmap;
+      end
+      gram.f_compositions;
+
+    validate_frozen gram
+
+    
+
 let reorder_symbols gram = 
   let notdone = ref true in
     while !notdone do 
@@ -531,18 +560,47 @@ let check_reachability gram =
     done;
     reachable
 
+let check_realizability gram leafchecker =
+  let realizable = Array.init (Frozen.num_symbols gram ) (fun i -> false) in
+
+  let progress = ref true in
+  let check sid = 
+    if not realizable.(sid) then begin
+      progress := true;
+      realizable.(sid) <- true;
+    end
+  in
+    while !progress do
+      progress := false;
+      (* short first (by convention, really) *)
+      Frozen.iter_symbols gram
+	begin fun symbol ->
+	  if leafchecker symbol then begin 
+	    check symbol.sid;
+	  end;
+
+	  if not realizable.(symbol.sid) then begin
+	    Frozen.iter_decompositions gram symbol
+	      begin fun dcomp ->
+		if realizable.(dcomp.leftsid) && realizable.(dcomp.rightsid) then begin 
+		  check symbol.sid;
+		end
+	      end
+	  end
+	end;
+    done;
+    realizable
+
 (* only works on frozen *)
-let ensure_reachability gram =
+let filter_symbols gram valid =
   (*   validate_froz gram; *)
   let nsymbols = Frozen.num_symbols gram in
   let liveid = Array.init nsymbols (fun i -> None) in
   let live = new_live_grammar gram.f_gdata in
 
-  let reachable = check_reachability gram in
-
     Frozen.iter_symbols gram
       begin fun sym ->
-	if reachable.(sym.sid) then begin
+	if valid sym then begin
 	  let newsym = make_new_symbol live sym.sdata sym.startable in
 	    liveid.(sym.sid) <- Some (newsym.sid);
 	end
@@ -550,22 +608,34 @@ let ensure_reachability gram =
 
     Frozen.iter_symbols gram
       begin fun sym ->
-	if reachable.(sym.sid) then begin
-	  Frozen.iter_decompositions gram sym
-	    begin fun dcomp ->
+	Frozen.iter_decompositions gram sym
+	  begin fun dcomp ->
+	    if valid sym &&
+	      valid (Frozen.get_symbol gram dcomp.leftsid) &&
+	      valid (Frozen.get_symbol gram dcomp.rightsid) 
+	    then begin
 	      let topsid = get liveid.(sym.sid) in
 	      let leftsid = get liveid.(dcomp.leftsid) in
 	      let rightsid = get liveid.(dcomp.rightsid) in
 		imake_new_composition live topsid (leftsid, rightsid) dcomp.cdata;
 	    end;
-	end
+	  end
       end;
-
 
     validate_live live;
     let froz = finalize live in
       validate_frozen froz;
       froz
+
+let ensure_reachability gram =
+  let reachable = check_reachability gram in
+  let reachable sym = reachable.(sym.sid) in
+    filter_symbols gram reachable
+
+let ensure_realizability gram leafchecker =
+  let realizable = check_realizability gram leafchecker in
+  let realizable sym = realizable.(sym.sid) in
+    filter_symbols gram realizable
 
 (* works on frozen grams *)
 let filter_compositions gram pred =
