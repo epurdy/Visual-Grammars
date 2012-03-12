@@ -1,0 +1,301 @@
+\documentclass[10pt]{article}
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{leonine}
+\usepackage{nips07submit_e, times}
+
+\title{A Stochastic Grammar Model for Shapes}
+
+\author{
+Pedro Felzenszwalb\\
+Department of Computer Science\\
+University of Chicago\\
+Chicago, IL 60637\\
+\texttt{pff@cs.uchicago.edu}\\
+\And
+Eric Purdy\\
+Department of Computer Science\\
+University of Chicago\\
+Chicago, IL 60637\\
+\texttt{epurdy@cs.uchicago.edu}
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This is an abstract.
+\end{abstract}
+
+\section{Modeling Generic Shapes}
+
+Shape is a fundamental cue for recognition, blah blah.  Main
+difficulty is modeling variation.  Deformable models are fairly
+successful, but they are not expressive enough.  Mixture of deformable
+models is a step towards rich models.  This is closely related to a NN
+approach with a deformable matching measure.
+
+Grammar models generalize deformable models to allow for variable
+structure.  Grammar structure allows for models that are much richer
+than simply using a mixture model.  1) Factorizes variation to get
+large (essentially infinite) number of structures from a small number
+of rules.  2) Shared parts allow for more efficient learning.
+
+Our main contributions are 2-fold.  1) We define a formal grammar model for 
+shapes which separately captures structural variation and deformations.  Model
+generalizes the shape-tree hierarchical deformation model.  Model can be used
+to parse shapes using a variation of CKY algorithm.  2) We develop a method
+for learning the structure of a shape grammar from training examples.  Method
+works by incrementally incorporating examples into the current grammar, at
+each step it can add new rules to the grammar to enrich the model so it
+can propertly parse the current example.
+
+\subsection{Related work}
+
+Compositional models - Geman, etc.
+
+Pattern Theory, Grenander
+
+Shape-tree.
+
+Murphy and Torralba shared parts for object recognition.
+
+Allan Yuille recent work on grammar-based models.
+
+Ales Leonardis work on ``grammar'' models.
+
+Stolke's method for grammar induction via merging, etc.  Incremental
+incorporation is related to model merging.
+\cite{Stolcke1994Bayesian}
+
+Old work on synthetic pattern recognition, K. S. Fu.
+
+\section{Grammar Model}
+
+\bitem
+\item Probabilistic context-free shape grammar (PCFSG). Formal
+  definition.  I think we can describe tge model for open curves and
+  leave closed curves as an aside.
+\item Give an illustrative example.
+  \eitem
+
+In this section, we define a grammatical model over curves that is
+rich enough to capture both small geometric deformations and large
+structural deformations. Our model is an enrichment of the framework
+of Probabilistic Context-Free Grammars.
+
+Recall that a probabilistic context-free grammar is a tuple $(\Sigma,
+\NNN, \RRR, S, \PPP)$, where $\Sigma$ is a finite alphabet of terminal
+symbols, $\NNN$ is a finite set of nonterminal symbols, $\RRR$ is a
+finite set of substitution rules of the form $[X\to \lambda]$ for
+$X\in \NNN$, $\lambda \in (\Sigma \cup \NNN)^*$, and $\PPP : \RRR\to
+\RR$ is a (conditional) probability function satisfying
+$\sum_{\lambda\in (\Sigma\cup \NNN)^*} \PPP(X\to \lambda) = 1$ for all
+$X\in \NNN$. 
+
+We represent a curve as a sequence of oriented line segments. We will
+denote a line segment going from point $p$ to point $q$ by
+$\ell_{p,q}$. A curve will then have the form
+$$ \ell_{p_0,p_1} \ell_{p_1,p_2}\cdots \ell_{p_{n-1},p_n},$$ and $p_0$
+will be equal to $p_n$ iff the curve is closed. For simplicity of
+presentation, we will only discuss open curves in this section,
+although the model can easily be adapted for closed curves.
+
+By analogy with context-free grammars over strings, we introduce
+non-terminals, which represent oriented curves whose endpoints are
+fixed, but whose path between those endpoints is unspecified. We
+denote such a non-terminal of type $N$ going from point $p$ to point
+$q$ by $N_{p,q}$. By itself, $N$ will denote a type of non-terminal
+that can be instantiated between any $p$ and $q$.
+
+\begin{defn}
+An {\em abstract curvilinear forms} is a sequence of nonterminals and
+$\ell$ symbols, of the form
+$$ \alpha^{(0)} \alpha^{(1)} \cdots \alpha^{(n-1)}.$$ 
+
+A {\em concrete curvilinear form} is an abstract curvilinear form
+labeled with endpoints:
+$$ \alpha^{(0)}_{p_0,p_1} \alpha^{(1)}_{p_1,p_2} \cdots
+\alpha^{(n-1)}_{p_{n-1},{p_n}}.$$ 
+\end{defn}
+
+Our model for shape grammars generates random curves by performing two
+random processes in parallel:
+\bitem
+\item Generating a random structure: iteratively applying the
+  substitution rules of a PCFG to curvilinear forms
+\item Generating a random geometric distortion: using a geometric
+  deformation model to randomly place the endpoints of concrete
+  curvilinear forms. \eitem
+
+When we apply a substitution rule $X_{p,q}\to Y^{(1)}_{p,p_1}\dots
+Y^{(k)}_{p_k,q}$ we are in effect giving a more complete description
+of the path that the curve takes between points $p$ and $q$, by
+specifying what points it visits along the way (the $p_i$), and what
+sort of curve it follows between each (the $Y^{(i)}$). To ensure that
+our formulation is context-free, we require that the distribution of
+the $p_i$ be specified in a coordinate system relative to $p$ and $q$,
+such as Bookstein coordinates.
+
+\begin{defn}
+A Probabilistic Context-Free Shape Grammar (PCFSG) is a tuple
+$\GGG = (\NNN, \RRR, S, \ell, \MMM, \PPP)$, where
+\bitem
+\item $(\{\ell\},\NNN,\RRR,S,\PPP)$ is a PCFG with alphabet $\{\ell\}$,
+\item $\MMM = \{ \mu_{X\to Y^{(1)}\cdots Y^{(k)}} \mid (X\to
+  T^{(1)}\cdots Y^{(k)}) \in \RRR\}$ is a set of {\em control-point
+    distributions}, one for each substitution rule.  
+\eitem
+\end{defn}
+
+To simplify matters, we restrict our attention to grammars in Chomsky
+Normal Form, where all productions are of either of the form $X\to
+YZ$, with $Y,Z\ne \ell$, or of the form $X\to \ell$.
+
+\subsection{Geometric Deformation Model}
+
+We will model the midpoint distribution using the complex Watson
+distribution, defined as follows: consider our points in $\RR^2$ as
+complex numbers, and let $\tilde{z} = \left(\begin{array}{c c c} p& r&
+  q\end{array}\right)$.  Let $\tilde{\mu} = \left(\begin{array}{c c c} p&
+    \widehat{r} & q\end{array}\right)$, where $\widehat{r}$ is the
+    most likely value of $r$. For various reasons, we will multiply
+    $\tilde{z}$ by the $2\times 3$ Helmert matrix
+$$H = \left(\begin{array}{c c c} 1/\sqrt{2} & -1/\sqrt{2} & 0
+  \\ 1/\sqrt{6} & 1/\sqrt{6} & -2/\sqrt{6}\end{array}\right), $$ and
+then normalize the result to get our coordinates:
+\begin{align*}
+\langle p, q, r\rangle = z &= H\tilde{z} / \|H\tilde{z}\| \\
+\mu &= H\tilde{\mu} / \|H\tilde{\mu}\|
+\end{align*}
+
+Then
+$$\mu_{A\to BC}(r) = Watson(\mu,\kappa) =
+\frac{1}{Z(\kappa)}e^{-\kappa |z^*\mu|^2},$$ where $\kappa$ is a
+concentration parameter. More details on the Watson distribution can
+be found in Mardia and Dryden\cite{Mardia1999Complex}.
+
+\subsection{Parsing}
+
+We now give formulas for the likelihood of a curve given a PCFSG, and
+describe an algorithm to compute an approximate likelihood. 
+
+Let $\GGG = (\NNN,\RRR,S,\ell,\MMM, \PPP)$ be a shape grammar in
+Chomsky Normal Form, and let $C$ be a curve of length $n$.
+
+A $\GGG$-parse of $C$ is a directed tree $T=(V,E)$, where $V=V_{NT}
+\cup V_\ell$.  $V_{NT}$ contains the interior nodes of $T$, each of
+which is labeled by $X_{c_i c_j}$ for some $X\in \NNN$, $i,j\in
+[n]$. $V_\ell$ contains the leaf nodes of $T$, each of which is
+labeled by $\ell_{c_i c_{i+1}}$ for some $i$. Every segment $\ell_{c_i
+  c_{i+1}}$ is used exactly once as a label.
+
+$V_{NT} = V_{bin} \cup V_{lex}$. If $X_{c_i c_j}\in V_{bin}$ , then
+$X_{c_i c_j}$ has two children, $Y_{c_i c_k}$ and $Z_{c_k c_j}$, where
+$[X\to YZ] \in \RRR$. We will set $rhs(X_{c_i c_j})=YZ$.  We will let
+$R(T) = \{ [X\to YZ]_{c_i c_j c_k} \mid X_{c_i c_j} \sim Y_{c_i c_k},
+Z_{c_k c_j}\}$.
+
+If $X_{c_i c_j}\in V_{lex}$, then $X_{c_i c_j}$ has one child $v\in
+V_\ell$. In this case, we will set $rhs(X_{c_i c_j})=\ell$.
+
+Let $Parse_\GGG(C)$ be the set of all $\GGG$-parses of $C$.  The
+likelihood of $C$ according to $\GGG$ is
+\begin{align*}
+P(C\mid\GGG) &= \sum_{T\in Parse_\GGG(C)} P(C,T\mid G)\\
+&= \sum_{T\in Parse_\GGG(C)} P(C\mid T, G) P(T\mid G)\\
+\end{align*}
+
+$$P(C\mid T,\GGG) = \prod_{[X\to YZ]_{pqr}\in R(T)} \mu_{X\to YZ}(p,q,r)$$
+$$P(T\mid \GGG) = \prod_{X_{c_i c_j}\in V_{NT}} \rho_{X}(rhs(X_{c_i c_j}))$$
+
+We will use the {\em Viterbi approximation}:
+$$P(C\mid\GGG) \approx P_{vit}(C\mid \GGG) = \max_{T\in Parse_\GGG(C)}
+P(C,T\mid \GGG).$$
+
+We parse curves with PCFSG's using an adaptation of the CKY algorithm.
+
+Suppose we are parsing a curve $C=(p_1,\dots,p_n)$ using a grammar
+$\GGG = (\NNN, \RRR, S, \ell, \MMM, \PPP)$, and let $\GGG_X = (\NNN,
+\RRR, X, \ell, \MMM, \PPP)$ be the grammar we get by making $X$ the
+start symbol of $\GGG$. Let 
+$$T(X,i,j) = P_{vit}\left( (p_i,\dots,p_j) \mid \GGG_X \right).$$
+Then
+\begin{align*}
+T(X,i,j) &= \max_{\substack{X\to YZ\\ i\le k\le j}} &P_{vit}( (p_i,\dots,p_k)\mid
+\GGG_Y) \cdot P_{vit}((p_k,\dots,p_j) \mid \GGG_Z) \cdot \\
+& & \mu_{X\to YZ}(p_i,p_k,p_j) \cdot \PPP(X\to YZ) \\
+&= \max_{\substack{X\to YZ\\ i\le k\le j}} & T(Y,i,k) T(Z,k,j) \mu_{X\to YZ}(p_i,p_k,p_j) \cdot \PPP(X\to YZ) \\
+\intertext{with the base case}
+T(X,i,i+1) = \PPP(X\to \ell)
+\end{align*}
+For greater accuracy, we perform these calculations in the log domain.
+Using this recursive definition, we have an $O(|\NNN| n^3)$ algorithm
+for computing $P_{vit}(C\mid \GGG)$. This algorithm also allows us to
+construct an optimal parsek $T$ for $C$.
+
+
+\subsection{Learning Parameters}
+
+Given training curves $C_1,\dots,C_n$ and a fixed grammatical
+structure (i.e., $\NNN,\RRR,S,\ell$), we wish to learn optimal values
+for the continuous parameters of our grammar (i.e., $\MMM$ and
+$\PPP$). This can be either a maximum likelihood estimate,
+$$\max_{\MMM,\PPP} P(C_1,\dots,C_n\mid \GGG),$$
+or the maximum a posteriori estimate
+$$\max_{\MMM,\PPP} P(C_1,\dots,C_n\mid \GGG) \cdot P(\MMM,\PPP),$$
+according to some reasonable prior on $\MMM$ and $\PPP$\footnote{
+  Convenient choices are: a Watson distribution for the midpoints of
+  $\MMM$, a Gamma distribution for the concentrations of $\MMM$, and a
+  Dirichlet distribution for $\PPP$.}.
+
+Estimating $\PPP$ is the same problem that arises in learning the
+parameters of a standard PCFG. As is oftern the case in grammar
+learning algorithms, these parameters are straightforward to compute
+if we fix parses $T_1,\dots,T_n$ for $C_1,\dots,C_n$, and optimize
+$P(C_1,\dots,C_n, T_1,\dots, T_n \mid \GGG)$. We therefore use the
+hard EM algorithm to find approximately optimal values for our
+parameters: first, we choose plausible initial values for all
+parameters. Then we alternate between optimizing
+$P(C_1,\dots,T_1,\dots,T_n\mid \GGG)$ over the $T_i$, and optimizing
+it over $\GGG$.
+
+Similar to PCFG, but now we have deformation parameters as well.  Can use EM.
+
+\section{Learning Structure}
+
+Building a grammar from a single shape.  Show sample from grammar -
+basically a random deformaiton of the example.
+
+\subsection{Incremental Incorporation}
+
+Class of grammars considered, how to solve the problem.
+
+Perhaps show one synthetic example.
+
+\section{Experimental Results}
+
+Swedish Leaves.
+
+Romer dataset.
+
+\section{Conclusion and Future Work}
+
+\subsubsection*{Acknowledgments}
+
+Only in final, not in anonymized version.
+
+\bibliographystyle{IEEEtranS.bst}
+{\def\section*#1{\subsubsection*{#1}}
+\tiny{
+\bibliography{sg}
+}
+}
+
+\end{document}

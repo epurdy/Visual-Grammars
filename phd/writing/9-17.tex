@@ -1,0 +1,209 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\section{Merging as a Correspondence Problem}
+
+Devi Parikh got some decent results using the approach from ``A
+Spectral Technique for Correspondence Problems Using Pairwise
+Constraints'' by Marius Leordeanu and Martial Hebert. In order to use
+their framework, we have to have similarity terms and context terms.
+
+Their framework requires that these terms are nonnegative. 
+
+Their framework can produce correspondences that obey mapping
+constraints like one-to-oneness. We might not care about that.
+
+\bitem
+\item Similarity term. What is the reward for merging $X$ and $Y$? 
+  The KL divergence actually works pretty well.
+
+  If we think of $X$ as stealing the data $d_Y$ that $Y$ was
+  explaining, then we'll be paying $\log
+  \frac{P_Y(d_Y)}{P_X(d_Y)}$. If we don't know $d_Y$, then we'll just
+  have to guess, so we'll be paying $E_Y \left[ \log
+    \frac{P_Y(d_Y)}{P_X(d_Y)} \right]$, which is exactly the KL
+  divergence.
+
+  If the formula were correct, this would be weighted by the actual
+  amount of data that $Y$ is explaining, but we can maybe assume that
+  this is uniform pre-training. Or weight the KL divergence term by
+  how much data we think $Y$ should explaining.
+
+\item Context term. What is the reward for simultaneously merging
+  $X_1$ with $X_2$ and $Y_1$ with $Y_2$? Probably just a bonus if they
+  are neighbors in some well-defined sense.
+
+  One such sense: $X_1 Y_1$ and $X_2 Y_2$ are both right-hand
+  sides. Or $X_1 \to Y_1 Z_1$ and $X_2 \to Y_2 Z_2$ are rules.
+
+  It might be good to generalize this to other more subtle kinds of
+  neighborship. For example, the rightmost descendants of $B$ in $A\to
+  BC$ will be always be next to the leftmost descendants of $C$.
+
+  The context term can be interpreted as approximating the benefit
+  from merging two rules and no longer having to encode one of them,
+  or pay its Dirichlet/midpoint prior cost. To actually get it right,
+  you'd have to have ternary terms, and there's no obvious way to do
+  that.
+
+  \eitem
+
+\section{Building small grammars with choice}
+
+We have a grammar $\GGG$, and we are recursively using it to pick
+midpoints of a curve. We will say that $\GGG$ is $\theta$-complete if
+the midpoint choice of a subcurve of length $L$ can be made within
+$\theta L$ points of any midpoint choice.
+
+\begin{thm}
+Let $C$ be a curve of length $N = 2^n$. Then there is a
+$\frac{1}{2^{t+1}}$-complete grammar \GGG\ that has at most
+$(2^{3t} + 2^{2t}) N$ rules. (So, for $\theta=\frac{1}{8}$,
+\GGG\ has at most $80 N$ rules.)
+\end{thm}
+
+\begin{proof}
+We represent subcurves of $C$ by intervals of indices of the form
+$[x,y]$, where $0\le x < y \le N$.
+
+We make the following definitions:
+$$k_{max} = \lfloor \frac{n}{t} \rfloor$$
+$$\LLL_k = \{ [x,y] : 2^{kt} | x, 2^{kt} | y \} \mbox{ for } 0 \le k \le k_{max}.$$ 
+
+$$\mbox{(Note that } \LLL_0 \supset \LLL_1 \supset \cdots \supset \LLL_{k_{max}}.)$$
+
+$$\AAA_k = \{ [x,y] \in \LLL_k : (y-x) \le 2^{(k+2)t}\}$$
+
+$$\NNN_k = \{ [x,y] \in \AAA_k : [x,y] \notin \AAA_j \mbox{ for } j
+< i \}$$
+
+$$\RRR_k = \{ [x,y] \to [x, z] [z, y] : [x,y] \in
+\NNN_k, z = x + a2^{kt}, x < z < y \}\mbox{ for } 1\le k \le k_{max}$$
+
+We define $\GGG$ to have rules $\RRR$ and nonterminals $\NNN$, where
+$\NNN = \cup_{k=0}^{k_{max}} \NNN_k$ and
+ $\RRR = \cup_{k=1}^{k_{max}} \RRR_k$.
+
+First, we claim that for $[x,y]\to [x,z][z,y]\in \RRR_k$, $[x,z]$ and
+$[z,y]$ are in $\AAA_k$. This holds because:
+$$[x,y]\in \NNN_k \implies 2^{kt} | x,y \implies 2^{kt} | z = x + 2^{kt}a$$
+and
+$$[x,y]\in \NNN_k \implies (y-x) \le 2^{(k+2)t},$$ and since $[x,z],
+[z,y]$ are shorter than $[x,y]$, the same applies to them.
+
+Second, we claim that every subcurve $[x,y]\in \NNN_k$ has at least
+$2^t - 1$ evenly spaced choices of $z$ such that $([x,y] \to [x,z]
+[z,y]) \in \RRR_k$. This is true if $(y-x) \ge 2^t \cdot 2^{kt} =
+2^{(k+1)t}$, which is true, because $[x,y] \in \LLL_{k-1}$ and
+$[x,y]\notin \AAA_{k-1}$.
+
+Since we have at least $2^t - 1$ evenly spaced choices of midpoint, we
+can choose the midpoint within $2^{t+1} (y-x)$ of any desired
+midpoint.
+
+Now we must bound the size of $\RRR$.
+\begin{align*}
+|\RRR| &= \sum_{k=1}^{k_{max}} |\RRR_k| \\
+&\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot \frac{\max_{[x,y]\in\NNN_k} y-x }{2^{kt}}\\
+&\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot 2^{(k+2)t} / 2^{kt}\\
+&\le \sum_{k=1}^{k_{max}} |\AAA_k| 2^{2t}\\
+&\le \sum_{k=1}^{k_{max}} 2^{n - kt} \cdot (2^{2t} - 1) \cdot 2^{2t}\\
+&= 2^{n+2t}(2^{2t}-1) \sum_{k=1}^{k_{max}} 2^{-kt}\\
+&= 2^{n+2t}(2^{2t}-1) \frac{2^{-t}}{1 - 2^{-t}}\\
+&= 2^{n+2t}(2^{t}-1)(2^t + 1) \frac{1}{2^t - 1}\\
+&= 2^{n+2t}(2^t + 1)\\
+&= (2^{3t} + 2^{2t}) N
+\end{align*}
+
+\end{proof}
+
+\section{Computing the KL divergence}
+
+Consider the distribution $P_X$ of curves arising from a nonterminal
+$X$.  We wish to compute the KL divergence between $P_X$ and $P_Y$, so
+that we know whether we want to merge them.
+
+This will have to be highly approximate.
+
+\subsection{Dealing with Mixture Distributions}
+
+The first problem with computing the KL divergence between $P_X$ and
+$P_Y$ is that these are mixture distributions, with components of the
+form $P_{X\to AB}$, $P_{Y\to CD}$ for each rule we could use to expand
+$X$ or $Y$, respectively.
+
+I found a paper: ``APPROXIMATING THE KULLBACK LEIBLER DIVERGENCE
+BETWEEN GAUSSIAN MIXTURE MODELS'' by John R. Hershey and Peder
+A. Olsen. As the title suggests, they compare a whole bunch of
+approximations of the KL divergence between Gaussian mixture
+models. Since the divergence between Gaussians has a closed form, this
+problem is much easier than ours, where we have a hierarchical mixture
+model. Nevertheless, it seems like a good starting point.
+
+The most accurate approximation is, of course, a Monte Carlo estimate
+with a huge number of samples. They look at many methods, but for us
+the relevant ones seem to be:
+
+\bitem
+\item Monte Carlo with fewer samples. 
+\item Two eldritch variational horrors.
+\item One approximation from the paper ``An efficient image similarity
+  measure based on approximations of KL-divergence between two
+  gaussian mixtures'', by Jacob Goldberger, Shiri Gordon, and Hayit
+  Greenspan.
+
+  According to Hershey and Olsen, this is reported to work poorly for
+  GMM's with a few low-probability components. That particular
+  objection doesn't apply to us, since our components are uniform.
+\eitem
+
+Anyway, the GGG idea is this:
+
+\begin{align*}
+KL(f || g) &= \sum_{i=1}^n \alpha_i \int f_i \log f - \sum_{i=1}^n \alpha_i \int f_i \log g\\
+&\approx \sum_{i=1}^n \alpha_i \int f_i \log \alpha_i f_i - \sum_{i=1}^n \alpha_i \max_j \int f_i \log \beta_j g_j\\
+&= \sum_{i=1}^n \alpha_i \min_j \left( KL(f_i || g_j) + \log \frac{\alpha_i}{\beta_j} \right)
+\end{align*}
+
+In our context, this last formula is very simple, since we are talking
+about doing merges before any training, and the $\alpha_i, \beta_j$
+will have uniform values. This approximation then tells us to do an
+essentially CKY-like process to compute the KL divergence of mixtures.
+
+Who knows how well it would work for us?
+
+\subsection{Dealing with Binary Rules}
+
+Now we need to figure out $KL( P_{X\to X_1 X_2} || P_{Y \to Y_1
+  Y_2})$. As Pedro said, this gets really messy if we do it correctly,
+and allow $X$ and $Y$ to use different midpoints in their parses, or
+even get a full parse score instead of Viterbi.
+
+However, if we don't do that, but instead limit $Y$ to parsing an
+$X$-generated curve in the same way that $X$ generated it, then the
+problem might not be intractable.
+
+Let $C$ be the $X$-generated curve, where $C=DE$ is the decomposition
+specified by $X$. Then, for our purposes, $P_{X\to X_1 X_2}$ is just a
+product distribution over $D$, $E$, and the choice of the midpoint.
+
+The KL divergence is additive over independent distributions, so we get
+$$KL(P_{X\to X_1 X_2}) || P_{Y\to Y_1 Y_2} = KL(P_{X_1} || P_{Y_1}) +
+KL(P_{X_2} || P_{Y_2}) + KL(\mu_{X\to X_1 X_2} || \mu_{Y\to Y_1
+  Y_2}).$$
+
+This last term is just the KL divergence of the midpoint
+distributions. This will either be the KL divergence of two Watson
+distributions (which might have a closed form?) or the KL divergence
+of two Gaussian mixtures for a non-parametric midpoint model. In the
+second case, we can use the GGG approximation with more confidence, or
+use some other approximation from Hershey and Olsen.
+
+\end{document}

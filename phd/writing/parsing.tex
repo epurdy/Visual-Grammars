@@ -1,0 +1,291 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx, setspace}%%xy, setspace, amscd (commutative diagram)
+\title{Linear Time Parsing with Sparse Decomposition Families}
+\author{Pedro Felzenszwalb \footnote{Department of Computer Science, University of Chicago. Email: pff@uchicago.edu}\\
+Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+
+\section{Domains}
+We can parse one-dimensional stuff, preferably non-exact.
+
+\bitem
+\item Curves
+\item Speech
+\item Google maps trajectories?
+\item Time series
+\item Strings? Here the approximateness might be a problem.
+\eitem
+
+\subsection{Bioinformatics}
+
+\bitem
+\item {\tt http://www.biomedcentral.com/1471-2105/5/71}
+
+This is a published paper using CKY and inside parsing to analyze RNA.
+The grammars are hand-built and very simple.
+It has results on a benchmark, so it would be meaningful to compare performance.
+
+\item 
+Emergent Computation
+%Biological and Medical Physics, Biomedical Engineering, 2005, Part I, 145-196, DOI: 10.1007/0-387-27270-4_5
+
+Context-Free Languages: DNA and RNA 
+\eitem
+
+\subsection{Time series}
+\begin{itemize}
+\item ``An Empirical Comparison of Machine Learning Models for Time
+  Series Forecasting''. Nesreen K. Ahmed Amir F. Atiya Neamat El Gayar
+  Hisham El-Shishiny
+
+\item {\tt timemachine.iic.harvard.edu/site\_media/i/umaatutorial.pdf}\\
+  A powerpoint survey of various methods in time series regression:
+
+  There are several papers listed which deal with time series by doing
+  time warping. So it is likely that one can think about hierarchical
+  models akin to Hierarchical Curve Models. It's not clear if that's
+  useful.
+\end{itemize}
+
+How is HCM different from time warping? The main difference is that
+HCM is creating contexts that have both a time and a value
+component. One can think of HCM as subtracting out a linear trend from
+a particular time window; we can then talk about the local structure
+of the detrended time series in this window, and see its similarity to
+another time series with a very different trend.
+
+We could also generalize the HCM model to be more like time-distorted
+wavelets. Basically, this just means that instead of picking a
+midpoint and de-trending, we would subtract out a wavelet. Actually,
+we would probably want to subtract out a pair of wavelets, one from
+before the midpoint, and one from after.
+
+\section{Decomposition Families}
+
+\begin{defn}
+Let $C=c_0,\dots,c_n$ be a signal.
+
+A {\em decomposition family for $C$} is a pair $(I, R)$, where $I$ is
+a set of intervals $[i,j]$, and $R$ is a set of rules of the form
+$$[i,j] \to [i,k] + [k,j],$$ where $[i,j], [i,k], [k,j]\in I$. $I$
+  must contain the interval $[0,n]$.
+\end{defn}
+
+The most trivial decomposition family is the set of all intervals
+$[i,j]$ such that $0\le i < j \le n$, together with all possible
+decompositions of each $[i,j]$ into $[i,k] + [k,j]$. We will call this
+the {\em complete decomposition family}.
+
+
+\begin{defn}
+A decomposition family $F=(I,R)$ is $\theta$-flexible if, for every interval
+$[i,j]\in I$, and every $k$ such that $i<k<j$, there is a rule
+$$[i,j] \to [i,k'] + [k',j],$$
+where 
+$$|k-k'| < \theta |j-i|.$$
+\end{defn}
+
+\begin{defn}
+Let $C$ be a signal of length $n$ Let $F=(I,R)$ be a decomposition
+family for $C$.  An interval $[i,j]$ is called {\em reachable} if
+there is a sequence of intervals $x_i$ such that $x_0=[0,n],
+x_k=[i,j]$, and there is a rule with $x_i$ on the left-hand side and
+$x_{i+1}$ on the right-hand side for every $i$ between $0$ and $k$.
+\end{defn}
+
+\begin{defn}
+A decomposition family $F=(I,R)$ is $\theta$-complete if, for every
+interval $[i,j], 0\le i< j \le n$, there is a reachable interval
+$[i',j']\in I$ such that
+$$|i-i'| < \theta |j-i|$$
+and
+$$|j-j'| < \theta |j-i|.$$
+\end{defn}
+
+\section{Constructing Sparse Decomposition Families}
+
+\mar{The notation of this section may not be consistent with other sections.}
+
+We construct sparse families. There are other constructions, possibly
+more efficient.
+
+\begin{thm}
+Let $C$ be a curve of length $N = 2^n$. Then there is a
+$\frac{1}{2^{t+1}}$-flexible decomposition family $(\III,\RRR)$ that
+has at most $(2^{3t} + 2^{2t}) N$ rules. (So, for
+$\theta=\frac{1}{8}$, $|\RRR|$ is at most $80 N$.)
+\end{thm}
+
+\begin{proof}
+We represent subcurves of $C$ by intervals of indices of the form
+$[x,y]$, where $0\le x < y \le N$.
+
+We make the following definitions:
+$$k_{max} = \lfloor \frac{n}{t} \rfloor$$
+$$\LLL_k = \{ [x,y] : 2^{kt} | x, 2^{kt} | y \} \mbox{ for } 0 \le k \le k_{max}.$$ 
+
+$$\mbox{(Note that } \LLL_0 \supset \LLL_1 \supset \cdots \supset \LLL_{k_{max}}.)$$
+
+$$\AAA_k = \{ [x,y] \in \LLL_k : (y-x) \le 2^{(k+2)t}\}$$
+
+$$\NNN_k = \{ [x,y] \in \AAA_k : [x,y] \notin \AAA_j \mbox{ for } j
+< i \}$$
+
+$$\RRR_k = \{ [x,y] \to [x, z] [z, y] : [x,y] \in
+\NNN_k, z = x + a2^{kt}, x < z < y \}\mbox{ for } 1\le k \le k_{max}$$
+
+Our decomposition family is $(\NNN, \RRR)$, where
+$\NNN = \cup_{k=0}^{k_{max}} \NNN_k$ and
+ $\RRR = \cup_{k=1}^{k_{max}} \RRR_k$.
+
+First, we claim that for $[x,y]\to [x,z][z,y]\in \RRR_k$, $[x,z]$ and
+$[z,y]$ are in $\AAA_k$. This holds because:
+$$[x,y]\in \NNN_k \implies 2^{kt} | x,y \implies 2^{kt} | z = x + 2^{kt}a$$
+and
+$$[x,y]\in \NNN_k \implies (y-x) \le 2^{(k+2)t},$$ and since $[x,z],
+[z,y]$ are shorter than $[x,y]$, the same applies to them.
+
+Second, we claim that every subcurve $[x,y]\in \NNN_k$ has at least
+$2^t - 1$ evenly spaced choices of $z$ such that $([x,y] \to [x,z]
+[z,y]) \in \RRR_k$. This is true if $(y-x) \ge 2^t \cdot 2^{kt} =
+2^{(k+1)t}$, which is true, because $[x,y] \in \LLL_{k-1}$ and
+$[x,y]\notin \AAA_{k-1}$.
+
+Since we have at least $2^t - 1$ evenly spaced choices of midpoint, we
+can choose the midpoint within $2^{t+1} (y-x)$ of any desired
+midpoint.
+
+Now we must bound the size of $\RRR$.
+\begin{align*}
+|\RRR| &= \sum_{k=1}^{k_{max}} |\RRR_k| \\
+&\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot \frac{\max_{[x,y]\in\NNN_k} y-x }{2^{kt}}\\
+&\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot 2^{(k+2)t} / 2^{kt}\\
+&\le \sum_{k=1}^{k_{max}} |\AAA_k| 2^{2t}\\
+&\le \sum_{k=1}^{k_{max}} 2^{n - kt} \cdot (2^{2t} - 1) \cdot 2^{2t}\\
+&= 2^{n+2t}(2^{2t}-1) \sum_{k=1}^{k_{max}} 2^{-kt}\\
+&= 2^{n+2t}(2^{2t}-1) \frac{2^{-t}}{1 - 2^{-t}}\\
+&= 2^{n+2t}(2^{t}-1)(2^t + 1) \frac{1}{2^t - 1}\\
+&= 2^{n+2t}(2^t + 1)\\
+&= (2^{3t} + 2^{2t}) N
+\end{align*}
+
+\end{proof}
+
+
+\section{Approximate Parsing}
+
+
+\begin{defn}
+Parsing relative to a decomposition family. Viterbi and full?
+\end{defn}
+
+Standard parsing is parsing relative to the complete decomposition
+family.
+
+\begin{thm}
+Let $G$ be a context-free grammar with $k$ rules. Let $C$ be a signal
+of length $n$. Let $F=(I,R)$ be a decomposition family for $C$. Then
+there is an algorithm to approximately parse $C$ in time $O(|R|k)$.
+\end{thm}
+
+In the next section, we try to say what kind of grammars will be hurt
+by this approximation. It might be the case that we should manipulate
+the approximation to do deletion more than misparsing, basically by
+ignoring parts of the input that are close to early constituent
+boundaries.
+
+\section{Robust Grammars}
+
+In some cases, we may need to modify a grammar slightly so that it
+behaves well with approximate parsing.
+
+For instance, consider approximate parsing of strings with space
+removed. If we use a context-free grammar trained on English, the
+approximation would be very, very inaccurate, since being a single
+letter off will prevent us from recognizing a word as being a
+particular part of speech.
+
+In this case, we could modify our rules so that
+\begin{align*}
+N &\to \mbox{cat} \\
+\intertext{becomes}
+N &\to \mbox{cat} \\
+N &\to \mbox{at} \\
+N &\to \mbox{cath} \\
+N &\to \mbox{cata} \\
+N &\to \mbox{catg} \\
+\ldots
+\end{align*}
+That is, we allow letters to be removed at either end, and allow
+letters to be added at either end. When adding letters, the
+distribution should be realistic (such as from an n-gram model) rather
+than uniform, or else we will pay $\log|\Sigma|$ for every letter
+added.
+
+In general, we can imagine adapting any grammar to deal with such
+problems. The grammar must allow deletion and addition of data at the
+ends of a chunk. The model for addition should be relatively accurate.
+
+\section{Data-Dependent Decomposition Families}
+
+Basically, want to build families on top of a good subsampling. Here
+good means that it respects some property of the signal, which could
+mean either boundary cues or that the subsampled version approximates
+the original well.
+
+\section{Correcting Parses through Local Perturbations}
+
+We think it is meaningful to talk about local perturbations of a
+parse. This would hopefully improve the quality of the parse.
+
+We are assuming that all grammars are in CNF, and thus all parse trees
+are binary trees.
+
+Consider every pair of adjacent data points. Some pairs are not
+separated by a constituency boundary (if the two points were the two
+children of an interval of length two), but at least half of the pairs
+are. 
+
+It is then reasonable to consider shifting either of these data points
+across the constituency boundary. We have to somehow rearrange the
+parse tree to keep it binary. This may require our grammar to resemble
+the robust grammars I described earlier. In particular, it would be
+convenient if every nonterminal $X$ had the rule $X\to aX$ for every
+terminal $a$, and some rule for deletion. Moving an added terminal to
+fill the hole left by a deletion is the whole point of this
+perturbation process.
+
+We want to have a local computation at each of these adjacent
+pairs. How do we do that?
+
+There are a linear number of adjacent pairs. How quickly can we do all
+the perturbations we want to do?
+
+\section{Proposed Experiments}
+
+For these techniques to make sense, we need to be parsing signals that
+are relatively long, something like 40 data points. The more we have,
+the better.
+
+We also need to already have a grammar, since we don't want to start
+trying to do grammar induction in arbitrary unfamiliar domains. We
+could also use synthetic grammars, but that might require familiarity
+with the domain.
+
+We could try doing experiments with English text. This has the
+advantage that we can start off with a realistic grammar. There is the
+disadvantage that the approximation assumption is less valid - if
+we're off by some characters, that might doom us.
+
+We could try building some synthetic curve grammars, sampling from
+them, and then comparing the parse we get to both the sample parse
+tree and the optimal parse tree.
+
+We can try all sorts of stuff with curve grammars.
+
+\end{document}

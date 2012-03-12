@@ -1,0 +1,490 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+
+\author{Eric Purdy \footnote{Department of Computer Science,
+    University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+\DeclareMathOperator*{\len}{len}
+\newcommand\fakecite[1]{ {\bf [#1]} }
+
+%% \newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
+
+\newcommand\spk[2]{\framebox{images/#2.png}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+
+\part{GRAMMATICAL METHODS IN VISION}
+
+
+\section{What problem are we working on?}
+
+\subsubsection{Problems of Interest}
+There are a number of problems in computer vision that are not yet
+solved satisfactorily.  We are interested in the following problems:
+
+\bitem
+\item Shape Classification (from silhouettes) \\
+  Example datasets: Swedish leaves, MPEG7
+\item Finding Shapes in Cluttered Images
+\item Object Classification\\
+  Example datasets: Caltech-256
+\item Scene Labeling \\
+  Example datasets: LabelMe
+\item Class-level object detection \\
+  Example datasets: Pascal
+\item Scene categorization \\
+  Example datasets: LabelMe
+\eitem
+
+
+\subsubsection{What is a grammatical Method?}
+Some have proposed to study grammatical methods in vision.
+These are also called compositional/decompositional methods.
+they are characterized by:
+
+\bitem
+\item trying, at least in principle, to understand an entire scene
+\item having a semantically meaningful, hierarchical decomposition of an image
+\item having models for objects that can contain other models
+\item having recursive models (imagine an L-system producing a maple leaf)
+\item having functional models which are simply a mixture of other models
+\eitem
+
+This is motivated by consideration of the human visual system.
+\bitem
+\item Humans use context to resolve ambiguities.
+\item Humans interpret some groupings of objects as a larger level object or activity.
+\item Gestalt research demonstrates that perception has definite, repeatable grouping rules.
+\item Humans seem to interpret whole scenes even in order to answer more specific questions.
+\eitem
+
+\subsubsection{Types of visual grammars}
+
+There are several questions here:
+\bitem
+\item What sort of object are we modeling: a 2-d image, a 3-d scene, a 1-d curve?
+\item What is the lowest level of data we are looking at? Are we looking at
+  pixels, superpixels, keypoint detections? 
+\item How do we represent the visual appearance of our data? Do we use
+  the color of a pixel to describe it, or do we use a region
+  descriptor like SIFT? How do we describe the appearance of a curve?
+\item How are we allowed to decompose our input into a hierarchy?
+  Equivalently, how do we agglomerate pieces of data into larger objects?
+\eitem
+
+\section{Grammatical Vision is Both Difficult and Important}
+
+It is difficult because:
+\bitem
+\item Little concrete progress has been made - general frameworks have
+  no results, people that have gotten results don't seem to have a
+  general framework.
+\item Grammar induction for string languages is very difficult already
+\item Many algorithmic problems arise in transferring techniques from
+  computational linguistics
+\item There is not a serious existing science, comparable to
+  linguistics, that provides intermediate hypotheses and sanity
+  checks.  
+
+\eitem
+
+Using grammatical methods in vision is an important task for many reasons.
+
+\subsubsection{Rich Annotations}
+
+It would be very useful if vision algorithms could produce richer
+annotation of images. Rather than a list of detected objects, we would
+like to simultaneously detect objects and make inferences about their
+relationships to one another. 
+
+As an extended example, we would like a surveillance system capable of
+describing spatial relationships between humans in a format both (1)
+rich enough to detect and describe crimes in progress, and (2)
+meaningful and simple enough that human operators could program in
+exceptions. For example, a good surveillance system might use
+contextual rules to ignore athletic activities, like tackle football,
+that would be difficult to distinguish from criminal activities, like
+assault. Ideally, the system would be able to distinguish between a
+game in progress and an assault that happened to take place on an
+athletic field.
+
+We would also like to be able to train on suitably systematic rich
+annotations. This will probably be necessary to output meaningful rich
+annotations on a wide range of data, if we do not want to explictly
+write rules for using every possible annotation primitive. Explicitly
+programming the anotation logic is likely to be labor-intensive and
+brittle, as novel combinations of circumstances will always arise.
+Learning from rich annotations would require powerful generalization
+over their structure.
+
+Grammatical methods are a strong candidate for interacting with rich
+annotations, because 
+
+\bitem
+\item Hierarchical decomposition allows for a rich annotation
+  structure corresponding to the structure of the decomposition.
+
+\item Hierarchical decomposition presses us to explain how any two
+  parts of our annotation are related, making for more useful
+  annotations.
+
+\item Decomposition provides a reasonable and elegant solution to the
+  ``questionable parts'' problem. In any rich annotation system, there
+  is an arbitrary choice of how many things to label. This is
+  especially pronounced when we start labeling subparts of objects,
+  like eyes in a face, or agglomerations, like crowds of
+  people. Forcing these annotations to be consistent is very
+  difficult, and may be counter-productive. For example, if we must
+  label every face in a crowd, then a crowd seen from a distance will
+  have an enormous amount of face annotations, most of which are
+  basically guesses. If we never label faces in a crowd, we are
+  missing out on a lot of face training data.
+  
+  Hierarchical decomposition describes a scene as a hierarchy of
+  objects, and further decomposition of these objects is optional; as
+  long as we know something about the object's appearance, we don't
+  have to demand that it be broken up into its constituent parts.
+
+\item Hierarchical decompositions can be represented in a format such
+  as XML, so that existing technology would allow programmers to
+  automate both sophisticated analyses of and responses to our
+  annotations. For example, if we lived in a fascist state that
+  routinely monitored movement and contact between citizens, such
+  automation might make it easier to automatically send surveillance
+  reports to the most relevant officer in the secret police.
+
+\item Hierarchical decomposition will allow us to make good use of
+  rich annotation training data, since we can use the decomposition of
+  the annotation to generalize our training labels. For instance, if
+  the annotation specifies a cat wearing a silly hat, we can decompose
+  the image into these two parts and use it to train our cat model and
+  our silly hat model, rather than training a specific
+  silly-hatted-cat model, or polluting our cat model with training
+  data depicting a farily unlikely cat instantiation.
+
+ \eitem
+
+In the chalkboard example, a (visual) grammatical approach might also
+produce more useful output than simple text. For instance, in
+transcribing the boards as lecture notes, we would like to be able to
+tag non-textual regions as figures and include them verbatim, or
+render them as a collection of lines.
+
+
+\subsubsection{Statistical Modules}
+
+We would also like to like to be able to integrate different
+statistical models in a modular fashion, including models trained in
+different contexts. As an example, consider a handwriting analysis
+system for transcribing lectures given on a chalkboard. The system
+will be much stronger if it can use knowledge about the language of
+the handwriting, and even the subject of the lecture. We would like to
+supplement our training data with other sources, such as textbooks and
+academic papers in the appropriate subject.
+
+Grammatical methods and rich annotation would help us integrate such
+modular statistical models. If we describe the contents of an image in
+terms of objects and relationships (such as images of words juxtaposed
+on a chalkboard), and if we can map these objects and relationships
+across domains (such as words juxtaposed in a sentence), then we can
+use these correspondences to transfer statistical knowledge. For
+example, we could strengthen our board transcription program with a
+Markov model for adjacent letters, a stochastic grammar for sentences
+and sentence fragments, and a topic model for word choice.
+
+\subsubsection{Sharing Object Parts for an Enormous Object Dictionary}
+
+It is currently impractical for vision systems to know about more than
+a certain number of object classes, something like several hundred for
+adequate performance. It would be very useful if we could increase
+this number, so that we have a vision system capable of dealing with
+tens of thousands of object classes.
+
+This is impractical unless we can devise algorithms which are
+sublinear in the number of known object classes. This, in turn,
+requires that our set of models either admits some sort of search
+structure, or that our models are built from a reasonably small set of
+parts.
+
+One particularly nice example of this would be a chalkboard
+transcription system, with the letters of the alphabet being the small
+set of parts that combine to produce many objects.
+
+Alternatively, we could try and build a very efficient search
+structure over our set of models.
+
+\subsubsection{Bidirectional Pipeline}
+
+While human vision crucially relies on global context to resolve local
+ambiguity, computer vision algorithms often have a pipeline which
+makes hard low-level decisions about image interpretation, and then
+uses this output as input to higher-level analysis. We argue that
+algorithms will be more accurate and less brittle if they avoid making
+hard decisions whenever possible.
+
+For example, in our whiteboard system, there will be various stray
+marks on the chalkboard. We would prefer not to filter these out with
+some sort of quality threshold, but instead mark them as
+possibilities, try to assemble an overall interpretation of the board,
+and then discount any stray marks that do not participate in the
+annotation. This seems much more fruitful than filtering out stray
+marks, along with some genuine letters, and then having to be very
+forgiving of words actually missing some of their letters altogether.
+
+This requires a bi-directional pipeline, in which we can figure out
+how to combine and resolve information at different levels.
+Grammatical methods provide us with powerful inference algorithms for
+determining the most likely decomposition of a scene under a given
+compositional model. This is precisely what we need: the overall
+likelihood of the decomposition is a common currency that allows us to
+negotiate between fitting the local data well, and explaining the
+local data in a way that allows a good decomposition of the rest of
+the image.
+
+\subsubsection{Modeling clutter and Whole Scene Parses}
+
+Humans deal with clutter and missing data largely by understanding its
+source. Similarly, we would like our algorithms to learn specific and
+accurate models of clutter and occlusion.
+
+In particular, we would like to explain clutter in the background with
+sub-parts of the objects of interest. Since objects in the background
+are still objects, and are often related to the objects of interest,
+this might allow us to build a much stronger background model in many
+cases.
+
+For instance, in our chalkboard example, it would be helpful to have a
+model for stray chalk marks, rather than a model for arbitrary
+unexplained patches; otherwise we will be tempted to explain stray
+chalk marks as some letter, possibly a lower-case 'i'. If we try to
+set our threshold high enough that we don't do this, we might start
+labeling some genuine i's as background. If we instead have a model
+for chalk marks, we can explain stray chalk marks and i's as
+particular sorts of chalk marks, and differentiate them based on
+context and appearance.
+
+Also in this vein, it is useful to demand whole scene parses, since it
+avoids the need to set various detection thresholds. Instead of having
+to set a filter on chalk marks to filter out stray chalk marks, we
+simply explain them and discount them, since they are not part of any
+larger structure, such as a word, that we find interesting.  With such
+a system, we might even be able to ignore rather subtle clutter, such
+as some stray letters from a previous lecture that were not completely
+erased.
+
+\subsubsection{Grammatical Methods use data efficiently}
+Grammatical models are fundamentally about making independence
+assumptions, and independence assumptions increase the effective
+amount of training data you have.
+
+\begin{rem}[Grammatical methods are an independence assumption]
+Grammatical methods in general are characterized by 1) a method for
+decomposing novel data in a hierarchical fashion, and 2) an
+explanation for each level of the hierarchy in terms of previously
+seen data. For example, in a standard CFG, we will have both a parse
+tree over a sentence, and a set of labels for the nodes of the parse
+tree. If the CFG has been automatically generated (i.e., no human has
+assigned semantic meaning to grammar elements), then the set of labels
+for the nodes is just a probability distribution derived from all
+parts of the training set that have received the same label. For
+generic grammatical methods, we can assume context-freeness by
+specifying that the contents of a node N (all nodes below N in the
+hierarchy) are independent of the context of a node N (all nodes not
+below N in the hierarchy) given the data stored at N (its label and
+any attributes).
+\end{rem}
+
+\begin{rem}[Independence assumptions yield more effective data]
+Independence assumptions let you effectively multiply the amount of data
+you have. Consider the following simple problem: try to classify 0-1
+vectors into two classes given a bunch of labeled examples. Consider the
+two sort of extreme things we can do: if we assume that each coordinate
+of the vector is independent, we get a Naive Bayes classifier, where we
+basically learn what the distribution is over a given coordinate for
+each class. The other extreme is assuming that there is total
+dependence, that there is no relation between any two vectors. Then the
+maximum likelihood classifier (Paranoid Bayes?) is given by seeing how
+many times a specific vector showed up in each class, and picking the
+class where it showed up more often. We would have to guess on any novel
+vector. The upshot is that the Naive Bayes classifier acts like the
+Paranoid Bayes classifier where we have trained on a much larger
+synthetic data set. (Specifically, for each class, we generate all
+possible vectors that can be made by taking the first coordinate of a
+random example from the class, then taking the second coordinate from an
+independently chosen random example from the class, etc.)
+\end{rem}
+
+This can be seen in examining the classic nonsense sentence "Colorless
+green ideas sleep furiously". The supposed weakness of context-free
+grammars, that the context-free assumption is unrealistic, is actually a
+strength, because it allows us to parse and react to very unrealistic data.
+
+\section{Generalizing Nearest-Neighbors and deformable models}
+
+We would like to start with nearest-neighbor (NN) algorithms, because
+they are very effective in many areas of vision, and because they
+admit a straightforward grammatical interpretation.
+
+We are specifically interested in NN algorithms that are based on
+deformable models.
+
+
+%% For each, a grammatical formulation that explains how to:
+%% \bitem
+%% \item interpret a single example as a grammar
+%% \item interpret the matching/scoring algorithm as parsing with a
+%%   grammar
+%% \item Figure out how to (efficiently) parse with a more general
+%%   grammar in this framework.
+%% \item Produce random data given a grammar.
+%% \eitem
+
+%% questions about nng:
+
+%% o what does nng provide? does it simply match one object to another, or does it
+%%   yield annotations of input data, or both?
+
+%% o what is our task? do we have to output info about inner structure, or do we just 
+%%   need a likelihood function?
+
+%% o how is similarity measure broken up among the parts of the object?
+%%   o does the way in which it is calculated yield a decomposition of the object?
+
+%% o we basically want algorithms which yield a correspondence between
+%%   the parts of two objects
+
+
+%% maybe we are actually talking about deformable models, not nearest neighbor?
+
+\subsubsection{Deformation models (VERY ROUGH)}
+
+We are working with datapoints in a space $\XXX$. Let $\CCC$ be a
+space of correspondences between two datapoints in $\XXX$.  We leave the
+notion of correspondence slightly vague; it might be a partial
+matching of the pieces of the two datapoints.
+
+We define a deformation model $\MMM: \XXX \times \CCC \times \XXX \to
+\RRR^{\ge 0}$ to be a function which maps two datapoints and a
+correspondence to a matching cost. $\MMM(x_1, c, x_2)$ represents the
+quality of the correspondence $c$ given that it purports to be a
+correspondence between $x_1$ and $x_2$. We are particularly interested
+in considering this to be the negative log of a (possibly
+non-normalized) probability distribution.
+
+Given a deformation model $\MMM$, we can define a nearest-neighbor
+classification algorithm on $\XXX$. If we have classes $X_1,\dots,X_k$ with
+training examples $\{x_{ij} \mid j\in [n] \}$ in $\XXX$, we can classify a novel
+example $x_*$ as being of the class $X_i$ which minimizes 
+$$\min_{j\in [n], c\in \CCC} \MMM(x_{ij}, c, x_*).$$
+
+Our research program is then to then to automatically generalize from the
+examples $\{x_{ij}\}$ using a grammatical version of $\MMM$.
+
+\bitem
+\item Define an agglomeration operator $\oplus$ on $\XXX$ that sticks
+  two datapoints together to get another. This may require enlarging
+  $\XXX$.
+\item Extend $\CCC$ in such a way that it respects $\oplus$: if $c_1$
+  is a correspondence between $x_1$ and $y_1$, and $c_2$ is a
+  correspondence between $x_2$ and $y_2$, we want there to be a
+  correspondence $c_1 \oplus_\CCC c_2$ between $x_1\oplus x_2$ and
+  $y_1\oplus y_2$.
+\item Redefine $\MMM$ so that $\MMM( x_1\oplus y_1, c_1 \oplus_\CCC
+  c_2, x_2\oplus y_2 )$ is the sum of $\MMM(x_1,c_1,y_1)$,
+  $\MMM(x_2,c_2,y_2)$, and possibly some interaction term $T( (x_1,y_1), (x_2,y_2) )$
+
+\item Define grammars over $\XXX$, such that $\oplus$ is used to stick
+  together the parts of the hierarchical decomposition
+
+\item Learn new, grammatical class models. These will be used for
+  classification like so:
+$$\argmin_i \min_{x\in \XXX c\in \CCC} \MMM(x, c, x_*) - \log\PP[x
+    \mid G_i].$$ We will call this parsing.  As part of this, we want
+  to be able to adapt whatever minimization algorithm was used by
+  $\MMM$ to find the best correspondence, and use it to find the best
+  parse of $x_*$.  
+\eitem
+
+Why is it important that $\oplus$ be used for the hierarchical
+decomposition? It means that the minimization algorithm of the last
+point will be producing a hierarchical decomposition of $x$, and thus
+of $x_*$.
+
+\subsubsection{Generalizing nearest neighbor/examplar methods}
+For a given nearest-neighbor or exemplar-based algorithm, we want a
+grammatical formulation that explains how to: 
+
+\bitem
+\item interpret a single example as a grammar
+\item interpret the matching/scoring algorithm as parsing with a grammar
+\item Figure out how to (efficiently) parse with a more general grammar in this framework.
+\item Produce random data given a grammar.
+\eitem
+
+
+\subsubsection{Grammatical transformations}
+
+Currently, it is not known how to do grammar induction except through
+heuristic exploration of the space of models.
+
+Plan is to iteratively apply various transformations to the grammar,
+and try to maximize the posterior. This necessitates a prior over
+grammars - we will probably use MDL.
+
+Tranformations could be:
+\bitem
+\item merging two submodels
+\item (over)-clustering all submodels, and then merging within each cluster
+\item Splitting a submodel into multiple submodels by clustering the
+  training data associated with it.
+\item Identifying some subset of our training data or our model as a
+  constituent, and introducing a new sub-model to represent it.
+\eitem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Prior Work and Literature Review}
+\bitem
+\item Visual Grammars:
+\bitem
+\item Stu Geman and Ya Jin's work
+\item visual L-systems
+\eitem
+\item Grammar Induction:
+\bitem
+\item Stolcke's thesis
+\item Dan Klein 
+\item Statistical Language Learning, Eugene Charniak
+\eitem
+\eitem
+
+
+\end{document}

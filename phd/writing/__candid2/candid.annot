@@ -1,0 +1,158 @@
+! Unclassified
+
+Statistical Science
+2004, Vol. 19, No. 1, 95–110
+DOI 10.1214/088342304000000017
+© Institute of Mathematical Statistics, 2004
+Nonparametric Bayesian Data Analysis
+Peter Müller and Fernando A. Quintana
+Abstract. We review the current state of nonparametric Bayesian inference.
+The discussion follows a list of important statistical inference problems,
+including density estimation, regression, survival analysis, hierarchical
+models and model validation. For each inference problem we review relevant
+nonparametric Bayesian models and approaches including Dirichlet process
+(DP) models and variations, Pólya trees, wavelet based models, neural
+network models, spline regression, CART, dependent DP models and model
+validation with DP and Pólya tree extensions of parametric models.
+Key words and phrases: Dirichlet process, regression, density estimation,
+survival analysis, Pólya tree, random probability model (RPM).
+
+POP: Patchwork of Parts Models for Object
+Recognition
+Yali Amit∗ and Alain Trouv ́ †
+e
+January 15, 2007
+
+J. R. Statist. Soc. B (1999)
+61, Part 3, pp. 485^527
+Bayesian nonparametric inference for random
+distributions and related functions
+Stephen G. Walker,
+Imperial College of Science, Technology and Medicine, London, UK
+Paul Damien,
+University of Michigan, Ann Arbor, USA
+Purushottam W. Laud
+Medical College of Wisconsin, Milwaukee, USA
+and Adrian F. M. Smith
+Queen Mary and West®eld College, London, UK
+
+Nonparametric maximum likelihood estimation by the method of sieves
+Stuart Geman and Chii-Ruey Hwang
+
+! Datasets
+
+@labelme
+
+Introduces the LabelMe dataset.
+
+! Parsing
+
+Valiant: Boolean Matrix Multiplication for Parsing
+
+Pedro: Fast min-plus matrix multiplication algorithm.
+Pedro recommends Algorithm no. 2.
+
+! Prior Work on Visual Grammars
+
+!! Devi Parikh
+
+@Parikh2009Unsupervised
+@Parikh2007Hierarchical
+
+!! The Brown School
+
+@BienenstockCompositionality
+@GemanComposition
+@Huang2001Compositional
+@Jin2006Probabilistic
+
+@jin-geman
+
+!! Song-Chun and Friends
+
+@Zhu2009Unsupervised
+@Zhu2006Stochastic
+@Han2009BottomUpTopDown
+@Tu2005Image
+
+! Unsupervised grammatical induction
+
+!! Finding the Structure
+
+@Stolcke1994Bayesian
+@deMarcken1995Unsupervised
+
+This is an article by Carl de Marcken on learning grammars. Approach
+is theoretically a lot like Stolcke's.
+
+@deMarcken1996Linguistic
+
+@deMarcken1996Unsupervised
+
+@Cook1976Grammatical
+
+@Charniak1996Statistical
+
+@Charniak97a
+
+This is a short little book that talks about grammar induction,
+including unsupervised. Some discussion of concrete systems.
+
+@NevillManning1997Identifying
+@NevillManning1996Inferring
+
+!! Segmentation and Morphology
+
+@Goldsmith2006Algorithm
+@Cohen2007Voting
+@Wolff1977Discovery
+@Wolff1980Language
+@Wolff1982Language
+
+!! Distributional Clustering
+
+@Schutze1995Distributional
+@Schutze1997Ambiguity
+@Klein2002Natural
+
+! Statistical Shape Analysis
+
+@Dryden1998Statistical
+@Kent2004Simulation
+@Mardia1999Complex
+
+! Hierarchical Curve Models
+
+@FelzenszwalbHierarchical
+@Felzenszwalb07
+
+! Dependency Grammars
+
+@Mcdonald2005Nonprojective
+@Csurka2004Visual
+@Lazebnik2005Sparse
+@Lazebnik2006Beyond
+
+! Background works in Computational Linguistics
+
+@manning-schutze
+
+Just a general textbook on computational linguistics.
+
+@Jurafsky2008Speech
+
+! Dryad
+
+@FakcharoenpholPlanar
+
+@KleinMultiplesource
+
+@Tarjan1977Finding
+
+! Tensors
+
+@Kofidis2002Best
+
+@Lim2006Singular
+
+@Qi2005Eigenvalues

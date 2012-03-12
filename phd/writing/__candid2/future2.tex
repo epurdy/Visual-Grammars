@@ -1,0 +1,157 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+\part{FUTURE DIRECTIONS}
+
+\section{Linear-time Approximate Parsing in Other Domains?}
+
+\section{Cluttered images}
+
+It is possible to use curve grammar techniques to deal with cluttered images.
+
+\subsection{Visual chalkboard?}
+
+It might not be that totally insane if we work with curves and
+Inkscape? Especially if we work with synthetic examples.
+
+\section{Other classes of visual grammars}
+
+\subsection{Generic Grammar Formalism (lots of work)}
+\note{ This should be moved to later. A straightforward account of
+  hierarchical curve models turning into grammars should take its place. }
+
+We start from a visual model of the form $M[\cdot](\cdot)$, where
+$M[a](x)$ gives the negative log probability of observing $x$ given
+that we are observing model $M$ with attributes $a$. Alternatively,
+$M[a](x)$ can just be a cost function.
+
+We might use $M[a](x)$ for classification. If we have models $M_1,
+\dots, M_k$, then our classifier would output
+$$\argmax_{i} \max_a M_i[a](x).$$
+We can also use $M[a](x)$ to infer the attribute $a$ as
+$$\argmax_a M[a](x).$$
+
+Starting from some model, we wish to reinterpret that model as a
+probabilistic attribute grammar in some visual setting, where the
+model's score on an example is a parse score. (This can be either a
+Viterbi parse score or a full parse score.) We reinterpret as follows: 
+
+\bitem
+
+\item Mixture components become choice. This in particular applies to
+  nearest neighbor and exemplar methods. If $M$ is a mixture model
+  with components $M_1, \dots, M_k$ and mixture weights $p_1, \dots,
+  p_k$, where
+  $$ M[a](x) = \max_i M_i[a](x) * p_i, $$ or
+  $$ M[a](x) = \max_i M_i[a](x) + \log p_i, $$
+  then we can describe this by the grammar
+\begin{align*}
+M &\to M_1 & (p_1)\\
+&\to M_2 & (p_2) \\
+\dots\\
+&\to M_k & (p_k).
+\end{align*}
+
+\item Part-based models become hierarchical decomposition.
+
+  If $M$ is a part-based model, with part models $M_1, \dots, M_k$, such that
+
+\note{Formation could also be called compatibility. A symbol would be clearer. $\Phi$? $\mathbb{\Phi}$?}
+$$ M[a](x) = \max_{x = x_1 \oplus \dots \oplus x_k} \max_{a_i}
+  Formation(a,a_1,\dots,a_k) + \sum_i M_i[a_i](x_i), $$ where $x_1
+  \oplus \dots \oplus x_k$ is some decomposition of $x$, the $a_i$ are
+  attributes of the parts, and $Formation(a,a_1,\dots,a_k)$ is a
+  function that penalizes parts for not having the right relationship
+  to the whole (for instance, for being in slightly the wrong place).
+
+Then $M$ is described by the grammar
+$$ M \to M_1 \dots M_k. $$ (This is in log probability space.)  Note
+that the $M_i$ need not be from the same general space of models, so
+that we are not necessarily talking about recursive models.
+
+\item Finally, other $M[a](x)$ are declared to be the appearance
+  model. These are evaluated at the level of the data, and correspond
+  roughly to the terminals of a grammar.
+
+\eitem
+
+Once we have such a grammatical interpretation, we can envision
+enriching it. Our part models can become mixtures of part models, or
+themselves be given part models.
+
+\subsubsection{Ball and Spring Models} 
+
+First, define.
+
+Use mixture trick if necessary.
+
+Define the formation cost of the model to be the quadratic penalty term.
+
+Define the appearance model to be whatever cost/template is being used.
+
+\subsubsection{Hierarchical Curve Models}
+
+Nearest neighbor aspect becomes a mixture.
+
+Formation cost becomes the geometric deformation.
+
+Appearance model is trivial, as the corresponding thing was free matching of line segments.
+
+\subsubsection{Sift Flow}
+
+Need to reread this paper.
+
+Choosing favorite image becomes a mixture.
+
+Formation cost becomes the geometric distortion model.
+Can also include the label clean-up MRF here.
+
+Appearance model is the SIFT matching cost.
+
+\note{Shape Context and Thin-Plate splines?
+
+This is a little bogus since the shape context actually depends on the
+neighboring points. We can think of it as an appearance model, though.
+
+Formation cost is the thin plate spline cost.
+}
+
+\subsection{Generalize Parsing} 
+
+This is highly dependent on the exact generalization, so we should
+just look at examples.
+
+\subsection{Learn rich grammars}
+
+The whole point of parsing with generalized grammars is to allow us to
+learn and use more general grammars. This turns out to be the hardest
+part of grammatical methods.
+
+\subsubsection{Grammatical transformations}
+
+Currently, it is not known how to do grammar induction except through
+heuristic exploration of the space of models.
+\note{There is EM, etc. These are arguably heuristics but this claim may be too strong.}
+\note{Should cite Stolcke, Cherniak, Klein.}
+
+Plan is to iteratively apply various transformations to the grammar,
+and try to maximize the posterior. This necessitates a prior over
+grammars - we will probably use MDL.
+
+Tranformations could be:
+\bitem
+\item merging two submodels
+\item (over)-clustering all submodels, and then merging within each cluster
+\item Splitting a submodel into multiple submodels by clustering the
+  training data associated with it.
+\item Identifying some subset of our training data or our model as a
+  constituent, and introducing a new sub-model to represent it.
+\eitem
+
+\end{document}

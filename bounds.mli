@@ -81,3 +81,5 @@ val marginify : bounds -> float -> bounds
     [squarify bds] and [marginify bds 0.1] for increased niceness. *)
 val nice_curve_bounds : Complex.t array -> bounds
 
+(** undoc *)
+val move_into_bounds : bounds -> Geometry.cpt -> Geometry.cpt

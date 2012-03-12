@@ -1,0 +1,45 @@
+
+\marginnote{beginning of learning/triangle.tex}
+
+
+\subsection{Learning a Watson Distribution} 
+
+\experiment{1.grammars/test\_watson/test\_watson.py}
+
+In the following experiments, we select a random triangle (by using a
+Gaussian in Bookstein coordinates). We then draw 20 samples from the
+Watson distribution centered at this triangle (using 30 for the
+concentration parameter of the Watson). We then reestimate the Watson
+distribution from the samples.
+
+This is a less noisy version of the learning task that EM faces when
+refitting the midpoint distributions of a grammar from 20 samples.
+
+\input{experiments/1.grammars/test_watson/output.d/watson}
+
+\subsection{Non-parametric models}
+
+
+Since we are modeling the midpoint distributions as non-parametric
+distributions, the learning algorithm is straightforward once we have
+observations of each midpoint distribution. If we see midpoints $z_i$,
+each with soft count $c_i$, our midpoint distribution will be
+$$P(z) = \frac{1}{2\pi h^2\sum_i c_i} \sum_i c_i e^{-\frac{\| z - z_i\|^2}{2h^2}}$$
+
+In vision applications where we match data to a model by minimizing a
+cost function, it is often best to limit the cost of matching any one
+piece of the model. In this case, we may want to limit the cost of
+matching any two midpoints to some maximum value. We may therefore
+also add a distribution that is uniform over the set of ``reasonable''
+midpoints. If this set has area $A$, then our midpoint distribution
+will be
+$$P(z) = \frac{1}{2\pi h^2\sum_i c_i} \left[2\pi h^2 \cdot \frac{c_0}{A} + \sum_{i>0} c_i
+  e^{-\frac{\| z - z_i\|^2}{2h^2}}\right].$$
+
+We build our initial grammar by decomposing individual training
+examples (see Section \ref{sec-single}), so our initial midpoint
+distributions are simply Gaussians. Our initial Parzen window size
+$h$, which is the standard deviation of the Gaussian, will be set
+significantly higher than our post-training window size.
+
+\marginnote{end of learning/triangle.tex}

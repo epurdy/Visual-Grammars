@@ -1,0 +1,69 @@
+
+* why is this a hard problem?
+
+  * essentially need a domain specific language / abstractions for
+    probabilistic things. but abstraction is really tricky because we
+    no longer have any notion of formal guarantees. programmers cannot
+    take any code as a black box because the code is doing something
+    fuzzy.
+
+
+
+* What is it like to use the interface?
+
+  * Annotation space: hierarchical decompositions labeled with a
+    (relatively) standardized set of labels
+
+  * Cartoon space: strokes, fills, pattern fills, and logical
+    groups. Naturally represented in SVG.
+
+  * Image space: regions in images
+
+  * Probabilistic models: specified programmatically
+
+  * Models can be constructed from smaller models with various
+    composition operations: juxtaposition of regions, concatenation of
+    curves, etc.
+
+  * Models can have their parameters trained from data.
+
+  * Models can have their structures automatically generated and
+    optimized by various algorithms, but that is a tricky business.
+
+* how would a grammatical interface be better than another interface?
+
+  * Inference is mathematically sound and completely tractable.
+
+  * Learning is just as difficult and wonky, but we can at least test
+    every component of the model in various ways.
+
+  * The normalization constants are tricky!
+
+  * Joining together multiple models is done in a common space,
+    ensuring that any two models can work together without extensive
+    customization.
+
+* what services will the interface layer provide?
+
+  * generation
+
+  * inference/labeling
+
+  * learning
+
+  * ?? knowledge discovery
+
+* for every service, we need to specify how to access the
+  functionality, and how to check that the right thing is being done
+
+* What would the input/output of the grammatical interface layer look like?
+
+  * people specify various grammars which produce both annotations and
+    simplified data models
+
+  * people construct grammars from datasets somehow. the algorithms
+    would be structured learning algorithms, but we also need to have
+    a representation that is human readable
+
+* Any application written on top of an interface layer needs to be unit-testable
+

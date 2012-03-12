@@ -1,0 +1,67 @@
+% deformation.tex
+
+\subsection{Deformation models (VERY ROUGH)}
+
+\marginnote{datapoints -> objects, throughout this section}
+We are working with datapoints in a space $\XXX$. Let $\CCC$ be a
+space of correspondences between two datapoints in $\XXX$.  We leave the
+notion of correspondence slightly vague; it might be a partial
+matching of the pieces of the two datapoints.
+\marginnote{Hard to imagine a ``piece'' of a datapoint}
+
+We define a deformation model $\MMM: \XXX \times \CCC \times \XXX \to
+\RRR^{\ge 0}$ to be a function which maps two datapoints and a
+correspondence to a matching cost. $\MMM(x_1, c, x_2)$ represents the
+quality of the correspondence $c$ 
+\marginnote{kill ``given that it purports to be a correspondence''} given that it purports to be a
+correspondence between $x_1$ and $x_2$. We are particularly interested
+in considering this to be the negative log of a (possibly
+non-normalized) probability distribution.
+
+Given a deformation model $\MMM$, we can define a nearest-neighbor
+classification algorithm on $\XXX$. If we have classes $X_1,\dots,X_k$ with
+training examples $\{x_{ij} \mid j\in [n] \}$ in $\XXX$, we can classify a novel
+example $x_*$ as being of the class $X_i$ which minimizes 
+$$\min_{j\in [n], c\in \CCC} \MMM(x_{ij}, c, x_*).$$
+
+Our research program is then to then to automatically generalize from the
+examples $\{x_{ij}\}$ using a grammatical version of $\MMM$.
+
+\marginnote{Intuitively c defines a parse of X2 with X1. NN only assumes
+  distances, so this claim is too broad.
+
+What parts-based models can we cite? Correspondence-based things, like
+shape matching algorithms. Ball and springs model. Pedro's Pascal model.  }
+
+\marginnote{Pedro does not follow this whole list}
+\bitem
+\item Define an agglomeration operator $\oplus$ on $\XXX$ that sticks
+  two datapoints together to get another. This may require enlarging
+  $\XXX$.
+\item Extend $\CCC$ in such a way that it respects $\oplus$: if $c_1$
+  is a correspondence between $x_1$ and $y_1$, and $c_2$ is a
+  correspondence between $x_2$ and $y_2$, we want there to be a
+  correspondence $c_1 \oplus_\CCC c_2$ between $x_1\oplus x_2$ and
+  $y_1\oplus y_2$.
+\item Redefine $\MMM$ so that $\MMM( x_1\oplus y_1, c_1 \oplus_\CCC
+  c_2, x_2\oplus y_2 )$ is the sum of $\MMM(x_1,c_1,y_1)$,
+  $\MMM(x_2,c_2,y_2)$, and possibly some interaction term $T( (x_1,y_1), (x_2,y_2) )$
+
+\item Define grammars over $\XXX$, such that $\oplus$ is used to stick
+  together the parts of the hierarchical decomposition
+
+\item Learn new, grammatical class models. These will be used for
+  classification like so:
+$$\argmin_i \min_{x\in \XXX c\in \CCC} \MMM(x, c, x_*) - \log\PP[x
+    \mid G_i].$$ We will call this parsing.  As part of this, we want
+  to be able to adapt whatever minimization algorithm was used by
+  $\MMM$ to find the best correspondence, and use it to find the best
+  parse of $x_*$.  
+\eitem
+
+Why is it important that $\oplus$ be used for the hierarchical
+decomposition? It means that the minimization algorithm of the last
+point will be producing a hierarchical decomposition of $x$, and thus
+of $x_*$.
+
+

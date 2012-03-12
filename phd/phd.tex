@@ -1,0 +1,381 @@
+\documentclass{tufte-book}
+\usepackage{leonine,cancel,amsmath,amssymb,amsthm,graphicx, setspace, subfig}%%xy, setspace, amscd (commutative diagram)
+
+\newcommand{\bow}[1]{\colorbox{black}{\color{white} #1}}
+\newcommand{\experiment}[1]{\bow{This section's results can be recreated by running #1}}
+
+\newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
+%% \newcommand\spk[2]{\framebox{images/#2.png}}
+
+
+% \hypersetup{colorlinks}% uncomment this line if you prefer colored hyperlinks (e.g., for onscreen viewing)
+
+\title{ Grammatical\\*Methods in\\*Computer Vision\\*and\\*Machine Learning}
+\author[Eric Purdy]{Eric Purdy}
+\publisher{Submitted to Satisfy the Requirements for a Ph.D. at the University of Chicago}
+
+%%
+% If they're installed, use Bergamo and Chantilly from www.fontsite.com.
+% They're clones of Bembo and Gill Sans, respectively.
+%\IfFileExists{bergamo.sty}{\usepackage[osf]{bergamo}}{}% Bembo
+%\IfFileExists{chantill.sty}{\usepackage{chantill}}{}% Gill Sans
+
+%\usepackage{microtype}
+\usepackage{booktabs}% For nicely typeset tabular material
+
+% For graphics / images
+\usepackage{graphicx}
+\setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
+\graphicspath{{graphics/}}
+
+% The fancyvrb package lets us customize the formatting of verbatim
+% environments.  We use a slightly smaller font.
+\usepackage{fancyvrb}
+\fvset{fontsize=\normalsize}
+
+%%
+% Prints argument within hanging parentheses (i.e., parentheses that take
+% up no horizontal space).  Useful in tabular environments.
+\newcommand{\hangp}[1]{\makebox[0pt][r]{(}#1\makebox[0pt][l]{)}}
+
+%%
+% Prints an asterisk that takes up no horizontal space.
+% Useful in tabular environments.
+\newcommand{\hangstar}{\makebox[0pt][l]{*}}
+
+%%
+% Prints a trailing space in a smart way.
+\usepackage{xspace}
+
+% Prints an epigraph and speaker in sans serif, all-caps type.
+\newcommand{\openepigraph}[2]{%
+  %\sffamily\fontsize{14}{16}\selectfont
+  \begin{fullwidth}
+  \sffamily\large
+  \begin{doublespace}
+  \noindent\allcaps{#1}\\% epigraph
+  \noindent\allcaps{#2}% author
+  \end{doublespace}
+  \end{fullwidth}
+}
+
+% Inserts a blank page
+\newcommand{\blankpage}{\newpage\hbox{}\thispagestyle{empty}\newpage}
+
+\usepackage{units}
+
+% Typesets the font size, leading, and measure in the form of 10/12x26 pc.
+\newcommand{\measure}[3]{#1/#2$\times$\unit[#3]{pc}}
+
+% Macros for typesetting the documentation
+\newcommand{\hlred}[1]{\textcolor{Maroon}{#1}}% prints in red
+\newcommand{\hangleft}[1]{\makebox[0pt][r]{#1}}
+\newcommand{\hairsp}{\hspace{1pt}}% hair space
+\newcommand{\hquad}{\hskip0.5em\relax}% half quad space
+\newcommand{\TODO}{\textcolor{red}{\bf TODO!}\xspace}
+\newcommand{\ie}{\textit{i.\hairsp{}e.}\xspace}
+\newcommand{\eg}{\textit{e.\hairsp{}g.}\xspace}
+\newcommand{\na}{\quad--}% used in tables for N/A cells
+\providecommand{\XeLaTeX}{X\lower.5ex\hbox{\kern-0.15em\reflectbox{E}}\kern-0.1em\LaTeX}
+\newcommand{\tXeLaTeX}{\XeLaTeX\index{XeLaTeX@\protect\XeLaTeX}}
+% \index{\texttt{\textbackslash xyz}@\hangleft{\texttt{\textbackslash}}\texttt{xyz}}
+\newcommand{\tuftebs}{\symbol{'134}}% a backslash in tt type in OT1/T1
+\newcommand{\doccmdnoindex}[2][]{\texttt{\tuftebs#2}}% command name -- adds backslash automatically (and doesn't add cmd to the index)
+\newcommand{\doccmddef}[2][]{%
+  \hlred{\texttt{\tuftebs#2}}\label{cmd:#2}%
+  \ifthenelse{\isempty{#1}}%
+    {% add the command to the index
+      \index{#2 command@\protect\hangleft{\texttt{\tuftebs}}\texttt{#2}}% command name
+    }%
+    {% add the command and package to the index
+      \index{#2 command@\protect\hangleft{\texttt{\tuftebs}}\texttt{#2} (\texttt{#1} package)}% command name
+      \index{#1 package@\texttt{#1} package}\index{packages!#1@\texttt{#1}}% package name
+    }%
+}% command name -- adds backslash automatically
+\newcommand{\doccmd}[2][]{%
+  \texttt{\tuftebs#2}%
+  \ifthenelse{\isempty{#1}}%
+    {% add the command to the index
+      \index{#2 command@\protect\hangleft{\texttt{\tuftebs}}\texttt{#2}}% command name
+    }%
+    {% add the command and package to the index
+      \index{#2 command@\protect\hangleft{\texttt{\tuftebs}}\texttt{#2} (\texttt{#1} package)}% command name
+      \index{#1 package@\texttt{#1} package}\index{packages!#1@\texttt{#1}}% package name
+    }%
+}% command name -- adds backslash automatically
+\newcommand{\docopt}[1]{\ensuremath{\langle}\textrm{\textit{#1}}\ensuremath{\rangle}}% optional command argument
+\newcommand{\docarg}[1]{\textrm{\textit{#1}}}% (required) command argument
+\newenvironment{docspec}{\begin{quotation}\ttfamily\parskip0pt\parindent0pt\ignorespaces}{\end{quotation}}% command specification environment
+\newcommand{\docenv}[1]{\texttt{#1}\index{#1 environment@\texttt{#1} environment}\index{environments!#1@\texttt{#1}}}% environment name
+\newcommand{\docenvdef}[1]{\hlred{\texttt{#1}}\label{env:#1}\index{#1 environment@\texttt{#1} environment}\index{environments!#1@\texttt{#1}}}% environment name
+\newcommand{\docpkg}[1]{\texttt{#1}\index{#1 package@\texttt{#1} package}\index{packages!#1@\texttt{#1}}}% package name
+\newcommand{\doccls}[1]{\texttt{#1}}% document class name
+\newcommand{\docclsopt}[1]{\texttt{#1}\index{#1 class option@\texttt{#1} class option}\index{class options!#1@\texttt{#1}}}% document class option name
+\newcommand{\docclsoptdef}[1]{\hlred{\texttt{#1}}\label{clsopt:#1}\index{#1 class option@\texttt{#1} class option}\index{class options!#1@\texttt{#1}}}% document class option name defined
+\newcommand{\docmsg}[2]{\bigskip\begin{fullwidth}\noindent\ttfamily#1\end{fullwidth}\medskip\par\noindent#2}
+\newcommand{\docfilehook}[2]{\texttt{#1}\index{file hooks!#2}\index{#1@\texttt{#1}}}
+\newcommand{\doccounter}[1]{\texttt{#1}\index{#1 counter@\texttt{#1} counter}}
+
+% Generates the index
+\usepackage{makeidx}
+\makeindex
+
+\begin{document}
+
+% Front matter
+\frontmatter
+
+% v.2 epigraphs
+% \newpage\thispagestyle{empty}
+% \openepigraph{%
+% The public is more familiar with bad design than good design.
+% It is, in effect, conditioned to prefer bad design, 
+% because that is what it lives with. 
+% The new becomes threatening, the old reassuring.
+% }{Paul Rand%, {\itshape Design, Form, and Chaos}
+% }
+
+
+\newpage\thispagestyle{empty}
+\openepigraph{%
+  Penetrating so many secrets, we cease to believe in the
+  unknowable. But there it sits nevertheless, calmly licking its
+  chops.}{H. L. Mencken}
+
+% ... they are ill discoverers that think there is no land when they can see nothing but sea.
+%     Francis Bacon (1561-1626) English essayist, philosopher, statesman.
+
+% r.3 full title page
+\maketitle
+
+% r.5 contents
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\listoffigures
+
+\listoftables
+
+% r.7 dedication
+% \cleardoublepage
+% ~\vfill
+% \begin{doublespace}
+% \noindent\fontsize{18}{22}\selectfont\itshape
+% \nohyphenation
+% Dedicated to those who appreciate \LaTeX{} 
+% and the work of \mbox{Edward R.~Tufte} 
+% and \mbox{Donald E.~Knuth}.
+% \end{doublespace}
+% \vfill
+% \vfill
+
+\chapter{Notation}
+
+  We denote $x$ etc.
+
+  \section{Style Guide}
+  \input{chapters/styleguide}
+
+% r.9 introduction
+\cleardoublepage
+\mainmatter
+
+\chapter{Introduction}
+
+  \input{chapters/intro}
+
+\chapter{Grammatical Models of Shape}
+
+  \section{Introduction}
+    \input{chapters/models/models_intro}  
+
+  \section{Goals}
+    \input{chapters/models/models_goals}
+
+  \section{Prior Work}
+
+  \section{Motivating Example: L-Systems}
+    \input{chapters/models/lsystems}
+
+  \section{Motivating Example: A Simple Hand-built grammar}
+    \input{experiments/1.grammars/hand_built/hand_built}
+
+  \section{Dealing with Curves}
+    \input{chapters/models/curves}
+
+  \section{Stochastic Shape Grammars: A Generative Model for Curves}
+    \input{chapters/models/curvegrammars}
+
+    \marginnote{Add a short section on inference. Explain that the
+      details of parsing are deferred to the learning section.}
+    \input{experiments/2.parsing/one_to_one/one_to_one}
+
+  \section{Building a Grammar From a Single Curve}
+    \input{chapters/models/single_curve}
+
+  \section{Models of Triangle Deformation}
+    \input{chapters/models/triangle}
+
+  \section{Dealing with Variation in Length}
+    \input{experiments/2.parsing/shorter_curves/shorter_curves}
+    \input{experiments/2.parsing/longer_curves/longer_curves}
+
+  \section{Sampling Experiments}
+
+  \section{Classification Experiments}
+
+  \section{Constellation Grammars}
+
+\chapter{Detecting Objects in Cluttered Images}
+
+  \section{Goals}
+    \input{chapters/detection/detection_goals}
+
+  \section{Prior Work}
+
+  \section{Motivating Examples}
+
+  \section{Parsing Scenes}
+
+  \section{Data Models for Object Detection}
+
+  \section{Speeding up Detection with Filtrations}
+    \input{chapters/detection/filtrations}
+
+  \section{The Problem of Unintended Reuse}
+
+  \section{Experimental Results}
+% \input{experiments/4.images/standard_cky/standard_cky}
+% \input{experiments/4.images/fuzzy_cky/fuzzy_cky}
+% \input{experiments/4.images/image_parsing/image_parsing}
+
+\chapter{Parameter Learning for Grammatical Models}
+
+  \section{Goals}
+    \input{chapters/learning/learning_goals}
+
+  \section{Prior Work}
+
+  \section{Motivating Examples}
+
+  \section{Learning a Model of Triangles}
+    \input{chapters/learning/triangle}
+
+  \section{Technical Details of Parsing}
+  \marginnote{Split these two sections, they are currently in the same
+    file, but the split is straightforward.}
+  \section{Learning Grammar Parameters with the EM Algorithm}
+
+    \input{chapters/learning/parsing_em}
+    \input{chapters/learning/doing_em}
+
+    \marginnote{Merge the following with the previous. The subsection
+      ``Scale-dependent Dirichlet Prior'' should have much of its
+      material moved to the Models chapter, since it is largely about
+      selecting an initially plausible set of parameters.}
+
+    \input{chapters/learning/parameters}
+
+  \section{Practical Use of the EM Algorithm with Curve Grammars:
+    Obstacles and Strategies}
+    \input{experiments/3.em/simple_tuning/simple_tuning}
+    \input{experiments/3.em/multi_tuning/multi_tuning}
+    \input{experiments/3.em/correlated_tuning/correlated_tuning}
+    \input{experiments/3.em/sdf_tuning/sdf_tuning}
+    \input{experiments/3.em/incremental/incremental}
+
+    \marginnote{Can slide naturally into talking about discriminative
+      and shadowcasting learning. Train, sample, and then hand-tag
+      some samples as bad, and then retrain with them weighted
+      negatively. (And probably with good samples weighted positively.)}
+
+  \section{Shadowcasting Priors}
+    \input{chapters/learning/shadowcasting}
+
+\chapter{Structure Learning for Grammatical Models}
+
+  \section{Goals}
+    \input{chapters/structure/structure_goals}
+
+  \section{Prior Work}
+
+  \section{Motivating Examples}
+  \marginnote{Probably want to move stuff from the introduction to
+    here.}
+
+  \section{What Characterizes an Optimal Structure?} 
+    \input{chapters/structure/optimality}
+
+  \section{Incrementally Incorporating Novel Structures}
+  \marginnote{This is buried inside of singleuse.tex, which is
+    unincorporated.}
+
+  \section{How do we do Local Search for an Optimal Structure?}
+    \input{chapters/structure/local_search}
+
+  \section{Approximating the KL Divergence Efficiently}
+    \input{chapters/structure/kl}
+
+  \section{How do we Identify Natural Constituents?}
+    \input{chapters/structure/constituency}
+    \input{chapters/structure/ex_constituency}
+
+  \section{Can we Learn a Model of Curve Texture?}
+    \input{chapters/structure/texture}
+
+\chapter{Approximate Parsing of One-Dimensional Signals}
+  \marginnote{This chapter is joint work with Pedro Felzenszwalb.}
+
+  \section{Goals}
+    \input{chapters/sdf/sdf_goals}
+
+  \section{Prior Work}
+
+  \section{Motivating Examples}
+
+  \section{Constructing Sparse Decomposition Families}
+
+  \section{Hierarchical Matching Costs}
+
+  \section{Experimental Results}
+
+  \section{Rest is Unincorporated}
+
+  \section{SDF's}
+    \input{chapters/sdf/sdf}
+
+  \section{SDF's, part 2}
+    \input{chapters/sdf/sdf2}
+
+\chapter{Unincorporated Material}
+
+  \section{Weird stuff}
+    \input{chapters/singleuse}
+    \input{chapters/deformation}
+    \input{chapters/structure_notes}
+    \input{chapters/parsing}
+
+  \section{Experimental Plans}
+    \input{chapters/plans}
+
+  \section{Datasets}
+    \input{chapters/datasets}
+    \input{experiments/0.datasets/synth/synth}
+    \input{experiments/0.datasets/romer/romer}
+    \input{experiments/0.datasets/leaves/leaves}
+
+
+
+
+
+%%
+% The back matter contains appendices, bibliographies, indices, glossaries, etc.
+\backmatter
+
+\bibliography{phd}
+\bibliographystyle{plainnat}
+
+\printindex
+
+\end{document}
+

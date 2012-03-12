@@ -1,0 +1,98 @@
+
+\marginnote{beginning of models/triangle.tex}
+
+\subsection{Procrustes Distance and The Watson Distribution}
+\marginnote{Write this!}
+
+\subsection{Non-Parametric Deformation Model}
+
+When sampling from our grammar, we place a midpoint $q$ according to
+the midpoint distribution $\mu_{X\to YZ}(q; p, r)$, where $X_{p,r}$ is
+the placed symbol we are currently replacing.
+
+We want our grammar to be invariant to translation, scale, and
+rotation. Therefore, we translate, scale, and rotate $\RR^2$ with a
+map $\phi$ such that $\phi(p) =(0,0)$ and $\phi(r) =(1,0)$, and
+represent $q$ via the coordinates $\widehat{q} = \phi(q)$.
+
+In this coordinate system, we use the nonparametric distribution given
+by the Parzen windows method \cite{parzen}. If we have seen samples
+$q_1, \dots, q_k$, then
+$$\mu_{X\to YZ}(q ; p, r) = \frac{1}{n} \sum_{i=1}^{k}
+\frac{1}{2\pi h^2} e^{\frac{\| \widehat{q_i} - \widehat{q}\|^2}{2h^2}}.$$
+
+In the context of kernel density estimators, the parameter $h$ is
+called the bandwidth. It specifies how much smoothing to apply to the
+density estimation. Selecting a suitable bandwidth is often
+problematic. 
+
+It is worth noting that this nonparametric distribution is just a
+mixture of Gaussians, and thus there is no solid distinction between a
+mixture of multiple copies of the rule $X\to YZ$ with Gaussian
+midpoint distributions, and a single copy with a mixture of Gaussians
+midpoint distribution. We will prefer the second, since the resulting
+grammar has a simpler structure, as discussed in Section \ref{sec-mdl}.
+
+
+\subsection{Open Questions}
+
+Which shape grammars can be converted to Chomsky Normal Form?
+
+This is not as straightforward as the corresponding question for
+traditional context-free grammars, since not all control point
+distributions can be expressed as products of midpoint
+distributions. Recursion makes this question more subtle.
+
+\newthought
+Process Model of Continuous Curves
+
+We can imagine a shape grammar which does not have any terminal
+$\ell$, but rather continues to generate sample points forever. If
+such a grammar is finite, it would have to have recursive rules to
+allow an infinite number of expansions. The simplest case would be
+rules of the form $L\to LL$.
+
+If we have a grammar with only one symbol $L$, and only one rule $L\to
+LL$, with $\mu_{L\to LL}(q;p,r)$ being the degenerate distribution
+that only takes on the value $q=\half(p+r)$, then it is clear that we
+generate only straight lines.
+
+We can ask what conditions on the grammar are necessary to produce
+smooth curves under such a model. For specificity, let us assume that
+we represent our curve by a function $C(t) : [0,1] \to \RR^2$. Let
+$C_k$ be the curve we obtain after $k$ rounds of substitution, and let
+$C(\frac{i}{2^k}) = C_k[i]$. It can be checked that this gives the
+same value for $\frac{i}{2^k}$ and $\frac{i'}{2^{k'}}$ when the two
+are equal, and thus $C(\cdot)$ is well-defined.  Since the set
+$\left\{\frac{i}{2^k}\right\}$ is dense in $[0,1]$, we can define
+$C(t)$ for other values by continuity when $C(\cdot)$ is continuous.
+
+Then, there are several interesting questions:
+
+\begin{q}
+What conditions on the grammar are necessary in order for $C(t)$ to
+be continuous?
+\end{q}
+
+\begin{q}
+What conditions on the grammar are necessary in order for $C(t)$ to
+be smooth?
+\end{q}
+
+\begin{q}
+Is it possible to write down a simple grammar for a simple parametric
+curve such as a circle or a Bezier curve?
+\end{q}
+
+\begin{q}
+Suppose that we generate a smooth curve $C(t)$ via a grammar \GGG, and
+then subsample it to get a curve $C_*$ with a finite number of
+points. How do we parse $C_*$ with \GGG, and how do we use this parse
+to assign a likelihood to $C_*$ under \GGG?
+\end{q}
+
+\begin{q}
+What is a good probabilistic interpretation of subsampling?
+\end{q}
+
+\marginnote{end of models/triangle.tex}

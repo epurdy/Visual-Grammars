@@ -1,0 +1,64 @@
+\marginnote{beginning of structure/structure\_goals.tex}
+
+\subsection{Learning Constituents}
+
+The EM algorithm with a sparsifying prior will hopefully be able to
+recover grammatical structure. Therefore, if we start from a grammar
+with choice, we hope that doing EM iterations will give us a grammar
+with fewer choices that correspond to natural decompositions of
+shapes.
+
+Easy tasks for this would be trying to find constituents in stars and
+polygons, and the $n$-armed shape. We could also try to get
+intuitively reasonable constituents for silhouettes of people and
+horses.
+
+\subsection{Merging and Factorization}
+
+We would like to show that grammars can capture an exponential amount
+of variability through factoring, as discussed in Section
+\ref{sec-structural}.
+
+The easiest task would be to correctly apply merging (Section
+\ref{sec-merge}) to the $n$-armed shapes of Section
+\ref{sec-structural}, so that we can generate all of the shapes in the
+class after having seen a small number of them. We can make this
+easier by having different arm variants in each of the $n$ arm
+slots. We can also start on an easier version by training on bracketed
+samples.
+
+A harder merging task is to use merging to get good-looking samples
+from the Romer and Weizmann Horse datasets.
+
+\subsection{Reusable Parts}
+
+We would like to show that we can learn simple grammars through
+replacement, as discussed in Section \ref{sec-replacement}.
+
+The easiest task would be to learn simple grammars for polygons,
+stars, or the $n$-armed shapes of Section \ref{sec-structural}. We
+could start on an easier version by training on bracketed samples.
+
+A harder replacement task is to replacement merging to get
+good-looking samples from the Romer and Weizmann Horse datasets.
+
+\subsection{Recovering a Grammar}
+
+If we build a shape grammar by hand and take samples from it, we would
+hopefully be able to use these to learn another shape grammar that is
+similar to the original. It is unlikely that we will recover the exact
+same grammar, so we should instead try to show that we can improve
+some measure of closeness. For instance, we can approximately measure
+the KL divergence between the original grammar and the learned
+grammar, by using the techniques of Section \ref{sec-merge}.
+
+\begin{itemize}
+\item Figure out optimal single-example grammar
+\item Implement Merge and Replace
+\item Implement Merge and Replace KL heuristics
+\item Use Merge and Replace to search for good grammar
+\item Figure out how to optimally incorporate new samples
+
+\end{itemize}
+
+\marginnote{beginning of structure/structure\_goals.tex}

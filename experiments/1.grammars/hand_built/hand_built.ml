@@ -7,7 +7,8 @@ open Sdf
 open Grammar
 
 let dir = "experiments/1.grammars/hand_built/output.d";;
-let latexdir = "./1.grammars/hand_built/output.d";;
+let latexdir = dir;;
+(* let latexdir = "./1.grammars/hand_built/output.d";; *)
 let nsamples = 20;;
 
 let _ = 

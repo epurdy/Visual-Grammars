@@ -8,8 +8,11 @@ open Grammar
 open Sdf
 open Models.Simple
 
+let scale = 100.
+
 let one_to_one incurve_name excurve_name sdf_name out_name = 
   let x = Svg.create out_name in
+  let _ = Cairo.scale x.Svg.ctx scale scale in
 
   let curve = Curve.load incurve_name in
   let n = Array.length curve in

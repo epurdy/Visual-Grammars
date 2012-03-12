@@ -1,0 +1,174 @@
+
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Annotated Bibliography}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+
+\section{ Datasets} 
+
+\bitem
+\item Russell, Bryan C. and Torralba, Antonio and Murphy, Kevin P. and Freeman, William T.. {LabelMe}: A Database and Web-Based Tool for Image Annotation. \cite{labelme} 
+Introduces the LabelMe dataset.
+
+\eitem
+
+\section{ Parsing} 
+Valiant: Boolean Matrix Multiplication for Parsing
+
+Pedro: Fast min-plus matrix multiplication algorithm.
+Pedro recommends Algorithm no. 2.
+
+\section{ Prior Work on Visual Grammars} 
+\subsection{ Devi Parikh} 
+
+\bitem
+\item Parikh, Devi and Chen, Tsuhan. Unsupervised modeling of objects and their hierarchical contextual interactions. \cite{Parikh2009Unsupervised} \item Parikh, D. and Chen, Tsuhan. Hierarchical Semantics of Objects (hSOs). \cite{Parikh2007Hierarchical} 
+\eitem
+
+\subsection{ The Brown School} 
+
+\bitem
+\item Bienenstock, Elie and Geman, Stuart and Potter, Daniel. Compositionality, MDL Priors, and Object Recognition. \cite{BienenstockCompositionality} \item Geman, Stuart and Potter, Daniel F. and Chi, Zhiyi. Composition Systems. \cite{GemanComposition} \item Huang, Shih-Hsiu. Compositional Approach to Recognition Using Multi-Scale Computations. \cite{Huang2001Compositional} \item Jin, Ya. Probabilistic Hierarchical Image Models. \cite{Jin2006Probabilistic} \item Jin, Ya and Geman, S.. Context and Hierarchy in a Probabilistic Image Model. \cite{jin-geman} 
+\eitem
+
+\subsection{ Song-Chun and Friends} 
+
+\bitem
+\item Zhu, Long and Chen, Yuanhao and Yuille, Alan. Unsupervised Learning of Probabilistic Grammar-Markov Models for Object Categories. \cite{Zhu2009Unsupervised} \item Zhu, Song C. and Mumford, David. A stochastic grammar of images. \cite{Zhu2006Stochastic} \item Han, Feng and Zhu, Song C.. Bottom-Up/Top-Down Image Parsing with Attribute Grammar. \cite{Han2009BottomUpTopDown} \item Tu, Zhuowen and Chen, Xiangrong and Yuille, Alan and Zhu, Song-Chun. Image Parsing: Unifying Segmentation, Detection, and Recognition. \cite{Tu2005Image} 
+\eitem
+
+\section{ Unsupervised grammatical induction} 
+\subsection{ Finding the Structure} 
+
+\bitem
+\item Stolcke, Andreas. Bayesian learning of probabilistic language models. \cite{Stolcke1994Bayesian} \item de Marcken, Carl. On the Unsupervised Induction of Phrase Structure Grammars. \cite{deMarcken1995Unsupervised} 
+This is an article by Carl de Marcken on learning grammars. Approach
+is theoretically a lot like Stolcke's.
+
+\item de Marcken, Carl. Linguistic Structure as Composition and Perturbation. \cite{deMarcken1996Linguistic} 
+\item de Marcken, Carl. Unsupervised Language Acquisition. \cite{deMarcken1996Unsupervised} 
+\item Cook, C.. Grammatical inference by hill climbing. \cite{Cook1976Grammatical} 
+\item Charniak, Eugene. Statistical Language Learning (Language, Speech, and Communication). \cite{Charniak1996Statistical} 
+\item Charniak, E.. Statistical techniques for natural language parsing. \cite{Charniak97a} 
+This is a short little book that talks about grammar induction,
+including unsupervised. Some discussion of concrete systems.
+
+\item Nevill-Manning, Craig G. and Witten, Ian H.. Identifying Hierarchical Structure in Sequences: A linear-time algorithm. \cite{NevillManning1997Identifying} \item Nevill-Manning, Craig G.. Inferring Sequential Structure. \cite{NevillManning1996Inferring} 
+\eitem
+
+\subsection{ Segmentation and Morphology} 
+
+\bitem
+\item Goldsmith, John. An algorithm for the unsupervised learning of morphology. \cite{Goldsmith2006Algorithm} \item Cohen, Paul and Adams, Niall and Heeringa, Brent. Voting experts: An unsupervised algorithm for segmenting sequences. \cite{Cohen2007Voting} \item Wolff, J. G.. The discovery of segments in natural language. \cite{Wolff1977Discovery} \item Wolff, J. G.. Language acquisition and the discovery of phrase structure.. \cite{Wolff1980Language} \item Wolff, J. G.. Language acquisition, data compression and generalization. \cite{Wolff1982Language} 
+\eitem
+
+\subsection{ Distributional Clustering} 
+
+\bitem
+\item Sch\"{u}tze, Hinrich. Distributional part-of-speech tagging. \cite{Schutze1995Distributional} \item Schutze, Hinrich. Ambiguity Resolution in Language Learning. \cite{Schutze1997Ambiguity} \item Klein, D. and Manning, C.. Natural language grammar induction using a constituent-context model. \cite{Klein2002Natural} 
+\eitem
+
+\section{ Statistical Shape Analysis} 
+
+\bitem
+\item Dryden, I. L. and Mardia, Kanti V.. Statistical Shape Analysis. \cite{Dryden1998Statistical} \item Kent, John T. and Constable, Patrick D. L. and Er, Fikret. Simulation for the complex Bingham distribution. \cite{Kent2004Simulation} \item Mardia, K. V. and Dryden, I. L.. The Complex Watson Distribution and Shape Analysis. \cite{Mardia1999Complex} 
+\eitem
+
+\section{ Hierarchical Curve Models} 
+
+\bitem
+\item Felzenszwalb, Pedro. Hierarchical Curve Models. \cite{FelzenszwalbHierarchical} \item Felzenszwalb, P. and Schwartz, J.. Hierarchical Matching of Deformable Shapes. \cite{Felzenszwalb07} 
+\eitem
+
+\section{ Dependency Grammars} 
+
+\bitem
+\item Mcdonald, Ryan and Pereira, Fernando and Ribarov, Kiril and Haji\v{c}, Jan. Non-projective dependency parsing using spanning tree algorithms. \cite{Mcdonald2005Nonprojective} \item Csurka, Gabriella and Dance, Christopher R. and Fan, Lixin and Willamowski, Jutta and Bray, C\'{e}dric. Visual categorization with bags of keypoints. \cite{Csurka2004Visual} \item Lazebnik, S. and Schmid, C. and Ponce, J.. A sparse texture representation using local affine regions. \cite{Lazebnik2005Sparse} \item Lazebnik, S. and Schmid, C. and Ponce, J.. Beyond Bags of Features: Spatial Pyramid Matching for Recognizing Natural Scene Categories. \cite{Lazebnik2006Beyond} 
+\eitem
+
+\section{ Background works in Computational Linguistics} 
+
+\bitem
+\item Manning, Christopher D. and Sch\"{u}tze, Hinrich. Foundations of Statistical Natural Language Processing. \cite{manning-schutze} 
+Just a general textbook on computational linguistics.
+
+\item Jurafsky, Daniel and Martin, James H.. Speech and Language Processing (2nd Edition). \cite{Jurafsky2008Speech} 
+\eitem
+
+\section{ Dryad} 
+
+\bitem
+\item Fakcharoenphol, Jittat and Rao, Satish. Planar Graphs, Negative Weight Edges, Shortest Paths, and Near Linear Time. \cite{FakcharoenpholPlanar} 
+\item Klein, Philip N.. Multiple-source shortest paths in planar graphs. \cite{KleinMultiplesource} 
+\item Tarjan, R. E.. Finding optimum branchings. \cite{Tarjan1977Finding} 
+\eitem
+
+\section{ Tensors} 
+
+\bitem
+\item Kofidis, Eleftherios and Phillip and Regalia, A.. On the best rank-1 approximation of higher-order supersymmetric tensors. \cite{Kofidis2002Best} 
+\item Lim, Lek-Heng. Singular Values and Eigenvalues of Tensors: A Variational Approach. \cite{Lim2006Singular} 
+\item Qi, L.. Eigenvalues of a real supersymmetric tensor. \cite{Qi2005Eigenvalues} \eitem
+\section{Uncategorized}
+\bitem
+\item Aigner, Martin and Li, Anping. Searching for counterfeit coins. \cite{Aigner1997Searching}
+\item Aycinena, Meg and Kaelbling, Leslie P. and Lozano-Perez, Tomas. Learning Grammatical Models for Object Recognition. \cite{Aycinena2008Learning}
+\item Bar, Moshe. Visual objects in context. \cite{visual-context}
+\item Belongie, Serge and Malik, Jitendra and Puzicha, Jan. Shape Context: A new descriptor for shape matching and object recognition. \cite{Belongie2000Shape}
+\item Bijral, Avleen S. and Breitenbach, Markus and Grudic, Greg. Mixture of watson distributions: A generative model for hyperspherical embeddings. \cite{Bijral2007Mixture}
+\item Bod, Rens. From Exemplar to Grammar: A Probabilistic Analogy-Based MOdel of Language Learning. \cite{Bod2009From}
+\item Bod, Rens. Probabilistic Linguistics. \cite{Bod2003Probabilistic}
+\item Bolle, Ruud and Aloimonos, Yiannis and Ferm\"{u}ller, Cornelia. Toward motion picture grammars. \cite{Bolle1997Toward}
+\item Bunke, H. and Blostein, Dorothea and Grbavec, Ann. Recognition Of Mathematical Notation. \cite{Bunke1996Recognition}
+\item Caraballo, Sharon A. and Charniak, Eugene. New Figures of Merit for Best-First Probabilistic Chart Parsing. \cite{Caraballo1997New}
+\item Chanda, Gaurav and Dellaert, Frank. Grammatical Methods in Computer Vision: An Overview. \cite{Chanda2004Grammatical}
+\item Clark, Alexander. Unsupervised induction of stochastic context-free grammars using distributional clustering. \cite{Clark2001Unsupervised}
+\item Dreyer, Markus and Eisner, Jason. Graphical Models over Multiple Strings. \cite{Dreyer2009Graphical}
+\item Eisner, Jason. Notes on the Inside-Outside Algorithm. \cite{EisnerNotes}
+\item Finley, Thomas and Joachims, Thorsten. Training structural SVMs when exact inference is intractable. \cite{Finley2008Training}
+\item Green, Peter J.. Reversible jump Markov chain Monte Carlo computation and Bayesian model determination. \cite{Green1995Reversible}
+\item Grune, D. and Jacobs, C. J. H.. Parsing techniques: a practical guide. \cite{grune-jacobs-90}
+\item Guy, Richard K. and Nowakowski, Richard J.. Coin-Weighing Problems. \cite{Guy1995CoinWeighing}
+\item Haghighi, Aria and Klein, Dan. Unsupervised Coreference Resolution in a Nonparametric Bayesian Model. \cite{Haghighi2007Unsupervised}
+\item Hinton, Geoffrey E. and Osindero, Simon and Teh, Yee-Whye. A Fast Learning Algorithm for Deep Belief Nets. \cite{Hinton2006Fast}
+\item Hofstadter, Douglas R.. Metamagical Themas: Questing for the Essence of Mind and Pattern. \cite{Hofstadter1996Metamagical}
+\item Johnson, Mark and Geman, Stuart and Canon, Stephen and Chi, Zhiyi and Riezler, Stefan. Estimators for stochastic "Unification-Based" grammars. \cite{Johnson1999Estimators}
+\item Kimia, Benjamin and Frankel, Ilana and Popescu, Ana-Maria. Euler Spiral for Shape Completion. \cite{Kimia2003Euler}
+\item Komodakis, Nikos and Tziritas, Georgios. Image Completion Using Efficient Belief Propagation via Priority Scheduling and Dynamic Pruning. \cite{KomodakisImage}
+\item Koo, Terry and Globerson, Amir and Carreras, Xavier and Collins, Michael. Structured prediction models via the matrix-tree theorem. \cite{Koo2007Structured}
+\item Kumar, Neeraj and Zhang, Li and Nayar, Shree. What Is a Good Nearest Neighbors Algorithm for Finding Similar Patches in Images?. \cite{Kumar2008What}
+\item Lafferty, John D.. Gibbs-Markov Models. \cite{Lafferty1996GibbsMarkov}
+\item Lavirotte, St\'{e}phane and Pottier, Lo\"{i}c and Pottier, Lo\#c. Mathematical Formula Recognition Using Graph Grammar. \cite{Lavirotte1998Mathematical}
+\item Lee, Kyoon H. and Eom, Kie B. and Kashyap, R. L.. Character Recognition Based on Attribute-Dependent Programmed Grammar. \cite{Lee1992Character}
+\item Lee, Lillian. Learning of Context-Free Languages: A Survey of the Literature. \cite{lee-induction}
+\item Leordeanu, M. and Hebert, M. and Sukthankar, R.. Beyond Local Appearance: Category Recognition from Pairwise Interactions of Simple Features. \cite{Leordeanu2007Beyond}
+\item Liu, Ce and Yuen, J. and Torralba, A.. Nonparametric scene parsing: Label transfer via dense scene alignment. \cite{Liu2009Nonparametric}
+\item Liu, Ce and Yuen, Jenny and Torralba, Antonio and Sivic, Josef and Freeman, William T.. SIFT Flow: Dense Correspondence across Different Scenes. \cite{Liu2008SIFT}
+\item Mcallester, David A.. On the Complexity Analysis of Static Analyses. \cite{Mcallester1999Complexity}
+\item Mikolajczyk, K. and Schmid, C.. A performance evaluation of local descriptors. \cite{Mikolajczyk2005Performance}
+\item Mikolajczyk, Krystian and Schmid, Cordelia. An affine invariant interest point detector. \cite{Mikolajczyk2002Affine}
+\item Olson, Clark F. and Huttenlocher, Daniel P.. Automatic target recognition by matching oriented edge pixels. \cite{Olson1997Automatic}
+\item Parikh, Devi and Zitnick, C. Lawrence and Chen, Tsuhan. Unsupervised Learning of Hierarchical Spatial Structures In Images. \cite{Parikh09}
+\item Ren, Xiaofeng and Fowlkes, Charless C. and Malik, Jitendra. Scale-Invariant Contour Completion Using Conditional Random Fields. \cite{Ren2005ScaleInvariant}
+\item Richards, Whitman and Hoffman, Donald D. and Richards, Codon C.. Codon constraints on closed 2D shapes. \cite{Richards1985Codon}
+\item Shi, Jianbo and Malik, Jitendra. Normalized Cuts and Image Segmentation. \cite{Shi2000Normalized}
+\item Sun, Liang and Ji, Shuiwang and Ye, Jieping. A least squares formulation for canonical correlation analysis. \cite{Sun2008Least}
+\item Wertheimer, M.. Laws of Organization in Perceptual Forms (partial translation). \cite{Wertheimer1938Laws}
+\item Wilson, D. Randall and Martinez, Tony R.. Reduction Techniques for Exemplar-Based Learning Algorithms. \cite{Wilson2000Reduction}
+\item Yuret, D.. Discovery of linguistic relations using lexical attraction. \cite{Yuret:98}
+\item Zhang, Hao and Berg, Alexander C. and Maire, Michael and Malik, Jitendra. SVM-KNN: Discriminative Nearest Neighbor Classification for Visual Category Recognition. \cite{Zhang2006SVMKNN}
+\item Zhu, Song C. and Mumford, David. A Stochastic Grammar of Images. \cite{zhu-mumford}
+\eitem
+
+
+\bibliographystyle{IEEEtranS.bst}
+\bibliography{candid}
+
+\end{document}
+

@@ -1,0 +1,202 @@
+
+Getalt cues (for edges?)
+  * proximity
+  * continuity
+  * collinearity
+  * cocircularity
+  * parallelism
+  * symmetry
+  * closure
+
+  * can imagine a hierarchical decomposition of such a thing
+
+What is the deal with the nonterminal / junction tree node connection?
+  * the nonterminal abstracts away
+  * the junction tree node doesn't(?)
+  * the junction tree gives no notion of span.
+  * the junction tree node does not stand for anything other than itself, so there's nothing to abstract away
+  * a graphical model cannot grow and shrink to fit the data
+  * long-range correlation splits the data?
+  * in some sense a junction tree node stands for its subtree (but that can be done in multiple ways)
+
+Generative training
+  * computer samples from an intermediate concept, and then a human either likes it or not
+
+  * how do we sample from a metagenerative model? jin and geman
+    consider this question with their account of the markov
+    backbone(?) i think they don't actually
+
+Learning latent structure!
+
+comparison to automated theorem proving
+  * intermediate concepts such as lemmas must be selected by humans
+
+  * parsing is very robust
+
+  * generation is very difficult and proceeds randomly 
+
+Considering the EM algorithm as a real paradigm
+  * seeing something reinforces our belief in it
+  * we can only see things if we parse them, otherwise we don't notice them
+
+what is finite attentiveness?
+  * it seems like the nonterminals should be competing for "juice"
+  * this makes sense in the case of limited computational resources
+
+  * the A* approach essentially performs one operation at a time, in
+    order of estimated importance
+
+  * one could parallelize A* to get a system with a larger attention
+    sphere (e.g. visuospatial sketchpad)
+
+  * one could somehow train the heuristics with reinforcement rather
+    than having a principled method. When a nonterminal participates
+    in a beautiful parse, we reward it
+
+  * We can distinguish between attentionality and preferred
+    attentionality. Nonterminal types could have preferred
+    attentionality, while nonterminal tokens could have actual
+    attentionality.
+
+  * this may be why the retina has a relatively small part that is
+    really being paid attention to
+
+  * (aside: satire and other things remove beauty by putting an object
+    in a non-beautiful context, and thus messing with the preferred
+    attentiveness.)
+
+  * How would A* deal with generation? What would a unified system
+    look like? It seems to be a combination of a top-down parser and a
+    bottom-up parser.
+
+  * At every time step, each dreaming queue would choose to expand a
+    nonterminal token based on activation (parse quality plus
+    attention). The produced nonterminal tokens would have high
+    attention but not high probability. Dreaming works on what we are
+    paying attention to?
+
+    We can pay attention to something for which there is no evidence,
+    which is imagination and day-dreaming.
+
+  * At every time step, every perceiving queue would choose to combine
+    two or more nonterminals tokens. These would be chosen based on
+    activation. The produced nonterminal token would have the
+    specified probability, with some value for the attention
+
+    We cannot perceive something which we are not paying any attention
+    to. However, we are forced to perceive its low-level
+    parts. Therefore, probability seems like a reasonable
+    priority. The image has extremely high probability, since it's
+    right there. 
+
+  * By thinking about contexts, it seems like we can limit the
+    perceiving queues to binariness, even in the case of general
+    combinators
+
+  * what the hell are the combinator markets? 
+
+a placed symbol can be thought of as the combination of a symbol and a
+place. if every place figures out what places border it, this might
+mean that places don't have to be special, which would be good.
+
+Combinator markets could then just be a list of favorite associations?
+
+state EM learning algorithm as a set of update equations on input
+
+
+
+
+feeling of paralysis in dreams - muscle signals being sent out, but
+proprioception not sensing anything
+
+combine the gestalt grouping laws with the model?
+  * parse the image via grouping laws
+  * somehow sample from this parse in a flexible way?
+
+The curse of dimensionality:
+  * run from it!
+
+  * the lens product is a reasonable approximation
+
+  * graphical models?
+
+  * grammatical models model dependency between the nodes of a
+    graphical model via statements of dependency. 
+
+  * the grammatical assumption ultimately corresponds to considering
+    only tree structures, in which inference is tractable.
+
+  * BP on the parse tree is always going to be inside-outside parsing
+    or viterbi parsing(?) Check Pedro's thesis.
+
+  * This inference is always going to be more straightforward and
+    accurate if we can observe the values of the variables. Hence the
+    Chomsky quiz.
+
+The concept of feature extraction
+
+  * features are the name for a particular way of constructing
+    intermediate concepts
+
+  * features are notoriously tricky creatures, and many practical
+    users of machine learning are begging for some framework that will
+    actually give them features which are stable and useful. Stability
+    and usefulness correspond to having comprehensible inner and outer
+    structure, respectively.
+
+
+
+
+
+
+
+What Is Model Merging???
+
+  * how does model merging work? it seems like we can think of it as
+    layoffs at the factory. how would it work in the market? does one
+    buyer start outbidding another buyer in replacement? what is
+    merging?
+
+  
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+what is the input to the parser?
+
+  * It should probably be a flexible hierarchical decomposition of the
+    input. For curves, this would be edge detection and some amount of
+    contour grouping. For patches, this would be a hierarchical
+    segmentation. It is not 100% clear how to make a flexible
+    hierarchical segmentation, although it seems like an SDF is a good
+    way to think about it. Basically, we form the tree structure that
+    maximizes some objective function, and then we insert new
+    composition rules that allow us to combine more flexibly.
+
+  * new composition rules will be X -> YZ, where X and Y are nodes of
+    the hierarchy, Y is a relatively close descendant of X, and Z is
+    whatever parts of X are not inside of Y.
+
+  * having introduced Z as a new constituent, we have to specify its
+    decompositions. One way to do this would be to say that Z inherits
+    the decompositions of X. Thus if X -> A + B is the original
+    decomposition of X, and Y < A, then we create the rule
+
+    X -> Y + Z
+    Z -> (A\Y) + B
+
+    Since Y < A < X, Y is a closer descendant of A than it is of X. So
+    we have not created a new constituent in this step of the
+    process. A\Y would have been introduced in the previous step.
+
+
+
+Metagenerative models
+
+  * The product of two generative models is a model that cannot be
+    efficiently sampled from.
+
+  * The markov backbone of Jin and Geman is an explicit example of
+    such a model.
+
+
+

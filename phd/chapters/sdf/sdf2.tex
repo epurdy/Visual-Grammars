@@ -1,0 +1,169 @@
+% sdf2.tex
+
+\subsection{Decomposition Families}
+
+\begin{defn}
+  Let $C$ be a curve of length $n$.  A {\em decomposition family for
+    $C$} is a pair $(\III, \DDD)$, where $\III$ is a set of intervals
+  $[i,j]$, and $\DDD$ is a set of decompositions of the form
+$$[i,j] \to [i,k] + [k,j],$$ where $[i,j], [i,k], [k,j]\in \III$. $\III$
+must contain the interval $[0,n]$.
+\end{defn}
+
+The most trivial decomposition family is the set of all intervals
+$[i,j]$ such that $0\le i < j \le n$, together with all possible
+decompositions of each $[i,j]$ into $[i,k] + [k,j]$. We will call this
+the {\em complete decomposition family}.
+
+\begin{defn}
+  A decomposition family $\FFF=(\III,\DDD)$ is $\theta$-flexible if,
+  for every interval $[i,j]\in \III$, and every $k$ such that $i<k<j$,
+  there is a decomposition
+$$[i,j] \to [i,k'] + [k',j],$$
+where 
+$$|k-k'| < \theta |j-i|.$$
+\end{defn}
+A $\theta$-flexible decomposition family is desirable because, for any
+parse tree, there is a similar parse tree that is allowable under the
+decomposition family. Here, similar means that, as we recursively
+subdivide a curve into subcurves, we can always choose a midpoint
+whose index differs from a given midpoint by at most 10\% of the
+length of the subcurve. A $\theta$-flexible decomposition family thus
+approximates the complete decomposition family, in some sense.
+
+Another notion of approximation is $\theta$-completeness:
+\begin{defn}
+  Let $C$ be a curve of length $n$. Let $\FFF=(\III,\DDD)$ be a
+  decomposition family for $C$.  An interval $[i,j]$ is called {\em
+    reachable} if there is a sequence of intervals $x_i$ such that
+  $x_0=[0,n], x_k=[i,j]$, and there is a decomposition with $x_i$ on
+  the left-hand side and $x_{i+1}$ on the right-hand side for every
+  $i$ between $0$ and $k$.
+\end{defn}
+
+\begin{defn}
+  A decomposition family $\FFF=(\III,\DDD)$ is $\theta$-complete if,
+  for every interval $[i,j], 0\le i< j \le n$, there is a reachable
+  interval $[i',j']\in \III$ such that
+$$|i-i'| < \theta |j-i|$$
+and
+$$|j-j'| < \theta |j-i|.$$
+\end{defn}
+
+\subsection{Constructing Sparse Decomposition Families for Fast Parsing}
+
+Decomposition families are interesting because they allow us to speed
+up parsing by summing or searching over a restricted set of parses:
+\begin{thm}
+  Let $G$ be a context-free grammar with $k$ rules. Let $C$ be a
+  curve of length $n$. Let $\FFF=(\III,\DDD)$ be a decomposition
+  family for $C$. Then there is a dynamic programming algorithm to
+  approximately (relative to $\FFF$) parse $C$ in time $O(|\DDD|k)$.
+\end{thm}
+Traditional parsing corresponds to the complete decomposition family,
+which has size $O(n^3)$. We can construct sparse decomposition
+families of size $O(n)$.
+
+\begin{thm}
+  Let $C$ be a curve of length $n$, and let $k$ be an integer. Then
+  there is a $\frac{1}{k}$-flexible decomposition family $(\III,\DDD)$
+  that has at most $2nk^2$ decompositions.
+\end{thm}
+
+\begin{proof}
+  We recursively define a sequence of subsampled curves $C^{(i)}$ as
+  follows: $C^{(0)} = C$, and $C^{(i+1)}$ is obtained from $C^{(i)}$
+  by taking every other point. The number of points in all $C^{(i)}$
+  combined is at most $2n$.
+
+  A subcurve between points $p$ and $q$ is \emph{allowable} if there
+  is some $C^{(i)}$ which contains both $p$ and $q$, and the subcurve
+  between them has length at most $k$ in $C^{(i)}$, i.e., there are at
+  most $k-1$ other points between them in $C^{(i)}$. The number of
+  allowable subcurves is then at most $2nk$.
+
+  We will say that a subcurve between points $p$ and $q$ \emph{lives}
+  in level $i$ (for $i>0$) if $p$ and $q$ are both in $C^{(i)}$, and
+  if the length of the subcurve is strictly greater than $k/2$ and at
+  most $k$ in $C^{(i)}$. When $i=0$, we will not have the minimum
+  length requirement, so all subcurves of $C$ of length at most $k$
+  live in level $0$. It is straightforward to see that each curve
+  lives in a single level.
+
+  If $p,q$ is a subcurve that lives in level $i$, then we can
+  decompose it by picking midpoints from $C^{(i)}$. Some of these
+  choices will lead to subcurves that live in level $i-1$.
+
+  This decomposition family is $\frac{1}{k}$-flexible. When picking
+  midpoints at level $i$, our subcurve has length at least $k/2$ in
+  $C^{(i)}$, so we have at least $k/2$ evenly spaced midpoint
+  choices. We can thus choose a midpoint that is within $c$ points of
+  any desired midpoint, where $c$ is at most $\frac{1}{k}$ times the
+  length of the subcurve we are splitting.
+  
+  There are at most $k$ midpoints per allowable subcurve, so the number
+  of composition rules is at most $2nk^2$.
+\end{proof}
+
+
+% \begin{thm}
+% Let $C$ be a curve of length $N = 2^n$. Then there is a
+% $\frac{1}{2^{t+1}}$-flexible decomposition family $(\III,\DDD)$ that
+% has at most $(2^{3t} + 2^{2t}) N$ decompositions. (So, for
+% $\theta=\frac{1}{8}$, $|\DDD|$ is at most $80 N$.)
+% \end{thm}
+
+% \begin{proof}
+% We represent subcurves of $C$ by intervals of indices of the form
+% $[x,y]$, where $0\le x < y \le N$.
+
+% We make the following definitions:
+% $$k_{max} = \lfloor \frac{n}{t} \rfloor$$
+% $$\LLL_k = \{ [x,y] : 2^{kt} | x, 2^{kt} | y \} \mbox{ for } 0 \le k \le k_{max}.$$ 
+
+% $$\mbox{(Note that } \LLL_0 \supset \LLL_1 \supset \cdots \supset \LLL_{k_{max}}.)$$
+
+% $$\AAA_k = \{ [x,y] \in \LLL_k : (y-x) \le 2^{(k+2)t}\}$$
+
+% $$\NNN_k = \{ [x,y] \in \AAA_k : [x,y] \notin \AAA_j \mbox{ for } j
+% < i \}$$
+
+% $$\DDD_k = \{ [x,y] \to [x, z] [z, y] : [x,y] \in
+% \NNN_k, z = x + a2^{kt}, x < z < y \}\mbox{ for } 1\le k \le k_{max}$$
+
+% Our decomposition family is $(\NNN, \DDD)$, where
+% $\NNN = \cup_{k=0}^{k_{max}} \NNN_k$ and
+%  $\DDD = \cup_{k=1}^{k_{max}} \DDD_k$.
+
+% First, we claim that for $[x,y]\to [x,z][z,y]\in \DDD_k$, $[x,z]$ and
+% $[z,y]$ are in $\AAA_k$. This holds because:
+% $$[x,y]\in \NNN_k \implies 2^{kt} | x,y \implies 2^{kt} | z = x + 2^{kt}a$$
+% and
+% $$[x,y]\in \NNN_k \implies (y-x) \le 2^{(k+2)t},$$ and since $[x,z],
+% [z,y]$ are shorter than $[x,y]$, the same applies to them.
+
+% Second, we claim that every subcurve $[x,y]\in \NNN_k$ has at least
+% $2^t - 1$ evenly spaced choices of $z$ such that $([x,y] \to [x,z]
+% [z,y]) \in \DDD_k$. This is true if $(y-x) \ge 2^t \cdot 2^{kt} =
+% 2^{(k+1)t}$, which is true, because $[x,y] \in \LLL_{k-1}$ and
+% $[x,y]\notin \AAA_{k-1}$.
+
+% Since we have at least $2^t - 1$ evenly spaced choices of midpoint, we
+% can choose the midpoint within $2^{t+1} (y-x)$ of any desired
+% midpoint.
+
+% Now we must bound the size of $\DDD$.
+% \begin{align*}
+% |\DDD| &= \sum_{k=1}^{k_{max}} |\DDD_k| \\
+% &\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot \frac{\max_{[x,y]\in\NNN_k} y-x }{2^{kt}}\\
+% &\le \sum_{k=1}^{k_{max}} |\NNN_k| \cdot 2^{(k+2)t} / 2^{kt}\\
+% &\le \sum_{k=1}^{k_{max}} |\AAA_k| 2^{2t}\\
+% &\le \sum_{k=1}^{k_{max}} 2^{n - kt} \cdot (2^{2t} - 1) \cdot 2^{2t}\\
+% &= 2^{n+2t}(2^{2t}-1) \sum_{k=1}^{k_{max}} 2^{-kt}\\
+% &= 2^{n+2t}(2^{2t}-1) \frac{2^{-t}}{1 - 2^{-t}}\\
+% &= 2^{n+2t}(2^{t}-1)(2^t + 1) \frac{1}{2^t - 1}\\
+% &= 2^{n+2t}(2^t + 1)\\
+% &= (2^{3t} + 2^{2t}) N
+% \end{align*}
+
+% \end{proof}

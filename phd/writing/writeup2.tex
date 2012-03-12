@@ -1,0 +1,47 @@
+%% -*- folded-file: t; -*-
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx, setspace}%%xy, setspace, amscd (commutative diagram)
+\title{GRAMMATICAL METHODS IN VISION}
+
+\author{Eric Purdy \footnote{Department of Computer Science,
+    University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+\DeclareMathOperator*{\len}{len}
+\newcommand\fakecite[1]{ {\bf [#1]} }
+
+%% \newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
+\newcommand\spk[2]{\framebox{images/#2.png}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\part{MOTIVATION}
+
+\part{CURRENT WORK: Grammatical Curve Models}
+\section{Style Guide}
+\section{Curve Tasks}
+  \subsection{Curve Classification}
+\section{Stochastic Shape Grammar: A Generative Model of Curves}
+  \subsection{L-Systems}
+  \subsection{Stochastic Shape Grammars}
+    \subsubsection{Dealing with Closed Curves}
+  \subsection{Restricted Classes of Shape Grammars}
+  \subsection{Geometric Deformation Model}
+  \subsection{Open Questions}
+\section{Parsing and Inference}
+  \subsection{Defining a Parse}
+  \subsection{Calculating the Likelihood of a Parse}
+  \subsection{Parsing Algorithm}
+\section{A Prior over Shape Grammars}
+  \subsection{A Prior over Grammar Parameters}
+  \subsection{An MDL Prior over Grammar Structure}
+\section{Learning Parameters}
+  \subsection{Learning Grammar Parameters}
+  \subsection{Fitting Geometric Deformation Models}
+\section{Learning Grammatical Structure}
+\section{Discretizing Curves for Efficiency}
+
+\end{document}

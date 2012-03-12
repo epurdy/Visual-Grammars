@@ -1,0 +1,67 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\section{Vanilla CKY}
+\begin{itemize}
+
+  \item Input: $\DDD$, a list of entries of the form $cost(X\to
+  \ell_{pq})=\sigma_{X,p,q}$ for various $X,p,q$.
+
+  \item Let $\TTT$ be an empty parse table mapping triples $X,p,q$ to
+    costs.
+
+  \item For $[cost(X\to \ell_{pq})=\sigma_{X,p,q}]\in \DDD$ do
+  \begin{itemize}
+    \item Choose $i$ such that $2^{i-1}\mu < d(p,q) \le 2^i \mu$, and let
+    $p'=round_i(p), q'=round_i(q)$
+    \item Insert $[cost(X\to \ell_{p'q'})=\sigma_{X,p,q}]$ into table
+    $\TTT_i$.
+  \end{itemize} 
+
+    \item For $p,q,r \in G_i$, $X\to YZ\in \GGG$ do
+    \begin{itemize}
+      \item Let $\sigma = \TTT_i[Y\to C_{pq}] + \TTT_i[Z\to C_{pq}] + \gamma_{X\to YZ}(p,q,r)$
+      \item $\TTT_i[X\to C_{pr}] \from \min \{\TTT_i[X\to C_{pr}], \sigma \}$
+    \end{itemize}  
+
+\end{itemize}
+
+\section{Proposed pseudocode}
+\begin{itemize}
+
+  \item Input: $\DDD$, a list of entries of the form $cost(X\to
+  \ell_{pq})=\sigma_{X,p,q}$ for various $X,p,q$.
+  \item For $\mu$ in $\{2,4,8,...,L\}$ do
+  \begin{itemize}
+
+  \item For $i\ge 0$ such that $2^i\mu < L$
+  \begin{itemize}
+    \item Let $\TTT_i$ be an empty parse table mapping triples $X,p,q$ to
+    costs.
+  \end{itemize}
+
+  \begin{itemize}
+    \item For $[cost(X\to \ell_{pq})=\sigma_{X,p,q}]\in \DDD$ do
+    \begin{itemize}
+      \item Choose $i$ such that $2^{i-1}\mu < d(p,q) \le 2^i \mu$, and let
+      $p'=round_i(p), q'=round_i(q)$
+      \item Insert $[cost(X\to \ell_{p'q'})=\sigma_{X,p,q}]$ into table
+      $\TTT_i$.
+    \end{itemize} 
+    \item For $p,q,r \in G_i$, $X\to YZ\in \GGG$ do
+    \begin{itemize}
+      \item Let $\sigma = \TTT_i[Y\to C_{pq}] + \TTT_i[Z\to C_{pq}] + \gamma_{X\to YZ}(p,q,r)$
+      \item $\TTT_i[X\to C_{pr}] \from \min \{\TTT_i[X\to C_{pr}], \sigma \}$
+    \end{itemize}  
+  \end{itemize}
+\end{itemize}
+\end{itemize}
+
+\end{document}

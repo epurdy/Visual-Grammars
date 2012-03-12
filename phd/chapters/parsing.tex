@@ -1,0 +1,134 @@
+% parsing.tex 
+
+\marginnote{beginning of parsing.tex}
+
+We have defined a statistical model that generates curves, and now we
+need to know how to calculate the likelihood of a curve under that
+model. We do this by parsing curves with PCFSG's.
+
+\subsection{Defining a Parse and Writing the Likelihood}
+
+Let $\GGG = (\NNN, \RRR, \{S\}, \ell, \MMM, \XXX)$ be a shape grammar in
+Chomsky Normal Form, and let $C$ be a curve. To simplify matters, we
+are assuming that our curve is open and that our grammar has starting
+set $\SSS = \{S\}$. Adapting to the general case is straightforward.
+
+Intuitively, we build parses up recursively, starting by parsing line
+segments with nonterminals $X$ such that $[X\to \ell]\in
+\RRR(X)$. Then, if $[X\to YZ]\in \RRR(X)$, and we have a parse of $D$
+starting from the nonterminal $Y$, and a parse of $E$ starting from
+$Z$, we can combine these to get a parse of $DE$ starting from $X$.
+
+\begin{defn}
+Let $C$ be a curve of length $n$, with points $C[0]$ through $C[n]$.
+
+A $\GGG$-parse of $C$ is a binary tree $T$. Every node of $T$ is
+labeled by a tuple $(X,R,i,j,k)$, where $X\in \NNN, R\in \RRR(X)$,
+$0\le i < k \le n$, and $j$ is either an integer strictly between $i$
+and $k$, or a special symbol $\bot$. The following properties must
+hold: 
+\begin{itemize}
+\item $T$'s root node must be of the form $(S,R,0,j,n)$.
+\item If $v$ is an internal node of $T$, then $v$ is of the form $(X,
+  [X\to YZ], i, j, k)$, where $i < j < k$. Furthermore, $v$ has
+  exactly two children, which are of the form $(Y,R_Y,i,i',j)$ and
+  $(Z, R_Z, j, j', k)$.
+\item If $v$ is a leaf node of $T$, then $v$ is of the form $(X, [X\to
+  \ell], i, \bot, i+1)$.
+\end{itemize}
+We will denote the set of such parse trees by $Parse_\GGG(C)$. 
+\end{defn}
+The likelihood of $C$ under $\GGG$ can then be written as
+$$P(C\mid \GGG) = \sum_{T\in Parse_\GGG(C)} P(C,T\mid \GGG),$$
+where
+\begin{align}
+\label{joint-likelihood}
+P(C,T\mid \GGG) = &\prod_{(X,[X\to YZ],i,j,k)\in T} \rho_X([X\to YZ])
+\cdot \mu_{X\to YZ}(C[i], C[j], C[k]) \\
+\nonumber
+\cdot &\prod_{(X,[X\to \ell],i,\bot,i+1)\in T} \rho_X([X\to \ell])
+\end{align}
+
+\def\Vbin{\ema{V_{bin}}}
+\def\Vlex{\ema{V_{lex}}}
+\newcommand\unirule[1]{\ema{[#1 \to \ell]}}
+\newcommand\binrule[3]{\ema{[#1 \to #2 #3]}}
+\newcommand\parseset[1]{\ema{Parse_{\GGG}(#1)}}
+
+We will often approximate $P(C\mid \GGG)$ by using the most likely
+parse instead of summing over all parses, i.e.
+$$P(C\mid\GGG) \approx P_{vit}(C\mid\GGG) := \max_{T\in \parseset{C}}
+P(C,T\mid \GGG).$$ This is called the Viterbi approximation, and the
+most likely $T$ is called the Viterbi parse.
+
+\subsection{Parsing}
+\label{sec-parsing}
+
+Calculating the likelihood of a curve $C$ under a shape grammar $\GGG$
+involves either summing over parse trees (to find the exact
+likelihood) or maximizing over parse trees (to find the Viterbi
+approximation). 
+
+Let $\langle L,v,R\rangle$ denote a binary tree with root $v$, left
+subtree $L$, and right subtree $R$. Let $Trees(X,i,k)$ be the set of
+parse trees whose root node is of the form $(X,R,i,j,k)$. Intuitively,
+$Trees(X,i,k)$ is the set of all the ways that the nonterminal $X$ can
+be used to parse the curve $C[i:k]$. We can describe this set
+recursively by considering all rules with $X$ on the left-hand side,
+and all ways to break the curve $C[i:k]$ into two subcurves:
+\begin{align*}
+\label{recursive-trees}
+Trees(X,i,i+1) &= \begin{cases}
+\{ \langle \emptyset, (X, [X\to \ell],i,\bot,i+1), \emptyset\rangle\} &
+\mbox{ if } [X \to \ell] \in \RRR(X)\\
+\emptyset & \mbox{otherwise}\end{cases}
+\end{align*}
+\begin{align}
+Trees(X,i,k) = \big\{ &\langle T_Y, (X, [X\to YZ], i, j, k), T_Z \rangle \big| [X\to YZ] \in \RRR(X), 
+\end{align}\begin{align*}
+&i < j < k, T_Y\in Trees(Y,i,j), T_Z\in Trees(Z,j,k)\big\}
+\end{align*}
+if $k > i+1$, and $\emptyset$ otherwise.
+
+Let $\GGG(X)$ be the grammar $\GGG$ with start symbol $X$ instead of
+$S$. Then we can recursively compute the likelihood of a subcurve
+under a particular parse tree, by grouping the factors of equation
+\eqref{joint-likelihood} into those arising from the root node, those
+arising from the left subtree, and those arising from the right
+subtree:\footnote{We are abusing notation for the sake of clarity,
+  since we are specifying all indices relative to $C$. The indices of
+  $C[i:k]$ would not agree with those of $C$ when $i>0$. }
+\begin{align*}
+P\Big(C[i:k], \Big\langle T_L, (X, [X\to YZ], i,j,k), T_R \Big\rangle \Big| \GGG(X)\Big) = &\rho_X([X\to YZ])  \\
+\cdot &\mu_{X\to YZ}(C[i],C[j],C[k]) \\
+\cdot &P(C[i:j], T_L \mid \GGG(Y)) \cdot P(C[j:k], T_R \mid \GGG(Z))
+\end{align*}
+Summing over the set of parse trees (and using the fact that this set
+factors according to equation \eqref{recursive-trees}) yields a recursive formula for the overall likelihood.
+\begin{align*}
+P(C[i:k] | \GGG(X)) = \sum_{T\in Parse_{\GGG(X)}(C[i:k])} & P(C[i:k], T \mid \GGG(X))\\
+= \sum_{\substack{[X\to YZ] \in \RRR(X)\\i < j < k\\ T_L\in Trees(Y,i,j)\\ T_R\in Trees(Z,j,k)}} &P\Big(C[i:k], \Big\langle T_L, (X, [X\to YZ], i,j,k), T_R \Big\rangle \Big| \GGG(X)\Big)\\
+= \sum_{\substack{[X\to YZ] \in \RRR(X)\\i < j < k}} &\Big[\rho_X([X\to YZ]) \\
+&\cdot \mu_{X\to YZ}(C[i],C[j],C[k]) \\
+&\cdot P(C[i:j] | \GGG(Y)) P(C[j:k] | \GGG(Z))\Big]
+\end{align*}
+If we replace summation with maximization, we get a recursive formula
+for the Viterbi approximation to the likelihood.
+\begin{align*}
+P_{vit}(C[i:k] | \GGG(X)) = \max_{T\in Parse_{\GGG(X)}(C[i:k])} & P(C[i:k], T \mid \GGG(X))\\
+= \max_{\substack{[X\to YZ] \in \RRR(X)\\i < j < k}} &\Big[\rho_X([X\to YZ]) \\
+&\cdot \mu_{X\to YZ}(C[i],C[j],C[k]) \\
+&\cdot P_{vit}(C[i:j] | \GGG(Y)) P_{vit}(C[j:k] | \GGG(Z))\Big]
+\end{align*}
+This recursive formulation makes it clear that we can do either
+Viterbi parsing or full parsing via dynamic programming in time
+$O(|\RRR|\cdot |C|^3)$. This is much like CKY parsing of strings with
+context free grammars.
+
+We have only been dealing with open curves in order to simplify the
+discussion, but we are also interested in parsing closed curves. This
+can be done efficiently in time $O(|\RRR|\cdot |C|^3)$ via
+essentially the same algorithm, where we consider subcurves of $C$
+that wrap around the artificially chosen ``end'' of $C$.
+
+\marginnote{end of parsing.tex}

@@ -1,0 +1,20 @@
+
+In \cite{hcm}, hierarchical curve models are used to find shapes in
+cluttered images. The same thing can be done for our models.
+
+We can test this out on the ETHZ dataset, which is relatively easy. We
+could also try to find curves in the much harder LabelMe dataset.
+
+\subsection{Parsing in Cluttered Images}
+Given a shape model and an image containing a similar shape, we would
+like to be able to find the shape in the image. This is done by
+searching for a shape that is rated highly by the shape model, and for
+which evidence exists in the image.
+
+We will work on solving harder and harder versions of this problem:
+  - Take a known curve, and generate evidence that suggests that
+    curve, and no other curve. Find the curve.
+  - As above, but randomly add evidence to other parts of the image.
+  - Extract evidence from an actual image, and use this to find the
+    curve.
+

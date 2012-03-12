@@ -1,0 +1,229 @@
+% curvegrammars.tex: explaining model of curve grammars
+
+\subsection{Stochastic Shape Grammars}
+
+In this section, we define Probabilistic Context-Free Shape Grammars,
+a probabilistic model that allows us to generate random curves, parse
+curves to find their likelihood, and ultimately learn distributions
+over a class of curves.
+
+Analogously to nonterminals in a traditional context-free grammar, we
+introduce {\em placed symbols}. A placed symbol is of the form
+$X_{p,q}$, where $X$ is a member of a finite alphabet $\NNN$, and
+$p,q$ are points. $X_{p,q}$ represents an oriented curve going from
+$p$ to $q$. The path between the endpoints is unspecified.
+
+We specify the type $X$ so that different nonterminals can be related
+by the grammar. Therefore, $X$ should be thought of as specifying a
+particular class of paths between any two endpoints. By itself, $X$ is
+an {\em abstract symbol} that can be instantiated as a placed symbol
+between any $p$ and $q$.
+
+There is a special symbol $\ell\in \NNN$ that denotes a line
+segment. This takes the place of terminals in traditional context-free
+grammars.
+
+\begin{defn}
+A {\em placed curvilinear form} (by analogy with a sentential form) is
+a sequence of placed symbols
+$$ \alpha^{(0)}_{p_0,p_1} \alpha^{(1)}_{p_1,p_2} \cdots
+\alpha^{(n-1)}_{p_{n-1},{p_n}}.$$ As with curves, $p_0$ will be equal
+to $p_n$ iff the curvilinear form is closed, and two closed curvilinear
+forms will be considered equivalent if they differ by a cyclic
+permutation.
+
+An {\em abstract curvilinear forms} is a sequence of abstract symbols
+(with no associated geometric information)
+$$ \alpha^{(0)} \alpha^{(1)} \cdots \alpha^{(n-1)}.$$ We will specify
+whether these are open or closed, since there is no other way to
+tell. Again, closed abstract curvilinear forms will be considered
+equivalent if they differ by a cyclic permutation.
+\end{defn}
+
+We next introduce substitutions and substitution rules, which allow us
+to transform curvilinear forms, ultimately producing curves. We will
+perform substitutions of the form
+$$ X_{p,q} \to Y^{(1)}_{p,p_1} Y^{(2)}_{p_2,p_3} \cdots
+Y^{(k)}_{p_{k-1},q}.$$ Since $X_{p,q}$ represents an unspecified path
+from $p$ to $q$, substitution simply gives a more specific route, in
+terms of which points we will visit in between (the $p_i$, which we
+will call the midpoint if there is only one of them, and {\em control
+  points} otherwise) and what sort of path we will follow between
+these points (the $Y^{(i)}$).
+
+In order to give a substitution rule for performing substitutions, we
+need to give
+\bitem
+\item An {\em abstract substitution rule} $X\to Y^{(1)}\cdots Y^{(k)}$.
+\item a rule for determining the $p_i$ in terms of $p$ and $q$.
+\eitem
+
+In practice, applying a substitution rule is problematic because the
+$p_i$ live in an infinite domain ($\RR^2$), but we want to deal with
+curves that (1) live in a finite domain (the pixels of the image
+plane) and (2) are expected to exhibit a good deal of variation. Thus,
+we give a distribution $\mu_{X\to Y^{(1)}\cdots Y^{(k)}}(p_1,\dots,
+p_{k-1} ; p,q)$ over the $p_i$ called the {\em control point distribution}. 
+When there is only a single control point, we will call $\mu_{X\to
+YZ}(p_1; p,q)$ the {\em midpoint distribution}.
+
+\begin{defn}
+A probabilistic context-free shape grammar (PCFSG) is a tuple 
+$\GGG = (\NNN, \RRR, \SSS, \ell, \MMM, \XXX)$, where
+\bitem
+\item $\NNN$ is a set of abstract symbol types, which we will call
+  {\em nonterminals}
+\item $\RRR$ is a set of abstract substitution rules, with $\RRR(X)$
+  being the set of rules in $\RRR$ with $X$ on the left-hand side
+\item $\SSS$ is the {\em starting set} of abstract curvilinear forms
+\item $\ell \in \NNN$ is a curve type representing a line segment
+\item $\XXX = \{ \rho_X \mid X\in \NNN, X\ne \ell \} \cup
+  \{\rho_\SSS\}$, where $\rho_X$ is a probability distribution over
+  $\RRR(X)$, and $\rho_\SSS$ is a distribution over $\SSS$
+\item $\MMM = \{ \mu_{X\to Y^{(1)}\cdots Y^{(k)}} \mid (X\to
+  Y^{(1)}\cdots Y^{(k)}) \in \RRR\}$ is a set of control-point
+  distributions.
+\eitem
+\end{defn}
+
+It is worth noting that $\GGG$ has a corresponding {\em abstract
+  grammar} $\GGG_{abs} = (\NNN, \RRR, \SSS, \{\ell\}, \XXX)$ which is
+just a traditional PCFG. $\GGG_{abs}$ is an odd PCFG because it only
+generates strings of the symbol $\ell$; nevertheless, many properties
+of $\GGG$ are actually properties of $\GGG_{abs}$.
+
+For a grammar that generates open curves, we can assume that $\SSS$
+has a single curvilinear form $S$, and we will call $S$ the start
+symbol. We sample from such a PCFSG by starting with the curvilinear
+form $S_{p,q}$ for arbitrary $p$ and $q$. While our curvilinear form
+contains a placed symbol $X_{p',q'}$ such that $X\ne \ell$, we pick a
+random substitution rule $X \to Y^{(1)} \dots Y^{(k)}$ according to
+$\rho_X$, and pick random control points $p_1,\dots, p_{k-1}$
+according to $\mu_{X\to Y^{(1)}\dots Y^{(k)}}(p_1, \dots, p_{k-1}; p',
+q')$. We then replace the placed symbol $X_{p',q'}$ with the
+curvilinear form $Y_{p',p_1}^{(1)} \dots Y_{p_{k-1},q'}^{(k)}$.
+
+There is a slight difficulty here in that we usually cannot define the
+control-point distribution if $p$ and $q$ are equal. This is
+important, since we are mainly interested in closed curves, so we
+would like to start with $S_{p,p}$ for some arbitrary $p$. In this
+case, our set $\SSS$ of starting forms will contain abstract
+curvilinear forms of length two or more, which are understood to be
+closed. We choose a random such curvilinear form according to
+$\rho_\SSS$, and then continue as before.
+
+\subsection{Restricted Classes of Shape Grammars}
+
+In this section, we define some restricted classes of PCFSG's. Our
+restrictions are only on the abstract part of the grammar, so we are
+just specifying restricted classes of traditional grammars.
+
+For simplicity and efficiency, we will usually restrict our abstract
+grammars to be in Chomsky Normal Form, in which abstract substitution
+rules can only be of two forms: 
+\bitem
+\item Binary rules of the form $X \to Y Z$.
+\item Lexical rules of the form $X \to \ell$.
+\eitem 
+
+From now on, we will assume that PCFSG's are in Chomsky normal form.
+Accordingly, we will speak of midpoints, rather than control points.
+
+\subsection{Geometric Deformation Model}
+\label{sec-deform}
+
+When sampling from our grammar, we place a midpoint $q$ according to
+the midpoint distribution $\mu_{X\to YZ}(q; p, r)$, where $X_{p,r}$ is
+the placed symbol we are currently replacing.
+
+We want our grammar to be invariant to translation, scale, and
+rotation. Therefore, we translate, scale, and rotate $\RR^2$ with a
+map $\phi$ such that $\phi(p) =(0,0)$ and $\phi(r) =(1,0)$, and
+represent $q$ via the coordinates $\widehat{q} = \phi(q)$.
+
+In this coordinate system, we use the nonparametric distribution given
+by the Parzen windows method \cite{parzen}. If we have seen samples
+$q_1, \dots, q_k$, then
+$$\mu_{X\to YZ}(q ; p, r) = \frac{1}{n} \sum_{i=1}^{k}
+\frac{1}{2\pi h^2} e^{\frac{\| \widehat{q_i} - \widehat{q}\|^2}{2h^2}}.$$
+
+In the context of kernel density estimators, the parameter $h$ is
+called the bandwidth. It specifies how much smoothing to apply to the
+density estimation. Selecting a suitable bandwidth is often
+problematic. 
+
+It is worth noting that this nonparametric distribution is just a
+mixture of Gaussians, and thus there is no solid distinction between a
+mixture of multiple copies of the rule $X\to YZ$ with Gaussian
+midpoint distributions, and a single copy with a mixture of Gaussians
+midpoint distribution. We will prefer the second, since the resulting
+grammar has a simpler structure, as discussed in Section \ref{sec-mdl}.
+
+\subsection{Open Questions}
+
+Which shape grammars can be converted to Chomsky Normal Form?
+
+This is not as straightforward as the corresponding question for
+traditional context-free grammars, since not all control point
+distributions can be expressed as products of midpoint
+distributions. Recursion makes this question more subtle.
+
+\newthought
+Process Model of Continuous Curves
+
+We can imagine a shape grammar which does not have any terminal
+$\ell$, but rather continues to generate sample points forever. If
+such a grammar is finite, it would have to have recursive rules to
+allow an infinite number of expansions. The simplest case would be
+rules of the form $L\to LL$.
+
+If we have a grammar with only one symbol $L$, and only one rule $L\to
+LL$, with $\mu_{L\to LL}(q;p,r)$ being the degenerate distribution
+that only takes on the value $q=\half(p+r)$, then it is clear that we
+generate only straight lines.
+
+We can ask what conditions on the grammar are necessary to produce
+smooth curves under such a model. For specificity, let us assume that
+we represent our curve by a function $C(t) : [0,1] \to \RR^2$. Let
+$C_k$ be the curve we obtain after $k$ rounds of substitution, and let
+$C(\frac{i}{2^k}) = C_k[i]$. It can be checked that this gives the
+same value for $\frac{i}{2^k}$ and $\frac{i'}{2^{k'}}$ when the two
+are equal, and thus $C(\cdot)$ is well-defined.  Since the set
+$\left\{\frac{i}{2^k}\right\}$ is dense in $[0,1]$, we can define
+$C(t)$ for other values by continuity when $C(\cdot)$ is continuous.
+
+Then, there are several interesting questions:
+
+\begin{q}
+What conditions on the grammar are necessary in order for $C(t)$ to
+be continuous?
+\end{q}
+
+\begin{q}
+What conditions on the grammar are necessary in order for $C(t)$ to
+be smooth?
+\end{q}
+
+\begin{q}
+Is it possible to write down a simple grammar for a simple parametric
+curve such as a circle or a Bezier curve?
+\end{q}
+
+\begin{q}
+Suppose that we generate a smooth curve $C(t)$ via a grammar \GGG, and
+then subsample it to get a curve $C_*$ with a finite number of
+points. How do we parse $C_*$ with \GGG, and how do we use this parse
+to assign a likelihood to $C_*$ under \GGG?
+\end{q}
+
+\begin{q}
+What is a good probabilistic interpretation of subsampling?
+\end{q}
+
+
+
+% LocalWords:  sparsifying parameterized multinomial posteriori subcurve Google
+% LocalWords:  LabelMe dataset unsummarizable datasets WordNet freeness runtime
+% LocalWords:  subparts substrings iff Discretizing subsampled nonterminals
+% LocalWords:  tuple Gaussians Bezier subsample subsampling nonterminal subtree
+% LocalWords:  subcurves indices Viterbi maxima decodable reparsing

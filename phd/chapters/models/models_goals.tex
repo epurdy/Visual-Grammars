@@ -1,0 +1,166 @@
+% models/models_goals.tex
+
+\marginnote{beginning of models/models\_goals.tex}
+
+\begin{itemize}
+
+\item Compare shape grammars to other point-set models
+\marginnote{Change ``point-set'' to something else.}
+
+We are building probabilistic models of shape. We want to demonstrate
+that our models have nice properties. In particular, we would like to
+prove that our models do as well or better in explaining geometric
+variability, compared to other popular models of shape. For now, we
+consider only models of shape that deal with the location in the plane
+of a fixed number of corresponding landmarks, $z_1, \dots, z_n$.
+
+The easiest way to compare two generative probabilistic models is to
+examine samples from them, and subjectively assess their similarity to
+real data. This is inherently a very qualitative evaluation.
+
+When the other models are also probabilistic models, we can compare
+them in a more quantitative way using (estimated) cross-entropy, which
+is defined as
+$$H(\{x_1,\dots,x_n\}, q) = - \sum_{i=1}^n \frac{1}{N} \log_2 q(x_i).$$
+
+If $X = \{x_1,\dots,x_n\}$ is unseen data, and a large enough sample
+to be statistically useful, then $H(X,q)$ is a good measure of how
+well a model explains unseen data. Smaller values of $H(X,q)$ suggest
+that $q$ is a better model. One problematic aspect of cross-entropy is
+that it is only meaningful if $q$ is a correctly normalized
+probability distribution. Often it is easier to compute
+$\widetilde{q}(x) = Z\cdot q(x)$ for some unknown but fixed constant
+$Z$.
+
+When we are comparing to a non-probabilistic model, sampling is
+impossible, and cross-entropy is meaningless. In this case, the most
+straightforward way to compare models is by using them both in some
+task like classification. For instance, we can use both models to
+classify leaves as being either oak or maple leaves. Whichever model
+has a lower error rate is better capturing the differences between the
+two classes of shapes.
+
+We would like to consider the following models:
+
+  - Markov curve models, where we represent a curve as a series of
+    turns and line segments (a la the Logo turtle), and then add noise
+    to the angle of each turn, and the length of each line segment.
+  - Procrustes-type models, such as the Watson distribution and the
+    Bingham distribution
+  - Independent gaussian perturbations of each point
+  - Independent nonparametric perturbations of each point
+
+For our models, we would like to consider several different models:
+  - a hand-built model
+  - a model automatically inferred from a single example
+  - a model automatically inferred from a single example and tuned
+    with multiple examples
+
+\item Model curves of varying length
+
+We would like to demonstrate that shape grammars effectively model
+curves with varying numbers of points. This is important to achieve
+scale invariance, since larger objects will generally have more
+detailed boundaries.
+
+For this question, there are fewer standard probabilistic models to
+compare grammars to. There are many discriminative models that deal
+with curves of varying length. Unfortunately, there are few
+classification tasks hard enough to distinguish between different
+models. There are more classification tasks when we consider the more
+restricted problem of comparing two different shapes, rather than
+modeling an entire class and classifying a single shape.
+
+We can examine samples from variable-length grammar models, and we can
+try to perform well on classification tasks.
+
+One hard matching task is MPEG-7. We are only allowed to compare
+images in pairs, and there are about 2 million pairs that must be
+iterated over. Therefore, we must be able to build a grammar from a
+single example that is very small and very robust. We must also be
+able to make coarse versions of curves that are good stand-ins, since
+we will have to lessen the work required to parse. We can start with a
+much smaller subset of the dataset, of course.
+
+\item Build more interesting grammars
+
+We would like to demonstrate the expressiveness of grammatical curve
+models. In particular, we would like to show that a hand-built grammar
+can exhibit interesting variation, such as:
+\begin{itemize}      
+ \item articulating parts of an object
+ \item the presence or absence of a part
+ \item a choice between two different variations on the part
+ \item shared parts that occur in different contexts 
+\end{itemize}
+
+We will show samples from these models.
+
+We also want to do this with automatically inferred grammars, but that
+is a hard problem. Section 6 will document our efforts there.
+
+\item Curve Classification
+
+We want to build a system that can classify curves. We will give it a
+set of curves from $n$ different classes $C_1,\dots,C_n$, and we wish
+to assign new curves to the class that they most belong in. Some
+datasets for this task are:
+\begin{itemize}
+\item Swedish Leaf dataset. Here we are given the silhouettes of
+  leaves from fifteen different species of tree. (Species include
+  maple, oak, and some sort of willow.) For each class, we are given
+  25 example leaves, and then we want to build a classifier that will
+  accurately classify another 50 examples from each species.
+
+\item MPEG7.
+
+\item The LabelMe dataset \cite{labelme} has some adequate user-drawn
+  polygons for many classes of natural shapes.
+
+\end{itemize}
+
+Our generic approach to this task will be to build a probabilistic
+model for each class. Given a novel curve $x_*$ from class $c_*$, we
+will compute $\PP( x_* \mid c_* = C_i)$ for each class and assign
+$x_*$ to the class which gives it the highest likelihood.
+
+\item Parsing goals
+
+Given a grammar model and a curve, we want to calculate how likely the
+curve is under the model, and we would like to extract the most likely
+correspondence between the points of the curve and the parts of the
+model. We demonstrate parsing with several different tasks:
+
+\begin{itemize}
+  \item Given two curves whose points can be put into a one-to-one
+    correspondence, show that we can recover that correspondence by
+    building a grammar model from one curve and using it to parse the
+    other. We can do this either with a hand-built model or an
+    automatically generated model.
+  \item Given a coarse curve and a finer curve, show that we can recover a
+    reasonable correspondence between the points of the coarse curve
+    and a subset of the points of the finer curve. We do this by
+    building a grammar model from the coarse curve and using it to
+    parse the finer curve. This demonstrates that we can model longer
+    curves than were used to build the grammar. 
+  \item Given a coarse curve and a finer curve, recover a reasonable
+    correspondence by building a grammar from the finer curve and
+    parsing the coarse curve. This demonstrates that we can model
+    shorter curves than were used to build the grammar.
+  \item Given a coarse curve and a finer curve, where the finer curve has
+    features not present in the coarse curve (such as bumps or pits),
+    recover a reasonable correspondence by building a grammar from the
+    coarse curve and using it to parse the finer curve. This
+    demonstrates that we can model longer curves that have non-trivial
+    variation in detail.
+  \item Given two fine curves which do not have a perfect correspondence,
+    recover a reasonable correspondence by building a grammar from one
+    and using it to parse the other. This demonstrates that we can
+    model both extra and missing points.
+  \item Given a rich grammar, show that we can choose the correct
+    structure for input curves.
+\end{itemize}
+
+\end{itemize}
+
+\marginnote{end of models/models\_goals.tex}

@@ -1,0 +1,77 @@
+
+\subsection{Building a Grammar for a Single Curve}
+\label{sec-single}
+
+The current work is based on \cite{hcm}, in which grammar-like
+structures were constructed from single training curves. We follow
+that approach here.
+
+A grammar $\GGG_C$ for a curve $C$ should produce $C$, and curves
+which look like $C$. We are not trying to achieve structural variation
+yet, so the only variation that $\GGG_C$ needs to account for is:
+\begin{itemize}
+\item Slight geometric deformations of $C$
+\item Curves like $C$ that have more or fewer sample points.
+\end{itemize}
+We model geometric deformations with the nonparametric distribution
+described in Section \ref{sec-deform}. We model curves with fewer sample
+points by allowing every nonterminal $X$ to have the rule $[X\to
+\ell]$. We initially set the probability of this rule based on the
+scale of $X$, as described in Section \ref{sec-scale}.
+
+The nonterminals of our grammar will correspond to subcurves of $C$.
+We model curves with more sample points than $C$ by allowing any
+nonterminal $X$ that arises from a subcurve of length $1$ to have two
+rules:
+\begin{itemize}
+\item $X\to \ell$
+\item $X\to XX$
+\end{itemize}
+The second rule is infinitely recursive, and thus allows the curve to
+get arbitrarily long.
+  \marginnote{Our current thinking is to have the
+  probability of $X\to XX$ be chosen in the same scale-dependent way
+  as the probability of $X\to YZ$. But this might be problematic.}
+
+\subsection{General Case}
+
+Let $C$ be a curve of length $n$. A \emph{generic parse tree} for $C$
+is a parse tree that does not refer to any particular grammar. This
+will just be a binary tree $T$ where each node is labeled by an
+interval $(i,j)$, $0\le i < j \le n$, and
+\begin{itemize}
+\item The root of $T$ is $(0,n)$
+\item If $(i,j)$ is a node, and $j-i \ge 2$, then $(i,j)$ has exactly
+  two children, and they are of the form $(i,k)$ and $(k,j)$ for some
+  $k$.
+\item $T$ has $n$ leaf nodes $(i,i+1)$ for $i=0,\dots,n-1$.
+\end{itemize}
+
+We can then specify a simple grammar for $C$ that produces the parse
+tree $T$. For every node $(i,j)$ in $T$, $\GGG$ has a nonterminal
+$X^{(i,j)}$. When $(i,j)$ has children $(i,k)$ and $(k,j)$, $\GGG$ has
+a rule $[X^{(i,j)} \to X^{(i,k)}X^{(k,j)}]$. The scale of the
+nonterminal $X^{(i,j)}$ is $\frac{j-i}{n}$ (see Section \ref{sec-scale}).
+
+Our choice of an initial grammar for $C$ is thus based on choosing a
+generic parse for $C$. Some choices:
+\begin{enumerate}
+\item An arbitrary parse, chosen to make the tree as balanced as
+  possible. This approach corresponds most closely to that of
+  \cite{hcm}.
+\item A parse that has been chosen to respect the structure of
+  $C$. This approach would require us to identify natural constituents
+  of curves. There has been some work on this question.
+\item We can choose multiple parses, and create a grammar that can
+  parse $C$ in multiple ways. 
+\end{enumerate}
+
+Our favored approach is number 3. We want to create a small grammar
+that can parse $C$ in as many ways as possible, so that the EM
+retraining can discover the ``correct'' sub-grammar. To this end, we
+use the sparse decomposition families of Section
+\ref{sec-fast-parsing}.
+
+
+
+

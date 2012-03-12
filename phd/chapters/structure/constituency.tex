@@ -1,0 +1,18 @@
+\subsection{Constituency Cues}
+In \cite{basri-jacobs}, it is argued that some shapes have natural
+constituents, and some shapes do not. Some cues that we believe would
+give us some clues to structure: 
+\begin{itemize}
+\item Large-scale curvature. If we smooth the points of a curve with a
+  Gaussian, then we can measure curvature at different levels. We feel
+  that large-scale curvature is likely to occur only at constituent
+  boundaries.
+\item Protuberances. If the curve goes out from a point $x$ and then
+  returns to a point $y$, where the length of the curve is
+  significantly larger than the distance between $x$ and $y$, then the
+  curve from $x$ to $y$ is likely to be a natural constituent. This
+  will also be true of any points close to $x$ and $y$, so we should
+  restrict ourselves to pairs $(x,y)$ for which the ratio 
+$$\frac{\max_{z}||x-z|| + ||y-z||}{||x-y||}$$
+is at a local maximum.
+\end{itemize}

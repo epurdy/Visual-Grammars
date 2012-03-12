@@ -1,0 +1,208 @@
+% parameters.tex
+
+\marginnote{beginning of learning/parameters.tex}
+
+In order to learn a shape grammar $\GGG =
+(\NNN,\RRR,\SSS,\ell,\MMM,\XXX)$, we must learn (1) the structural
+elements of the grammar ($\NNN, \RRR, \SSS$); (2) the continuous
+elements of the grammar (the multinomial distributions $\XXX$), and
+(3) the associated geometric information (the midpoint distributions
+$\MMM$). Learning the structural elements of the grammar is a very
+difficult unsolved problem, and we defer the topic to Section
+\ref{sec-learn-struct}.
+
+For the multinomial distributions and the midpoint distributions, we
+use the Expectation-Maximization algorithm \cite{em}.  
+
+\subsection{EM for Parameter Estimation}
+
+Let $C_1,\dots, C_n$ be independent samples from a grammar $\GGG$, for
+which we know the structure, but not the parameters. We would like to
+set the parameters of $\GGG$ such that the posterior $P(\GGG\mid
+C_1,\dots,C_n)$ is maximized. We can write the posterior as
+\begin{align*}
+  P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \prod_i P(C_i\mid \GGG)\\
+  &= P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
+  &= P(\GGG) \cdot \sum_{\{T_i\}}\prod_i P(C_i, T_i \mid \GGG)\\
+\end{align*}
+Unfortunately, it is not known how to maximize this posterior, or even
+the likelihood. The likelihood is known to have many local maxima in
+the case of context-free grammars for natural languages
+\cite{charniak}. Therefore, we are forced to use approximation
+techniques. We use the Expectation-Maximization algorithm \cite{em},
+which is a standard approach to finding maximum likelihood or maximum
+a posteriori estimates in the case where important variables are
+unobserved. In our case, the unobserved variables are the parse trees
+$\{T_i\}$.
+
+Let $\mathbf{C} = (C_1,\dots,C_n)$, and let $\mathbf{T}$ be the latent
+variable $(T_1,\dots,T_n)$. We then iteratively find better and better
+grammars $\GGG^{(t)}$:
+\begin{enumerate}
+\item \textbf{E step:} Let 
+  \begin{align*}
+Q^{(t)}(\GGG) &= \sum_{\mathbf{T}} \big[P(\mathbf{T}\mid \mathbf{C},
+\GGG^{(t)}) \log P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log
+P(\GGG)\\
+&= E_{\mathbf{T} \sim \mathbf{T} | \mathbf{C}, \GGG^{(t)}}\big[\log
+P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log P(\GGG)
+  \end{align*}
+\item \textbf{M step:} Let
+$$ \GGG^{(t+1)} = \argmax_{\GGG} Q^{(t)}(\GGG)$$
+\end{enumerate}
+
+We compute only what is necessary to optimize $Q^{(t)}(\GGG)$. The
+joint log-likelihood can be calculated as follows:
+\begin{align*}
+  P(\mathbf{C},\mathbf{T}\mid \GGG) = &\prod_a \prod_{(X,[X\to YZ],i,j,k)\in T_a} \rho_X([X\to YZ]) \cdot \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k]) \\
+  \cdot &\prod_a \prod_{(X,[X\to \ell],i,\bot,j)\in T_a} \rho_X([X\to \ell]) \\
+  \log P(C,T\mid \GGG) = &\sum_a \sum_{[X\to \lambda] \in \RRR}
+  \#\{\mbox{uses of }[X\to \lambda]\mbox{ in } T_a \} \log \rho_X([X\to \lambda]) +\\
+  &\sum_a \sum_{[X\to YZ] \in \RRR} \sum_{(X, [X\to YZ], i, j,k)\in T_a} \log
+  \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])\\
+\end{align*}
+
+We wish to optimize $Q^{(t)}$ with respect to the multinomial
+distributions $\rho_X$ for each $X$. The joint likelihood given in
+Equation \ref{joint-likelihood} depends on the $\rho_X$ only as $\prod
+\rho_X()$. Taking logs, and by the linearity of expectation, the
+relevant part of $Q^{(t)}$ is
+$$\sum_a \sum_\lambda E_{T_a}\left[ \#\left\{\mbox{uses of }[X\to
+    \lambda] \mbox{ in }T_a \right\}\right]\cdot \log \rho_{X}([X\to \lambda]) +
+\log P(\rho_X).$$
+
+This has the same form as the log-posterior of a multinomial
+distribution under the Dirichlet prior, as we will see in Section
+\ref{sec-multinomial}. The observed multinomial counts are a
+sufficient statistic, so we need only compute $\sum_a E_{T_a}\left[
+  \#\left\{\mbox{uses of }[X\to \lambda] \mbox{ in } T_a
+  \right\}\right]$ for each $\lambda$. We call this quantity a
+\emph{soft count}.
+
+Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
+distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
+midpoint distribution, so this question is ill-posed. We adapt the
+Parzen window density estimator by using the soft counts instead of
+multiplicities. The formula for this is given in Section
+\ref{sec-learn-midpoint}.  The formula for the soft counts is:
+$$\sum_a \sum_{0\le i < j < k\le n} \log \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])
+ E_{T_a}\left[ \xi_{a, X\to YZ, i,j,k} \right],$$
+where we define
+$$\xi_{a, X\to YZ,i,j,k}$$
+to be one if the parse tree $T_a$ uses $X\to YZ$ to parse the curve
+$C_a[i:k]$, divided into $C_a[i:j]$ and $C_a[j:k]$, and zero otherwise.
+
+We have thus reduced the problem of learning parameters to the problem
+of finding the soft counts. How do we find the soft counts?  We need
+to compute $E_{T_a} \xi_{a,X\to YZ,i,j,k}$ for every $a$, $[X\to YZ],
+i,j,k$. Since $\xi_{a, X\to YZ,i,j,k}$ is an indicator variable, this
+is the same as computing the total probability that the rule $[X\to
+YZ]$ appears in the specified location, which can be obtained by
+summing Equation \eqref{joint-likelihood} over all parse trees that
+use $[X\to YZ]$ in the specified location.
+
+This probability can be calculated efficiently using the
+Inside-Outside algorithm, which can be derived from the equations in
+Section \ref{sec-parsing}. The inside probability is given in the
+second-to-last equation of Section \ref{sec-parsing}. We do not give
+the equations for the outside probability, but they are derived in a
+similar way.
+
+The soft counts $E_{T_a}\left[ \#\left\{\mbox{uses of
+    }[X\to \lambda] \mbox{ in } T_a\right\}\right]$ can be found by summing the
+relevant $\xi$.
+
+\subsection{Learning Multinomial Distributions}
+\label{sec-multinomial}
+
+A multinomial distribution is a distribution over a finite alphabet
+$a_1,\dots, a_k$, where $P(a_i)=p_i$. Learning a multinomial
+distribution from independent samples $x_1,\dots, x_n$ is commonly done by
+maximizing the posterior probability 
+\begin{align*}
+\vec{p} = (\widehat{p_1},\dots, \widehat{p_k}) &= \argmax_{\vec{p}}
+P(\vec{p} \mid x_1,\dots,x_n )\\
+&= \argmax_{\vec{p}} P(x_1,\dots,x_n; \vec{p}) \cdot P(\vec{p}),
+\end{align*}
+where $P(\vec{p})$ is a prior distribution over the space of possible
+$(p_1,\dots,p_k)$. The most common choice of prior is the Dirichlet
+distribution, parameterized by $\alpha_1,\dots, \alpha_k > 0$:
+$$\mathrm{Dir}(p_1,\dots, p_k; \alpha_1,\dots, \alpha_k) = \frac{\Gamma\bigl(\sum \alpha_i\bigr)}{\prod \Gamma(\alpha_i)} \prod_{i=1}^k p_i^{\alpha_i - 1},$$
+because, when all $\alpha_i \ge 1$, the maximum a posteriori estimate of the $\{p_i\}$ has the simple form
+$$\widehat{p_i} = \frac{ c_i + \alpha_i - 1}{ n + \sum
+  \alpha_i - k},$$ 
+where
+$$c_i = \#\{j : x_j = i\}.$$
+More generally, the maximum a posteriori estimate has the form
+$$\widehat{p_i} = \begin{cases}
+\frac{ c_i + \alpha_i - 1}{ n + \sum_{i\in I} \alpha_i - |I|} & c_i + \alpha_i \ge 1\\
+0 & \mbox{ otherwise}\\
+\end{cases},$$ 
+where
+$$I = \{i : c_i + \alpha_i \ge 1\}.$$
+
+When the $\alpha_i$ are greater than one, this prior smooths the
+estimated distribution $\vec{p}$ towards the uniform
+distribution. When the $\alpha_i$ are less than one, this prior makes
+the distribution sparser than the maximum likelihood estimate. 
+
+When estimating the production probabilities in a grammar, a
+sparsifying prior is generally recommended. One intuition for this is
+that we are trying to recover a relatively sparse set of rules from
+the set of all possible rules; in order to avoid missing a rule, we
+must give some weight to (and thus generate observations of) rules
+that will ultimately be discarded. In \cite{johnson-naacl}, a
+Dirichlet prior with $\alpha_i = \frac{1}{1000}$ was found to work
+well for training context-free grammars for natural languages,
+although $\alpha_i$ between $\frac{1}{100}$ and $\frac{1}{10,000}$
+were found to work about as well.
+
+\subsection{Scale-dependent Dirichlet Prior}
+\label{sec-scale}
+
+When there is no prior reason to believe that any $p_i$ is larger than
+the others, it is natural to use a Dirichlet prior with each
+$\alpha_i$ the same. For shape grammars, this is not entirely the
+case; since rules of the form $[X\to YZ]$ and $[X\to \ell]$ serve
+different roles in the grammar, we expect their probabilities to take
+on different values. 
+
+In particular, if the nonterminal $X$ is meant to model long curves,
+it is unlikely that a long curve will have only two sample points,
+especially if we are parsing a curve that has many sample
+points. Therefore, we would expect the probability of $[X\to \ell]$ to
+be low.
+
+Let $C$ be a curve. We define the \emph{scale} of a subcurve $C'$ to
+be $s(C') = |C'| / |C|$. We can then specify an ideal scale $s_X$ for
+the nonterminal $X$. Our prior distribution on $\rho_X$ is then
+$Dir(\alpha_1,\dots,\alpha_k)$, where
+\begin{align*}
+\alpha_1 &= k \cdot \alpha_{dir} \cdot e^{-\omega s_X^2}k &\\
+\alpha_i &= k \cdot \alpha_{dir} \cdot \frac{1 - e^{-\omega s_X^2}}{k-1} & 2 \le i \le k.\\
+\end{align*}
+Here $\alpha_1$ corresponds to the rule $[X\to \ell]$. Suitable values
+of $\alpha_{dir}$ are probably significantly less than one, in light
+of \cite{johnson-naacl}. A suitable value for $\omega$ is more
+complicated, and depends on the value of other model parameters.
+
+This prior is suitable, because it produces grammars biased towards
+balanced parses. To see this, consider a grammar $\GGG$ whose
+parameters are set according to this prior. (This will be true of our
+initial grammar, as we describe in Section \ref{sec-single}.)  Let $C$ be a
+curve of length $n$, and $T$ be a $\GGG$-parse of $C$. $T$ will then
+specify nonterminals $X_1,\dots,X_n$ to parse each line segment of
+$C$. Thus, the likelihood $P(C,T\mid \GGG)$ will contain factors
+$\rho_{X_i}([X_i\to \ell])$ for $i=1,\dots,n$. If $\rho_{X_i}([X_i\to
+\ell])$ is $e^{-\omega s_X^2}$, then these factors contribute
+$$e^{-\omega \sum_i s_{X_i}^2}$$
+in total. Since the $X_i$ combine to parse $C$, the scales $s_{X_i}$
+will hopefully sum to approximately one. In this case the probability
+will be highest when $\sum_i s_{X_i}^2$ is lowest, which occurs when
+all the $s_{X_i}$ are equal. The stated Dirichlet prior thus pushes
+$\GGG$ to favor balanced parse trees, as desired.
+
+\marginnote{Would it make sense to do experiments trying to learn
+  $P(X\to \ell)$?}
+
+\marginnote{end of learning/parameters.tex}

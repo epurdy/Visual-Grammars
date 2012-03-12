@@ -1,0 +1,185 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\section{Rules of Thumb}
+\begin{itemize}
+\item Glutamate is black ink of computation
+\item GABA is red ink of computation
+\item Apical dendrites are the input dendrites
+\item Basal dendrites are the output dendrites
+\end{itemize}
+
+\section{Cerebellum}
+
+\subsection{Cell Types}
+
+\begin{description}
+\item[Source Neuron (Pontine Nuclei)] Axons are called ``Mossy
+  Fibers''. There are forty times more Source Neurons than Sink
+  Neurons.[PONS 831]
+\item[Sink Neuron (Deep Cerebellar Nuclei, Lateral/Medial Vestibular
+  Nuclei of the Brain Stem)]  
+\item[Production Neuron (Granular cell)] Axons are called ``parallel
+  fibers''. There are $10^{11}$ such cells, approximately half of the
+  cells in the brain. [PONS 835]
+\item[Right Anti-Symbol Neuron (Purkinje)] Output is entirely
+  inhibitory and mediated by GABA (red ink). [PONS 835]
+\item[Right Exception Neuron (Inferior Olive)]
+\item[Golgi cell]
+Input dendrites in molecular layer
+GABA (red ink) terminals output (axodendritically) in the glomeruli
+
+Looks like an anti-production. So some productions also generate anti-productions?
+\item[Basket Cell]
+\item[Stellate Cell]
+These two cell types are inhibiting the Purkinjes, so they are
+ultimately giving increased weight to various symbols.
+\end{description}
+
+\subsection{Cerebellar Glomeruli}
+
+Pontine nuclei terminals contact granule cells and Golgi neurons in
+synaptic complexes called CG.
+
+\subsection{Symbolic Coherence and Equivalence}
+
+We hypothesize that neurons which carry information over significant
+distances are encoding some comprehensible meaning. We will thus refer
+to certain neurons as conveying symbols. We will also say that groups
+of related symbols exist in symbol-clusters.
+
+\begin{conj}[Symbolic Equivalence Hypothesis] Symbols in one part of
+  the brain can be paired up with equivalent or roughly equivalent
+  symbols in another part of the brain.
+\end{conj}
+
+\begin{conj}[Symbolic Coherence Hypothesis] Symbols that are related
+  in one part of the brain will be anatomically related.
+\end{conj}
+
+
+[PONS 837]:
+\begin{quote}
+  Individual Purkinje neurons receive synaptic input from only a
+  single climbing fiber, whereas each climbing fiber contacts 1-10
+  Purkinje neurons. The terminals of the climbing fibers in the
+  cerebellar cortex are arranged topographically; the axons of
+  clusters of olivary neurons terminate in thin parasagittal strips
+  that extend across several folia. In turn, the Purkinje neurons
+  within each strip project to common groups of deep nuclear
+  neurons. This highly specific connectivity of the climbing fiber
+  system contrasts markedly with the massive convergence and
+  divergence of the mossy and parallel fibers.
+\end{quote}
+
+\begin{quote}
+Individual Anti-Symbol neurons receive exception signals from only a
+single Exception neuron. Each Exception neuron contacts 1-10
+Anti-Symbol neurons (presumably a coherent symbol-cluster). The
+terminals of the Exception neurons are arranged topographically;
+clusters of Exception neurons output into thin strips that extend
+across several folia. In turn, the Anti-Symbol neurons within each
+strip project to common groups of Sink neurons. 
+\end{quote}
+
+[PONS 842]:
+\begin{quote}
+  More refined mapping studies of the cerebellar cortex based on
+  single-cell recordings reveal that the input from a given peripheral
+  site, such as a local area of skin, diverges to multiple discrete
+  patches of granule cells, an arrangement called fractured
+  somatotopy.
+
+Recent anatomical studies of primates show that the deep cerebellar
+nuclei are also organized somatotopically. They are arranged to
+receive projections from the two maps on the dorsal and ventral
+surfaces of the intermediate and lateral zones of the cerebellar
+cortex and project to the magnocellular red nucleus and primary motor
+cortex via the thalamus.
+\end{quote}
+
+\begin{quote}
+  Symbols (signaled by Source neurons) from a particular cluster
+  diverge to multiple discrete patches of Production neurons.
+
+  The Sink neurons also exhibit symbolic coherency. They project to
+  the cerebral cortex via the thalamus.
+
+...
+
+\end{quote}
+
+\begin{quote}
+  Purkinje neurons in the lateral cerebellar cortex project to the
+  dentate nucleus. Most dentate axons exit the cerebellum via the
+  superior cerebellar peduncle and have two main terminations. One
+  termination is in the contralateral ventrolateral thalamus, in the
+  same area receiving input from the interposed nucleus. These
+  thalamic cells project to premotor and primary motor areas of the
+  cerebral cortex. The second main termination of dentate neurons is
+  in the contralateral parvocellular red nucleus, a portion of the red
+  nucleus that is distinct from the part receiving input from the
+  interposed nucleus. These neurons project to the inferior olivary
+  nucleus, which in turn projects back to the contralateral cerebellum
+  in the climbing fibers, thus forming a feedback loop. In addition to
+  receiving input from the dentate nucleus, parvocellular neurons also
+  receive input from the lateral premotor areas. The intriguing
+  suggestion has been made, based on brain imaging, that this
+  premotor-cerebello-rubrocerebellar loop is involved in the mental
+  rehearsal of movements and perhaps with motor learning.
+\end{quote}
+
+\subsection{The Pass-Through Pathway}
+
+$$X \to X$$
+
+\begin{itemize}
+\item The $X$ Source Neuron sends a positive signal to the $X$ Sink Neuron.
+\end{itemize}
+
+\subsection{The Anti-Production Pathway}
+
+$$ X \to \bar{Y} \bar{Z} $$
+
+\begin{itemize}
+\item The $X$ Source Neuron sends a positive signal to the $X\to YZ$
+  Production Neuron.
+\item The $X\to YZ$ Production Neuron sends a positive signal to
+  the Right Anti-Symbol Neurons for $Y$ and $Z$.
+\item The $Y$ Right Anti-Symbol Neuron sends a negative signal to the
+  $Y$ Sink Neuron.
+\item The $Y$ Sink Neuron does not fire.
+\end{itemize}
+
+\subsection{The Exception Pathway}
+
+$$ X\to \bar{Y} \bar{Z}$$
+$$ \bar{Y} $$
+
+\begin{itemize}
+\item The $X$ Source Neuron sends a positive signal to the $X\to YZ$
+  Production Neuron.
+\item The $X\to YZ$ Production Neuron sends a positive signal to the
+  Right Anti-Symbol Neuron for $Y$.
+\item The $Y$ Right Exception Neuron sends a positive signal to Right
+  Anti-Symbol Neuron for $Y$.
+\item The $Y$ Right Anti-Symbol Neuron is switched off (the ``complex
+  spike'' depolarization).
+\item The $Y$ Sink Neuron can start firing. 
+\item The link between the $X\to YZ$ Production Neuron and the $Y$
+  Right Anti-Symbol Neuron is weakened.
+\end{itemize}
+
+The pathway from The Right Exception Neuron to the Right Anti-Symbol
+Neuron to the Sink Neuron is said to be an unusually straightforward
+connection.
+
+
+\end{document}

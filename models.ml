@@ -38,7 +38,13 @@ struct
 	  let scale = float_of_int scurve.sdata.len /. fn in
 	  let straightcost = 
 	    if scurve.dcompids = [] then 0.
-	    else infinity (* 100000. *. scale *. scale *)
+	    else 
+(* 	      if scale > 0.1 then *)
+(* 		infinity *)
+(* 	      else *)
+(* 		100000. *. scale *. scale  *)
+
+	      infinity (* 100000. *. scale *. scale *)
 	  in
 	  let straightprob = exp (-. straightcost) in
 	    Some {closed = closed;

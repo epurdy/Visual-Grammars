@@ -1,0 +1,63 @@
+\marginnote{beginning of structure/optimality.tex}
+
+\marginnote{John Goldsmith wanted to see examples of grammars at
+  different levels of complexity.}
+
+We want to learn a grammar that explains our training data well, but
+we also want a simple grammar. We thus specify a Minimum Description
+Length prior over grammars, which will favor simple grammars. We then
+attempt to maximize the posterior probability of $\GGG$ given the
+training data and this prior.
+
+Finding the optimal such grammar is a very hard unsolved problem for
+standard CFG's, and thus we only give a heuristic search strategy.  We
+discuss the difficulties of grammar induction in Section \ref{sec-gram-hard}.
+
+\subsection{MDL Priors over Grammar Structure}
+\label{sec-mdl}
+
+Let $\GGG=(\NNN,\RRR,\SSS,\ell,\MMM,\XXX)$ be a grammar. We wish to
+specify a prior over the structural parts of $\GGG$: $\NNN, \RRR,
+\SSS$. We use a minimum description length prior for the structure of
+the grammar:
+$$P(\NNN,\RRR,\SSS) = \frac{1}{Z} e^{-len(enc(\NNN,\RRR,\SSS))}$$
+for some binary encoding function $enc(\cdot): \{\GGG\} \to
+\{0,1\}^*$. $enc$ must be uniquely decodable, i. e.,
+$enc(\NNN,\RRR,\SSS) = enc(\NNN',\RRR',\SSS') \implies \NNN=\NNN',
+\RRR=\RRR', \SSS=\SSS'$.
+
+The encoding function $enc$ should be as concise as possible, so that
+simple grammars are rewarded for their simplicity.  We choose to
+represent $\NNN, \RRR$, and $\SSS$ as
+$$(|\NNN|, \{(i_X,i_Y,i_Z) \mid [X\to YZ] \in \RRR\}, \{(i_Y,i_Z) \mid
+YZ\in \SSS \} ),$$ where the $i_X$ denote some consistent numbering of
+the nonterminals. We assume that every nonterminal $X\in \NNN$ has the
+rule $[X\to \ell] \in \RRR(X)$, and thus do not explicitly encode this
+information.
+
+Each component of this representation can be encoded in binary:
+\begin{itemize}
+\item $|\NNN|$ is represented as a standard binary integer, taking up
+  $k_\NNN \lceil \log_2 \NNN \rceil$ bits
+\item Each $(i_X, i_Y, i_Z)$ is represented as three binary integers,
+  each zero-padded to take up exactly $k_\NNN$ bits.
+\item Each $(i_Y, i_Z)$ is represented as two binary integers, each
+  zero-padded to take up exactly $k_\NNN$ bits.
+\end{itemize}
+
+We thus use up $k_\NNN (1 + 3 |\RRR| + 2 |\SSS|)$ bits. We also need
+to use $2 \lceil \log_2 k_\NNN \rceil + 2$ bits to specify how to
+break the stream of bits into ``words'' of $k_\NNN$ bits. (We simply
+need to encode $k_\NNN$ itself. We need to be able to specify where
+the encoding of $k_\NNN$ stops and the rest of the encoding
+begins. One relatively simple way to do this is to encode $k_\NNN$ in
+binary, and then preface every digit with a $1$. We then use $00$ to
+denote the end of $k_\NNN$.)
+
+Thus our total description length is
+\begin{align*}
+\big\lceil \log_2 |\NNN| \big\rceil (1 + 3 |\RRR| + 2|\SSS|) + 2 \big\lceil
+\log_2 \log_2 |\NNN| \big\rceil + 2
+\end{align*}
+
+\marginnote{end of structure/optimality.tex}

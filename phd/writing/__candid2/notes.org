@@ -1,0 +1,12 @@
+
+
+
+* Define the model
+** P_sub
+* Explain parsing
+** Define inside weight
+** Define outside weight
+** Show recursive computation of both
+** Define soft counts
+** Show how to compute soft counts
+** Show how to reestimate using soft counts, prove optimality

@@ -179,17 +179,17 @@ let _ =
     let fnames = Array.init !nsamples curvenamer in
     let fnames = Array.fold_left (fun s fname -> s ^ " " ^ fname) "" fnames in
       doit (sprintf "./show_curves.native -fname %s/samples.svg -title '%s' %s" !dir !title fnames);
-      doit (sprintf "inkscape %s/samples.svg -E %s/samples.eps" !dir !dir);
+      doit (sprintf "inkscape %s/samples.svg -D -e %s/samples.png" !dir !dir);
       fprintf tex "Here are some samples from the grammar:\n\n";
-      fprintf tex "\\includegraphics[width=6in]{%s/samples.eps}\n\n" !latexdir;
+      fprintf tex "\\includegraphics[width=6in]{%s/samples.png}\n\n" !latexdir;
 
 
       let comp_namer = sprintf "%s/gram.%04d.ppm" !dir in
-      let comp_namer_eps = sprintf "%s/gram.%04d.eps" !dir in
-      let comp_namer_eps_latex = sprintf "%s/gram.%04d.eps" !latexdir in
+      let comp_namer_png = sprintf "%s/gram.%04d.png" !dir in
+      let comp_namer_png_latex = sprintf "%s/gram.%04d.png" !latexdir in
       let comp_sample_namer = sprintf "%s/gram.%04d.sample.svg" !dir in
-      let comp_sample_namer_eps = sprintf "%s/gram.%04d.sample.eps" !dir in
-      let comp_sample_namer_eps_latex = sprintf "%s/gram.%04d.sample.eps" !latexdir in
+      let comp_sample_namer_png = sprintf "%s/gram.%04d.sample.png" !dir in
+      let comp_sample_namer_png_latex = sprintf "%s/gram.%04d.sample.png" !latexdir in
 
 	if !show_rules then begin
 
@@ -210,14 +210,14 @@ let _ =
 	      fprintf tex "$S_{%d} \\to S_{%d} S_{%d}, P=%f$ & " prod.topsid prod.leftsid prod.rightsid prod.cdata.prob;
 
 	      if !draw_midpoints then begin
-		doit (sprintf "convert %s %s" (comp_namer prod.cid) (comp_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_namer_eps_latex prod.cid);
+		doit (sprintf "convert %s %s" (comp_namer prod.cid) (comp_namer_png prod.cid));
+		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_namer_png_latex prod.cid);
 	      end;
 	      fprintf tex " & ";
 
 	      if !draw_rules && (prod.cdata.geom != Improper) then begin
-		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_eps prod.cid));
-		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_sample_namer_eps_latex prod.cid);
+		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_png prod.cid));
+		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_sample_namer_png_latex prod.cid);
 	      end;
 	      fprintf tex "\\\\\n\\hline\n";
 

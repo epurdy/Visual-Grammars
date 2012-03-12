@@ -1,0 +1,904 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\part{Theoretical Notes}
+
+\section{Lessons and Thoughts from ``Segmentation and Morphology''}
+
+\bitem
+\item Segmentation should be chosen to avoid unlikely things, like
+  ``qx'' or hairpin turns. This is probably true of other
+  constituents.
+\item At a segmentation boundary, we should be able to insert
+  additional material without hurting likelihood. This is true of any
+  constituent.
+
+  A similar criterion: high entropy right after the boundary.
+
+\item Purpose of this work is to predict data varieties not seen in
+  training data.
+\item Would be nice to do joint annotation/image learning, and relate
+  the parse of the image to the parse of the annotation.
+
+  One nice thing here would be the following grammar $X\to XX, X\to
+  a$. This basically generates the integers. We can imagine using this
+  grammar, together with rich annotations that contain an integer, to
+  understand such concepts as a star with a variable number of points.
+
+\item We should reward shapetrees if they hav mostly convex subcurves,
+  especially at lower levels. This would allow us to for instance
+  identify the points of a star as constituents rather than the valley
+  between two points.
+
+  Exceptions: there are times when this would make less sense, such as
+  a leaf with a bite taken out of it. Various kinds of occlusion also
+  produce such effects.
+
+  How to measure? Could look at signed area above the curve in
+  standard coordinate frame.
+
+\item Curves have a sort or natural scale defined by their amount of
+  convexity or bendiness.
+
+  Image patches similarly have some amount of variability.
+
+  How to measure? Total deflection from axis in Bookstien coordinates?
+  Estimated standard deviation of a random walk or Brownian motion
+  generating the path between the two points?
+
+  For image patches, some sort of measure of how much color variation there is?
+
+  For keypoint sets, just the number of keypoints?
+
+\item MDL algorithm for segmentation in SAM seems very applicable to our situation
+
+\item Gibbs sampling for Dirichlet seems really cool. 
+
+\item If we have a partially grammatified text, is successor frequency
+  with nonterminals interesting?
+
+\item Two problems: non-identity, scale
+
+  When two things are very similar, they will probably not be
+  identical. How do we deal?
+
+  We may need to find similarity between two objects at different scales.
+
+\item Basic problem: we are working with continuous data. CL is
+  working with discrete data.
+
+  At low-level, cl sees unigrams and bigrams which are interesting. A
+  unigram or bigram model of curves at pixel level is boring.
+
+  At a higher level, we have too many objects to get the same one with
+  any frequency, so we have to relate non-identical objects.
+
+  How do we solve this problem? Hough transform is most obvious
+  answer. One of the algorithms in particular (MARK10?) was using
+  something that could be replaced with a Hough transform.
+
+  One other question: do we actually want to be learning discrete
+  classes? Or do we want to learn a single model with parameters? Or
+  do we want multiple models with parameters?
+
+\item Other basic problem: we need to come up with our own notion of
+  description. Concatenation of Bezier curves seems somewhat reasonable.
+
+\eitem
+
+\section{Other thoughts}
+\bitem
+
+\item It seems like we're generalizing and would benefit from
+  understanding some existing literature on sparsifying nearest
+  neighbor algorithms by picking a subset of representatives and/or
+  clustering to find representatives. See e.g. shape context paper.
+
+\item Shape context might be another fruitful area to try to generalize.
+  Here we are using thin plate splines as local deformation model?
+
+\item Could try to demonstrate that we are learning by compressing
+  curves. Could try to approximate them well enough that we get curve
+  exactly after rounding to pixels and doing line drawing algorithm.
+
+  Could compare to something like sequitur, possibly over
+  N,E,S,W,NE,etc. moves drawing the curve
+
+\item Use some sort of higher-order tensors with the CKY assertions
+  $(N \to [i,j])$ to pick out a large cluster that do well together?
+  One problem is that for an arbitrary initial grammar we don't have
+  meaningful singleton affinities.
+
+\item Are higher-order tensors a limited neighborhood approximation of
+  Gibbs sampling?
+
+\eitem
+
+
+\section{Bumpiness of Curves}
+When we subsample a curve, we lost a lot of information. One thing we
+are forgetting is the bumpiness of the curve. In examining leaves, I
+find that I discount unlikely midpoints at a much higher rate when the
+curve is very bumpy. In order to capture this, I have toyed with the
+idea of using the final value of the objective function (possibly
+without the second, regularizing term) as a measure of overall
+straightness. This could be used to set the initial variances of the
+Watson distribution, for instance. We could also, for bumpy curves,
+move the midpoint of a curve slightly closer to the mean of the
+endpoints.
+
+\section{Bezier Approximation}
+
+I can also do a slightly sub-optimal approximation with Bezier
+curves. In order to use this in the algorithm, we would need to be
+able to compare two Bezier curves. I once worked out an expression for
+the following metric in terms of the Bezier coefficients: $
+\int_{t=0}^1 \left\| P(t) - Q(t) \right\|^2$. I have never tried to
+parse like this, but maybe it would be cool.
+
+\subsection{Parameterized Coordinate Frames}
+
+Consider a square with jagged edges, and a circle with jagged edges.
+In our current formalism, we can't see the similarity of the
+jaggedness except at low enough levels where the circle is essentially
+straight.
+
+Perceptually, however, there is a huge amount of similarity.
+We would like to capture this somehow.
+
+We propose an alternative to the previously proposed coordinate system.
+We want a coordinate system that bends with the curve.
+
+Let $p=(x,y)$ be any point, and let $B(t)$, $0\le t\le 1$ be our
+curve, with $B(0)=a, B(0)=b$. We can then define a coordinate system
+relative to $B$ by setting
+
+$p_B = (\argmin_t \| B(t) - p\|, \min_t \| B(t) - p\|)$
+
+This should then serve to capture the notion of globally following one
+curve and locally following another.
+
+Some questions arise: is this a context-free grammar? Can we parse
+efficiently?
+
+Is it context-free? It is, but we have to modify our formalism
+slightly, so that our nonterminals are Bezier paths between two points
+rather than completely unspecified paths. Still, we can imagine
+generating a random sample from such a grammar without violating
+independence assumptions. Instead of a midpoint distribution, we need
+to specify both a midpoint and a (random) procedure for generating the
+two Bezier sub-curves of the larger Bezier curve. We can probably do
+this fine by giving a distribution over the local tangents in our new
+coordinates.
+
+$ A_{p, \alpha, q} \to B_{p, \beta, r} C_{r, \gamma, q}$
+
+$\alpha$ can be specified by two tangent vectors $a_1, a_2$, in the
+standard coordinate system where $p \to (0,0)$, $q\to (1,0)$.
+
+We can specify $r$ as being the image under $\alpha$-relative
+coordinates of some distribution over $\RR^2$.
+
+What is the inverse mapping? We know how to go from normal coordinates
+to $\alpha$-relative coordinates, how do we go back? Well, we go to
+$\alpha(t)$ and then we go a certain distance perpendicular to the
+tangent and we'll be there. So we just need to know 
+
+We should actually work out formulas for everything here.  A good
+sanity check is whether we can get the same Bezier curve by giving
+$\beta$ and $\gamma$ as straight lines in $\alpha$-coordinates and
+giving $r$ as being on the straight line in $\alpha$ coordinates.
+This should be possible, since Bezier curves can be subdivided arbitarily.
+
+\section{Curves with Local Features}
+
+Some suggestions of Yali:
+
+Since we have a pretty good understanding of local features and
+feature descriptors (e.g. corners, SIFT descriptors), it would be nice
+if we could build a model that included the presence of such features.
+
+Such an approach could be invaluable in finding curves in cluttered
+images, where such features are rare but can be reliably found and
+described.
+
+We might even have some understanding of how the features are related
+to the geometry of the curve?
+
+\section{Variable Length Encoding for MDL prior}
+We might be able to shorten the description length using variable
+length encoding of the nonterminal ids. This would require using
+something like $O(n\log n)$ bits to describe the encoding, instead of
+the $\log(n)$ bits we are using to give the length of the alphabet. We
+might save bits in describing the binary productions. So this will
+probably not help unless our grammar has very uneven numbers of rules
+for the different nonterminals, or unless our grammar has far more
+productions than it has nonterminals.
+
+
+\section{Thinking about Morphology}
+
+We would like to do our low-level segmentation in a way that is
+inspired by morphology.
+
+We would like to break the curve into chunks that are somehow
+meaningful or at least repeatable.
+
+Can we have an MDL formulation of this? Need to give a description
+framework.
+
+\section{Category Induction}
+
+This is a lot like what we need to do to merge intelligently.
+
+\section{Reversing with Merging}
+
+We would like to consider merges of the form $Merge(A,B_{rev})$.  It
+might be the case that we have a good match but only in this reflected
+way.
+
+\section{Proposed Framework: Stolcke on Curves}
+
+\subsection{The Objective Function}
+
+Global objective function is the parse likelihood times the prior. For
+the prior on the grammar we will just use Stolcke's MDL prior, which
+seems eminently sensible. For a prior on the midpoints and control
+points, we might want one, but I don't have any idea what kind.
+
+The log likelihood will be given by the HCM score.
+
+\subsection{The Algorithm: Overview + Status}
+
+\benum
+\item First segment the curve. [done]
+
+\item Then compute a constituency score for all groups of remaining
+  elements. The constituency score should be the max of a score for
+  simplicity (outlined above) and a score for protuberance.
+
+  One possible protuberance score is the ratio of the arclength to the
+  straight distance.
+
+\item Let G=nearest neighbor grammar, in this case the
+  non-hierarchical NN grammar (possibly with segments already made
+  into parse nodes)
+
+\item Start a loop of:
+\benum
+\item Let G' = CNF(G), where we do this in the way that makes the best
+  constituents. We do this using the HCM dynamic program to optimize
+  the sum of the constituency scores.
+
+  I would like to just optimize the sum of the constituency scores -
+  it would be good to try and justify this as picking the most likely
+  CNFication of G. That would then require a generative interpretation
+  of the constituent scores, which doesn't seem impossible.
+
+\item Reparse the training examples using G', get parse trees T'. This
+  is done using the HCM algorithm. 
+
+\item Transform T' out of CNF form by undoing the CNF transformation
+  wherever our parse has an artifical node in it. This can be done
+  because the parse tree will label these artificial nodes with types
+  that were introduced in the CNFication step. Call this set of parse
+  trees T.
+
+\item Relearn the parameters of G using T. We learn the grammar in the
+  standard way, possibly with smoothing. 
+
+  We relearn the control points based on the observed control points.
+  See [Deformation Model:Maximum likelihood estimation]
+
+\item Propose various (parse-preserving) transformations:
+\bitem
+\item Merge - identify clusters of nodes which are likely to collapse
+  nicely.
+\item Split - look at all the nodes of a given type, and consider
+  splitting them up into multiple types.
+\item Chunk - look at all the artificial CNF nodes of G', try to pick
+  out a useful cluster of them and label it as a real node. 
+ \eitem
+
+\item All proposals will be selected to optimize several criteria.  We
+  choose to work in a clustering framework, and use the most
+  straightforward algorithm, k-means. We will thus add features to
+  nodes to represent our criteria. We will ignore for now the
+  important question of how much to scale each feature.
+
+  Our criteria are: \bitem
+\item Consistent level - to discourage excessive scale-freeness, we
+  add the arclength of the subcurve under a node as a feature.
+\item Consistent midpoints - when we create a new type, we want the
+  variance of the midpoint distribution to be low. The x and y
+  coordinates of the midpoint are features.
+\item Consistent children - assuming that the children are correctly
+  typed, we want the distribution of types of children of the new type
+  to be low-entropy. 
+
+  Assume there are $k$ types in existence. We add in $k$ features,
+  each just counting the number of direct decendants of the node which
+  are of a given type. (Note that a node can have more than two
+  descendants because we have tranformed back out of CNF.)
+
+  If we are merging, then we want the subtypes we are merging to have
+  similar distributions over their children, regardless of the
+  variance. Thus, we give each node of type $t$ $k$ features
+  $f_1,\dots,f_k$, with $f_i$ equal to the total number of children of
+  type $i$ possessed by {\em all} nodes of type $t$.
+
+  If we are splitting, then we would actually like to do a matrix
+  factorization algorithm for this part. I don't immediately see how
+  to integrate this into the clustering framework.
+
+\item Consistent parents - same as above, except on the parent of a node.
+
+\item Consistent contexts - assuming that the subcurves immediately
+  before and after the curve are correctly typed, we want the
+  distribution over these types to be concentrated. To find the
+  subcurves immediately before and after, we drill all the way down to
+  the segment level.
+
+  We add features for these, in the same way as we did for the
+  consistent children features.
+
+\item Good constituency scores - this only applies when we are
+  creating new constituents, which only happens in chunking. We can
+  restrict the input to our clustering algorithm to be only those
+  artificial nodes with constituency scores above a threshold, or only
+  pick the top x\% by constituency score, etc.
+ 
+\eitem
+
+\item Propose various non-parse-preserving transformations
+\bitem
+\item   Squash - delete a rule from the grammar. This can help Stolcke's
+algorithm generalize by forcing it to reparse a sentence for which it
+has recently learned a second (arguably superior) parse. In this
+context, we would want to limit this to when we've actually detected
+ambiguity. In particular, we really want to encourage parsing one leaf
+with the top-level rule derived from another leaf, so we will probably
+only consider squashing top-level rules.
+\eitem
+This we will just have to judge by reparsing.
+
+\item Transform grammar according to these proposals. For speed, if we
+  don't want to reparse, we can also transform parses according to the
+  proposal, as long as we choose Merge, Split, or Chunk
+
+\eenum
+
+\eenum
+
+\section{Segmentation}
+
+There is a generic problem in visual grammars: objects can appear at
+any scale, and there is a finite resolution that we can
+see. Therefore, to make two objects comparable, we may have to apply a
+coarsening operation to one or both of them. This may also be
+necessary to speed up processing.
+
+Such a coarsening procedure has a pitfall related to constituency
+testing. Most coarsening operations will correspond to asserting some
+sort of hierarchical decomposition of the data. Making such a
+decomposition on a single example, we may make a non-repeatable
+choice, and thus prevent two examples from matching up correctly.
+
+This suggests that we should segment - hierarchical decompositions
+should be consistent with the actual structure of the data.
+
+\subsection{...}
+
+Segmentation is a kind of constituency testing.  Straight lines are
+obviously good constituents. Curves of constant curvature are also
+good constituents. In general anything with a simple parametric model
+is a good constituent. All of these things essentially give us a
+segmentation of the curve. There's no reason why a constituent can't
+contain two disparate elements, but a constituent shouldn't cross a
+segmentation boundary: you can be a subset of a nice smooth curve, and
+you can contain a nice smooth curve along with other stuff, but you
+can't contain half of a nice smooth curve along with other stuff.
+
+
+\subsection{Things to try}
+\bitem
+\item what if there was penalty for number of segments instead of
+  regularization? Might encourage closer fit
+\item Can use it as a constituency test, i.e., remember the points on
+  the segments, but only allow matches that respect
+  segmentation. Probably still need to subsample, but could allow us
+  to increase sampling rate.
+\item Might want to use $\ell_1$ metric for fitting segments. It is a
+  pretty good proxy for the area between the curve and the
+  approximation, which seems like a nice metric.
+
+\eitem
+
+\subsection{Segmentation into Parametric Pieces}
+  For every pair of points, approximate the underlying curve with our
+  favorite parametric family of curves, either straight lines, Euler
+  spirals, circles, or Bezier curves. Give this pair of points a score
+  based on the total distance from points on the curve to the nearest
+  point on the parametric model (or just project down one dimension).
+
+  Average distance should be a good cost for a curve, since a longer
+  curve is in a larger coordinate frame, it will be hurt more by
+  average distance.  Might have to do $[Sum(distances) + A] /
+  num(points)$ to prevent all segments from being of length 1.
+
+  We can use dynamic programming to find the cheapest division of the
+  whole curve into segments, by making a table of the cheapest
+  segmentation of the curve up to a given point.  Can speed things up
+  by assuming that no segment is larger than a certain size
+
+\subsection{Fitting parametric models}
+Ben Kimia has the formulas for Euler spirals
+%% http://portal.acm.org/citation.cfm?id=774161
+
+For straight lines, pretty easy.
+
+For Bezier curves, can approximate least squares fit by assuming the
+curve's arclength parameterization is the Bezier
+parameterization. (Might be able to do better by then recalculating
+the parameterization?)
+
+\subsection{Matching parametric curves}
+If we have different parametric curves (i.e., not just straight lines)
+then we might need to charge for differences between them, or we are
+throwing out information.
+
+\section{Deformation Model}
+For now, something Procrustes-like on the midpoint
+
+\subsection{Things to Try}
+\bitem
+\item
+Might try raising arclength to a power less than one, since
+intuitively I'm pretty forgiving of distortions at the very highest level.
+
+\item Wish we could bend stems easily - want some way for distortion
+  to be easy around protuberances. How to do it? Maybe weight it
+  proportional to the distance between the points? Don't want to
+  encourage it to shrink though, only bend...
+
+\eitem
+\subsection{Matching score for Parsing}
+
+\subsection{Maximum likelihood estimation}
+  The shape analysis book talks about MLE for Watson distribution and
+  related distros.
+
+  We learn the control points by averaging the control points over
+  parses using a given rule. (There may be more than one control
+  point, so it's no longer a midpoint.) Since we're looking at
+  different uses of the same rule, we don't have to worry that there
+  will be a different number of control points.
+
+  It seems like a control point estimate for a long curve is going to
+  be worse than a midpoint estimate, in general, especially if there
+  are many control points.
+
+  Note that we initially have rules with lots of control points but
+  only one use, so we're not losing anything by averaging. Hopefully
+  learning will happen from the bottom up, and by the time we start
+  having to use the same rule twice, the insides of the rule will be
+  well grouped, and not too many control points will be needed.
+
+  This also suggests that the prior should be chosen to help us out,
+  by penalizing many control points. This will force agglomeration, so
+  we won't have these ridiculous rules for too long.
+
+\subsection{Procrustes is also a distro on either endpoint}
+But then building a subcurve has to be conditioned on us knowing its
+final endpoint?
+
+Can we do this implicitly by just saying that we change the
+coordinates once we know where the endpoint wound up?
+
+Why this is nice: would allow us to canonically map non-binary
+productions into CNF, in a way that allows us to do the same dynamic
+programming-type pruning?
+
+pAq -> pXrYsZq
+becomes
+pAq -> pXrBq
+rBq -> rYsZq
+
+Want to say that $$\argmax_{r,s} P(pXrYsZq|pAq) = (\argmax_r
+P(pXrBq|pAq), \argmax_s P(rYsZq|rBq) )$$.
+
+
+\section{Terminal Matching}
+
+\subsection{Scale Space}
+Since visual objects exist in scale space, there are no true
+terminals. However, we basically are forced to come up with something
+much like terminals: structural similarity does not convey visual
+similarity unless there is also similarity in low-level
+appearance. Therefore we have to have a notion of a visual patch that
+does not decompose, but does have some sort of internal appearance. We
+also need to be able to cast any visual patch, even a decomposable
+one, as such a terminal patch, in order to match objects at different scales.
+
+\subsection{Shapemes}
+Instead of just straight lines, model smallest curves with $L_i\to L_i
+L_i$.
+
+In general, create a richer vocabulary of terminals.
+
+\subsection{Comparing two Terminal Matching Approaches}
+
+The mutual information between succesive shapemes should be high if
+the regime is good.
+
+Building a classifier on unigram/bigram frequencies of the shapemes
+should work better. This can only be used if there is a common shapeme
+dictionary. Otherwise, we can try to build the classifier anyway. For
+each test curve, for each class, we label all segments of the curve
+using that classes shapeme dictionary. We then again just do naive
+bayes.
+
+\subsection{Random proposals for curve appearance metrics}
+\bitem
+\item Take a curve, put it into a standard coordinate frame, consider
+  it as an image, take DT ($\max \{1-dt(c), 0\}$), and then take dot
+  product or $\ell_2$ distance of two such images.
+
+ \eitem
+
+
+\section{Grammatical Transformations and Heuristics}
+
+\subsection{splitting vs. merging}
+I am somewhat agnostic about the splitting vs. merging, although
+Stolcke's approach is definitely weak. We have to learn all these
+geometric parameters, so it's important that we always operate with
+large enough groups of data to have good estimates of them. In essence,
+we are continually solving a clustering problem: which nodes in all the
+parse trees correspond to the same non-terminal? Splitting is a
+reasonable approach, since we can use any clustering algorithm we want,
+and we can hopefully just stop splitting when there is not enough data
+to do a good job. Stolcke's approach to merging does not do this - it
+essentially limits us to using agglomerative clustering. (Essentially
+the only thing we can do is stick together the closest pair and hope for
+the best.) Agglomerative clustering can be hurt by early mistakes (this
+happens even in using Stolcke's algorithm for string CFG's).
+
+We might be able to use larger-scale merging, where we cluster all the
+non-terminal instances we have in our parse trees.
+
+\section{Constituency Testing}
+
+\subsection{Argument for Constituency Testing}
+If we want to cut down on the number of bogus parse trees, then it
+makes sense to do constituency testing. A constituent is a subcurve that
+corresponds to a node of the parse tree. The grammar induction papers
+I've been reading recently focus almost exclusively on trying to get the
+constituents right, since labeling the parse tree with nonterminals is
+almost like part-of-speech induction once you have the parse tree.
+
+There are two reasons to use constituency tests. Firstly, we may a
+priori think the grammar should respect our constituency test (below I
+argue this for some specific tests).
+
+Secondly, we need to have consistent constituents between examples if we
+want to learn. If we parse two training examples A and B randomly, then
+a constituent in A, which may correspond very nicely to a subcurve of B,
+won't necessarily correspond to a constituent of B. Unless we somehow
+redo the parsing, we will never be able to talk about this nice
+correspondence. This is a huge problem.
+
+One effect of transforming our grammars and parses into CNF is to
+introduce a lot of artificial constituents. Specifically, if we have a
+rule A->BCD, and we change this to A->BX, X->CD, we have made CD into a
+constituent when it wasn't before. This prevents BC from becoming a
+constituent, and if we retrain the grammar using such a parse, it is
+likely that BC will never become a constituent.This could cause
+problems, for instance if we have A->BD | BBD | BBBD, and we transform
+this into CNF as
+A->BD | BX | BY
+X->BD
+Y->BBZ
+Z->BD
+
+\subsubsection{CNF overconstituentiates (?)}
+Early CNFication can be bad if it causes us to mislabel constituents.
+There are two parts of the parsing output, the parse tree and the
+nonterminal labels. If we begin with a specific sort of parse tree,
+then we will learn a grammar that produces similar parse trees. This
+means that we can introduce a lot of hard-to-reason-about bias into
+the algorithm. In particular, we will label a lot of semi-arbitrary
+curves as constituents. A completely flat parse tree has no bogus
+constituents - every constituent is a tiny curve that must be in every
+parse tree. In general, pressure towards CNFication just labels more
+things as constituents. There's no harm in that - it either does
+nothing (corresponding exactly to the CNFication of the "correct"
+grammar) or it causes more generalization (by identifying the newly
+created tokens with other tokens). Since it can choose, it will
+hopefully choose correctly.  HOWEVER
+
+
+\subsubsection{A possible cognitive science experiment to show the use of constituency}
+%% Come up with two grammars that are isomorphic, but one of which has
+%% constituents that correspond to english word break markovian
+%% statistics, and one of which they don't.
+
+%% This will have to be a mildly complicated grammar?
+
+%% One suggestion: take the palindrome grammar, and expand all the
+%% nonterminals with a regular or finite language.
+
+%% Might simplify things if we restrict to commoner letters:
+%% ETAOIN SHRDLU
+%% what if we start with ETAOIN
+
+%% eaoi?
+%% ea 1720
+%% oi
+
+%% eant
+%% ea 22
+%% en 25
+%% an 38
+%% at 25
+%% et 704/40K ~ 35/2K
+%% nt 24
+
+%% if regular language is A(B+C)*D, then the identities of A and D tell you what happens at word breaks.
+%% D = g,k
+%% A = t,c
+%% OR
+%% D = c,t
+%% A = h,r
+
+%% tagcektigcokcuktagcektig
+%% hacrethicrotruthacrethic
+
+%% Out[7]: 'uaiaaaua'
+%% Out[8]: 'eiiiaaei'
+
+%% tugcaktigcakcaktagcuktag
+%% hecrithicritrathacrethic
+
+%% with boundaries
+%% %% S -> ASA | BSB | _
+%% %% A -> (
+%% %% B -> tn
+
+%% without boundaries
+%% %% S -> ASA | BSB | _
+%% %% A -> (e+a)*
+%% %% B -> (o+i)*
+
+\subsection{Proposed constituency tests for curve grammars}
+
+\subsubsection{Protuberances}
+"Protuberances" seem like good constituents - these are pieces of the
+curve that jut out, with the endpoints fairly close together, marking
+the easiest place to lop off the protuberance. [This is a problem for
+  the L->LL, midpoint equals mean parse: lots of good constituents
+  should have midpoints very FAR from the mean of their endpoints.]
+
+A probabilistic argument for protuberance constituency - if a subcurve
+has high arclength and low distance between its endpoints, then its
+endpoints are close together because of the outcome of separate random
+processes. This is less likely than the explanation that we generated
+the endpoints close together, and then decided to add a protuberance.
+
+For example, consider a five-pointed star. I think each point of the
+star is a good constituent. I would place the breakpoints at the five
+interior corners. This could then be expected to learn a grammar like S
+-> circle of interior corners, two interior corners -> two interior
+corners with a point between them. This grammar would then generate
+six-pointed stars also, as long as the first rule can be generalized.
+Certainly this grammar would be able to generalize if you gave it
+several stars with different numbers of points, and ensured that it
+chose the breakpoints I specified.
+
+In general, the protuberance rule seems like a good way to pick out any
+number of copies of something that humans would notice but not
+necessarily count. This could be a powerful tool for generalization.
+
+Other ways to phrase the rule: arclength between points is much larger
+than straight-line distance.
+
+In accordance with the second constituent motivation, we have to make
+sure that protuberances are cut at a specific, repeatable place,
+hopefully even robust to noise. For example, we don't detect
+constituents everywhere on a long thin rectangle, even though each
+opposite pair of points sort of passes the protuberance test.
+
+Notches would also be good. A notch is just a protuberance that juts in
+instead of out.
+
+\subsection{Constituents from Context}
+
+\subsubsection{Cluster, then find constituents}
+Cluster small curves according to something. Then, decide which
+clusters contain constituents.
+
+How to cluster small curves? We would like to do it so that a cluster
+can contain curves of different lengths. We would also like to use a
+distance compatible with the HCM distance, since it seems like a
+reasonable distance.
+
+If we use squared distance between midpoints instead of procrustes,
+then all curves implicitly live in the same high-dimensional space...
+
+\subsubsection{Learn local statistics, then find constituents}
+(So a good constituency test might be that if we
+remove a chunk by identifying its endpoints, the surrounding curve
+still makes sense and follows local statistics. We would have to think
+about exactly how this ) 
+
+Removability is good evidence for a certain kind of constituency...
+this is an instance of a more general principle: good constituents
+support generalization - in this case, we think that nonterminals
+should be allowed to disappear? Or at least if there's a bunch of
+copies, some of them can disappear. 
+
+\subsection{Constituency tests speed up parsing}
+It is cheaper to parse bracketed samples. So, if we have a
+constituency test that we trust, we can use it to speed up parsing by
+not looking at parses with bad constituents.
+
+This only works if the tests are either accurate or repeatable. That
+is, they should either be necessary constituents, or constituents that
+can be reliably detected.
+
+\section{Unorganized Thoughts}
+
+
+
+\subsection{On mapping to CNF to parse}
+
+Pedro: In general, it would be a bad idea to be giving out scores for
+a different grammar than we are looking at. Therefore, shouldn't grade
+unCNFied grammar with CNFified grammar.
+
+But: maybe it is good to grade a grammar based on its potential rather
+than its current state. 
+
+\subsection{PEDRO NOTES}
+
+shape -> parts is a general problem much considered (largely abandoned)
+Lesson: curvature extrema characterize peninsulas, and give a good
+semantic segmentation
+
+Is there a family of midpoint distros that CNFication respects?
+
+We can generalize HCM to non-binary trees, it's really just
+parsing. In particular, we can do procrustes for control points, just
+think of the triangle between each control point and the two endpoints
+
+Simpler approach?
+always do CNF, do shape tree
+then do merges
+try to build shape tree respecting the constituents?
+
+1. start with straight-up HCM
+2. add in constituency scores
+3. start doing merges
+4. try to do bottom-up instead
+
+\subsection{Approach}
+\bitem
+\item Start from Hierarchical Curve Models (HCM) grammar since that
+  already does OK on the leaves - this requires a mostly agglomerative
+  approach
+\item Segment the curve into super-edgels before doing anything else
+\item Use constituency testing to cut down on bad parse trees
+\item Choose grammar transformations by using a clustering heuristic
+\eitem
+
+\subsection{Random thoughts}
+\bitem
+\item Coarse to fine parsing?
+
+\item Procrustes distance works for any number of points. This would
+  allow us to define a joint distribution over multiple control
+  points. We can do MLE refitting for this.
+
+\item Maybe add an arclength-balance term to the HCM dynamic program? Or is
+  it actually all captured by the midpoint?
+
+\item We can use constituency scores to prune during parsing also
+  (although we plan to be parsing with an arbitrarily CNF'd grammar,
+  we can restrict pruning to cases where the true grammar would demand
+  a constituent)
+
+\item Things might look less preposterous if we don't add a rule for
+  every training leaf. We might somehow try to pick a set of leaves
+  that spans all the variations - for example, calculate all pairwise
+  HCM distances, and try to cover all the leaves with a small number
+  of balls of small radius centered at the leaves that we DO have
+  rules for.  We can also think of periodically adding a new top-level
+  rule.
+
+\item segmenting allows us to subsample the curve more intelligently
+
+\item appearance-based measure for non-terminals?  
+
+\item CNFication MIGHT hurt learning, if it prevents us from
+  identifying a constituent and a non-constituent. But it has no
+  effect on parsing, so we can always CNFy the grammar before we
+  parse. In particular, there is no harm in starting with the
+  nearest-neighbor grammar and thinking of it as the Stolcke grammar
+  and parsing with it as the HCM grammar. Of course, we would then
+  want to change the parse we get in the inverse manner, substituting
+  for any CNF-inserted nonterminals. This would cause us to get a
+  correspondence mapping instead of a true parse if we do it with the
+  initial grammar. We need to think about how progress would be made,
+  especially how the first generalization and/or merging of two
+  examples happens. In Stolcke it always comes from a chunking step. I
+  guess the analogous thing here is to start labeling these
+  CNFication-created nodes as real nodes, trying to pick out a cluster
+  of them (we would want it to be near the bottom to prevent
+  misconstituentiation) that are all similar.
+
+\item The saliency map as a generic visual grammar tool?
+
+
+\item Grammars shouldn't be scale free.
+
+L->LL is arguably too scale-free. Suppose we have a parse tree, and
+we want to split the nodes into two different classes which are
+semantically meaningful. It seems like the depth of a node, or the
+arclength of its subcurve, gives us a lot of information, which we would
+be throwing away if we only looked at the midpoint of the curve.
+
+L-> LL doesn't seem to work to capture a regular jagged line. For one
+thing, we would want to always break it at the beginning of a jag,
+which L->LL can't do. For another thing, it's not a scale-free
+process - a regular jagged line is wobbly at one scale, and perfectly
+straight at a slightly lower scale. 
+
+
+\eitem
+
+
+\end{document}
+
+%%%%%%%%%%%%%%% CRUFT
+
+%% \subsection{Parsing}
+%% In the interest of starting from a place that should work, the value of
+%% a parse should be consistent with the HCM paper. We want to treat
+%% that paper as specifying an appropriate nearest-neighbor grammar to
+%% begin with. 
+
+%% In particular, we will consider the likelihood of a parse to
+%% be the product of the likelihood specified by the CFG and $exp(\sum
+%% \lambda_A diff(midpoint_{gram}(A), midpoint_{parsedinput}(B)))$
+
+%% Something to consider: hopefully applying the constituency tests to that
+%% algorithm won't break it. It WILL change the way the algorithm works.
+
+%% Also, it would be nice if
+
+
+%% \subsection{L->LL is highly ambiguous, favors balanced trees}
+%% L->LL is a highly ambiguous grammar, it is equally happy with ANY
+%% binary parse tree. So, if we start with the L->LL (midpoint=mean)
+%% grammar, we'll get something fairly arbitrary, except that it will be
+%% trying to make every midpoint as close to the mean of the endpoints as
+%% possible. I think it will favor a relatively balanced parse tree, which
+%% seems reasonable. (Choosing the arclength midpoint is usually going to
+%% make the x coordinate of the Bookstein coordinates close to 0. Also, by
+%% choosing relatively balanced parses, this will put more nodes lower in
+%% the tree; smoothness of the curve will then cause the y coordinate of
+%% the Bookstein coordinates to be close to 0. This reasoning is actually
+%% backwards for a leaf with jagged edges and a relatively smooth
+%% high-level shape?)
+
+%% Below (``Protuberance Constituency'') I give an argument why we may
+%% not want this parse tree.

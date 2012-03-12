@@ -1,0 +1,25 @@
+\marginnote{Beginning of structure/texture.tex}
+
+\marginnote{Retrain the grammar with EM!!!}
+
+\begin{itemize}
+\item set up some hierarchy of scales, with decompositions between them
+
+\begin{itemize}
+\item would like to use all the data we can get, which means we want
+      every length of curve to be close to some scale
+\end{itemize}
+
+\item build a grammar from this
+\item learn midpoint distributions by going over all pairs of curve
+    points and taking the midpoint (and maybe other percentiles) by
+    arclength to get triangles
+\item sample from it
+\item Here are samples from such a grammar, built from every class of
+    the Swedish leaf dataset. Some classes are being modeled
+    reasonably, some are not.
+\end{itemize}
+
+\input{experiments/7.texture/scaled_nts/scaled_nts}
+
+\marginnote{End of structure/texture.tex}

@@ -1,0 +1,23 @@
+
+\section{Shadowcasting Priors}
+
+Can we modify em to express some constraint on the model? For
+instance, if we want to model convex curves, we could generate random
+curves, find the non-convex ones, and somehow use those as negative
+observations (a la contrastive divergence)
+
+Could weight them negatively according to how much they violate our
+constraint
+
+We can think of it like this: if we had lots and lots of data, then we
+would hope that our model estimation procedure would work. But, since
+we have relatively little data, we want to somehow use our intuition
+about the domain to suggest more data.
+
+In general, can have any sort of positive and negative observations...
+
+Need to be able to use negative observations in our estimators. For
+us, we have multinomial counts and the procrustes mean, relatively
+clear how it should be done. Need to watch out that the procrustes
+mean matrix remains psd, or the eigenvalues will behave weirdly.
+

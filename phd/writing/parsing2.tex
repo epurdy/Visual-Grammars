@@ -1,0 +1,372 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx, setspace}%%xy, setspace, amscd (commutative diagram)
+\title{Linear Time Parsing with Sparse Decomposition Families}
+\author{Pedro Felzenszwalb \footnote{Department of Computer Science, University of Chicago. Email: pff@uchicago.edu}\\
+Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+We are interested in modeling time series data. We will consider
+sequences of data $C=c_0, \dots, c_n$. We would like to create a
+meaningful similarity measure, so that we can do nearest neighbor
+classification of sequences. 
+
+\section{Dynamic Time Warping}
+
+One well-known and effective approach to time-series matching is to
+use Dynamic Time Warping (DTW), which searches for a correspondence
+between the points of two time series such that their data are
+similar, and such that the correspondence is relatively smooth.
+
+Dynamic time warping is defined in terms of a distance function $d$
+between data points. Let $X$ and $Y$ be two sequences, of length $m$
+and $n$ respectively. Then we let the DTW match cost be
+$M[m,n]$, where $M$ is defined via the following dynamic program:
+\begin{align*}
+M[0,0] &= d(x_0, y_0) \\
+M[i,j] &= d(x_i,y_j) + \min \{ M[i-1,j], M[i,j-1], M[i-1,j-1]\}.
+\end{align*}
+
+It should be noted that this penalizes stretching, since choosing
+$M[i-1,j]$ or $M[i,j-1]$ instead of $M[i,j]$ increases the number of
+  $d(\cdot,\cdot)$ terms in the final sum.
+
+One weakness of DTW is that it does not model long-range
+properties. 
+
+\begin{ex}
+\label{stretch-problem}
+For example, DTW will charge similar amounts for skipping
+$k$ points in a row, and for skipping $k$ points that are spaced far
+apart. The latter case is less likely to indicate error, since it can
+arise from small variations in the sampling rate. If we consider three
+times series $X,Y,Z$:
+\begin{align*}
+x_i &= i, &i=0, \dots, 2n\\
+y_i &= 2i, &i=0, \dots, n\\
+z_i &= \begin{cases} 0 & i=0,\dots, n\\ i-n & i=n+1, \dots, 3n\end{cases}\\
+\end{align*}
+Arguably, $X$ and $Y$ are the same time series at different
+resolutions, but they are distance $n$ apart, while $X$ and $Z$ have
+different shapes, but are distance $0$ apart.
+\end{ex}
+
+\section{Parsing Sequences to Measure Distance}
+
+Instead of growing our sequences by one each time, as in DTW, we want
+to consider hierarchical decompositions of the sequences. Let $X$ be a
+sequence of length $n$. We consider intervals $[i,j]$ for all $0\le i
+\le j \le n$, and decompositions of the form $[i,k] \to [i,j] +
+    [j,k]$.  Recall that we have some similarity measure
+    $d(\cdot,\cdot)$ on the domain of $X$ and $Y$.
+
+Suppose we have two sequences, $X$ and $Y$, of length $m$ and $n$
+respectively, and we wish to measure their similarity. A {\em
+  hierarchical matching} is a set $\MMM$ of pairs of intervals $I,J$
+such that $([0,m], [0,n])\in \MMM$, and for every $(I,J) \in \MMM$
+where $|I|, |J|> 1$, there are two pairs $(I_1, J_1)$, $(I_2, J_2)\in
+\MMM$ with $I=I_1 + I_2$ and $J=J_1 + J_2$.
+
+The cost of a matching is the sum of costs for matching splits,
+$W_{split}(I\to I_1 + I_2, J\to J_1 + J_2)$, where $(I,J), (I_1,J_1),
+(I_2,J_2)\in \MMM$, and costs for matching a given pair of intervals
+$W_{pair}(I,J)$, where $(I,J)\in \MMM$.
+We can calculate these costs via the following dynamic program:
+
+\begin{align*}
+M[[i,i+1],J] &= W_{pair}([i, i+1],J)\\
+M[I,[j, j+1]] &= W_{pair}(I,[j,j+1])\\
+M[I,J] &= \min_{\substack{I\to I_1 + I_2 \\ J\to J_1 + J_2}} 
+M[I_1, J_1] + M[I_2, J_2] + W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) + W_{pair}(I,J)\\
+\end{align*}
+
+We have many choices for these cost functions.
+
+\subsubsection{Emulating DTW}
+\begin{align*}
+W_{pair}([i,i+1], [j_1,j_2]) &= \frac{1}{2}\left(d(x_i,y_{j_1}) +
+d(x_{i+1}, y_{j_2})\right) + \min_{j_1 \le k < j_2} \sum_{j=j_1 + 1}^k
+d(x_i, y_j) + \sum_{j=k+1}^{j_2 - 1} d(x_{i+1}, y_j)\\
+W_{pair}([i_1,i_2], [j,j+1]) &= \frac{1}{2}\left(d(x_{i_1},y_j) +
+d(x_{i_2}, y_{j+1})\right) + \min_{i_1 \le k < i_2} \sum_{i=i_1 + 1}^k
+d(x_i, y_j) + \sum_{i=k+1}^{i_2 - 1} d(x_{i}, y_{j+1})\\
+W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0
+\end{align*}
+This corresponds almost exactly to dynamic time warping - the cost is
+the same as the corresponding warp in DTW, but not every warp can be
+represented by a matching. For example, matching all but the last
+point in $X$ to the first point of $Y$, and matching all but the first
+point of $Y$ to the last point of $X$. Reasonable warpings will be
+very close to a warping that is representable by a matching.
+
+Note that, like DTW, this penalizes stretching and contracting, because we end up
+adding more distance terms together when we stretch.
+
+\subsubsection{Explicit stretching penalty}
+We can use
+\begin{align*}
+W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= w(I,J) \times \left[\left( \frac{|I_1|}{|I|} - \frac{|J_1|}{|J|}\right)^2 +
+\left( \frac{|I_2|}{|I|} - \frac{|J_2|}{|J|}\right)^2 \right].
+\end{align*}
+This penalizes matching two intervals which are split in very
+different places. It would impose a hefty penalty on matching $X$ and
+$Z$ in example \ref{stretch-problem}, since the problematic match
+there would be charged $W_{split}([0,2n]\to [0,0] + [0,2n], [0,3n] \to
+[0,n] + [n,3n])$.
+
+We would have to use some weighting function $w(I,J)$ to make the
+longer intervals count more. For very short intervals, sampling
+artifacts would make this very noisy. For example, matching an
+interval of length two to an interval of length three would have a
+minimum penalty of $\frac{1}{18}$.
+
+\subsubsection{DTW without implicit stretching penalty}
+The formula isn't quite right, but it's close.
+
+If we don't want to implicitly penalize stretching, we can use
+\begin{align*}
+W_{pair}([i,i+1], J) &= \min_{J = J_1 + J_2} \left(1+ \frac{1}{|J_1|}\right) \sum_{j\in J_1} d(x_i,
+y_j) + \left(1+ \frac{1}{|J_2|}\right) \sum_{j\in J_2} d(x_{i+1}, y_j)\\
+W_{pair}(\{i\}, J) &= \left(1 + \frac{1}{|J|}\right) \sum_{j\in J} d(x_i, y_j) \\
+W_{pair}(I, \{j\}) &= \left(1 + \frac{1}{|I|}\right) \sum_{i\in I} d(x_i, y_j) \\
+W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0.
+\end{align*}
+It can be verified that each $i$ and $j$ then contributes a weighted
+average of one data term, for $m+n$ total data terms.
+
+Since stretching is a bad thing, this seems silly. However, we can
+combine this with the explicit stretching penalty.
+
+\subsubsection{Comparing subsequences by approximation}
+
+We can define the cost $W_{pair}(I,J)$ in terms of how similar the
+sequences $X$ and $Y$ appear on the respective intervals $I$ and $J$,
+by comparing approximations of them. For example, if we had a linear
+approximation of each, we could compare the two lines. It should be
+possible to compute linear approximations of all subsequences in some
+efficient way.
+
+Wavelets might provide a cool way to do this, since we could probably
+compare the wavelet coefficients in a semi-principled way.
+
+\subsubsection{Bias and Gain Invariance}
+
+What is base case?
+
+We can be invariant to bias and gain by charging some function of
+%% \begin{align*}
+%% W_{pair}(\{i\}, J) &= \left(1 + \frac{1}{|J|}\right) \sum_{j\in J} d(x_i, y_j) \\
+%% W_{pair}(I, \{j\}) &= \left(1 + \frac{1}{|I|}\right) \sum_{i\in I} d(x_i, y_j) \\
+%% W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+%% W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0.
+%% \end{align*}
+$$\frac{C[i_2] - C[i_1]}{C[i_3] - C[i_1]} - \frac{D[i_2] - D[i_1]}{D[i_3] - D[i_1]}.$$
+This makes the cost invariant to local bias and gain, which might be a little bit strong.
+
+\subsubsection{Detrending data cost}
+We can also formulate a detrending data term, so that if $C'$ is
+defined in terms of $C$ as $c'_i = c_i + a + bi$, the cost for
+matching $C'$ and $C$ is zero.
+
+To match $[i_1,i_3]\to [i_1,i_2] + [i_2, i_3]$ with $[j_1,j_3]\to [j_1,j_2] + [j_2, j_3]$, we charge
+\begin{align*}
+&\left[ C[i_2] - C[i_1] + \frac{i_2 - i_1}{i_3 - i_1}(C[i_3] - C[i_1])\right] \\
+-&\left[ D[j_2] - D[j_1] + \frac{j_2 - j_1}{j_3 - j_1}(D[j_3] - D[j_1])\right] 
+\end{align*}
+We can verify that works for detrending: suppose $D[i] = C[i] + a + bi$. Then the cost of matching 
+$[i_1,i_3]\to [i_1,i_2] + [i_2, i_3]$ with itself is
+\begin{align*}
+&\left[ C[i_2] - C[i_1] + \frac{i_2 - i_1}{i_3 - i_1}(C[i_3] - C[i_1])\right] \\
+-&\left[ C[i_2] + a + bi_2 - C[i_1] -a - bi_1 + \frac{i_2 - i_1}{i_3 - i_1}(C[i_3] + a + bi_3 - D[j_1] - a - bi_1)\right],
+\end{align*}
+which is zero. The cost is also approximately zero if $D$
+simultaneously includes an additive trend and is stretched, although
+small errors will result from subsampling. 
+
+The correct base case is probably to compute the cost of matching each
+interval $J$ to an interval $[i,i+1]$; this will not depend on which
+$i$ we pick, and will only measure how far $D$ or $C$ deviates from a
+straight line in the given interval.
+
+
+\section{Decomposition Families}
+
+\begin{defn}
+Let $C=c_0,\dots,c_n$ be a sequence. We will say that $C$ has length
+$n$, even though it has $n+1$ points.
+
+A {\em decomposition family for $C$} is a pair $(I, R)$, where $I$ is
+a set of intervals $[i,j]$, and $R$ is a set of rules of the form
+$$[i,j] \to [i,k] + [k,j],$$ where $[i,j], [i,k], [k,j]\in I$. $I$
+  must contain the interval $[0,n]$.
+\end{defn}
+
+The most trivial decomposition family is the set of all intervals
+$[i,j]$ such that $0\le i < j \le n$, together with all possible
+decompositions of each $[i,j]$ into $[i,k] + [k,j]$. We will call this
+the {\em complete decomposition family}.
+
+Decomposition families are interesting because they allow us to speed
+up parsing by summing or searching over a restricted set of parses:
+\begin{thm}
+  Let $G$ be a context-free grammar with $k$ rules. Let $C$ be a
+  sequence of length $n$. Let $\FFF=(\III,\DDD)$ be a decomposition
+  family for $C$. Then there is a dynamic programming algorithm to
+  approximately (relative to $\FFF$) parse $C$ in time $O(|\DDD|k)$.
+\end{thm}
+Traditional parsing corresponds to the complete decomposition family,
+which has size $O(n^3)$. We can construct sparse decomposition
+families of size $O(n)$, though.
+
+\begin{defn}
+A decomposition family $F=(I,R)$ is $\theta$-flexible if, for every interval
+$[i,j]\in I$, and every $k$ such that $i<k<j$, there is a rule
+$$[i,j] \to [i,k'] + [k',j],$$
+where 
+$$|k-k'| < \theta |j-i|.$$
+\end{defn}
+
+\begin{defn}
+Let $C$ be a sequence of length $n$ Let $F=(I,R)$ be a decomposition
+family for $C$.  An interval $[i,j]$ is called {\em reachable} if
+there is a sequence of intervals $x_i$ such that $x_0=[0,n],
+x_k=[i,j]$, and there is a rule with $x_i$ on the left-hand side and
+$x_{i+1}$ on the right-hand side for every $i$ between $0$ and $k$.
+\end{defn}
+
+\begin{defn}
+A decomposition family $F=(I,R)$ is $\theta$-complete if, for every
+interval $[i,j], 0\le i< j \le n$, there is a reachable interval
+$[i',j']\in I$ such that
+$$|i-i'| < \theta |j-i|$$
+and
+$$|j-j'| < \theta |j-i|.$$
+\end{defn}
+
+\section{Constructing Sparse Decomposition Families}
+
+\begin{thm}
+  Let $C$ be a sequence of length $n$, and let $k$ be an integer. Then
+  there is a $\frac{1}{k}$-flexible decomposition family $(\III,\DDD)$
+  that has at most $2nk^2$ decompositions.
+\end{thm}
+
+\begin{proof}
+  We recursively define a sequence of subsampled sequences $C^{(i)}$ as
+  follows: $C^{(0)} = C$, and $C^{(i+1)}$ is obtained from $C^{(i)}$
+  by taking every other point. The number of points in all $C^{(i)}$
+  combined is at most $2n$.
+
+  A subsequence between points $p$ and $q$ is \emph{allowable} if
+  there is some $C^{(i)}$ which contains both $p$ and $q$, and the
+  subsequence between them has length at most $k$ in $C^{(i)}$, i.e.,
+  there are at most $k-1$ other points between them in $C^{(i)}$. The
+  number of allowable subsequences is then at most $2nk$.
+
+  We will say that a subsequence between points $p$ and $q$
+  \emph{lives} in level $i$ (for $i>0$) if $p$ and $q$ are both in
+  $C^{(i)}$, and if the length of the subsequence is strictly greater
+  than $k/2$ and at most $k$ in $C^{(i)}$. When $i=0$, we will not
+  have the minimum length requirement, so all subsequence of $C$ of
+  length at most $k$ live in level $0$. It is straightforward to see
+  that each subsequence lives in a single level.
+
+  If $p,q$ is a subsequence that lives in level $i$, then we can
+  decompose it by picking midpoints from $C^{(i)}$. Some of these
+  choices will lead to subsequences that live in level $i-1$.
+
+  This decomposition family is $\frac{1}{k}$-flexible. When picking
+  midpoints at level $i$, our subsequence has length at least $k/2$ in
+  $C^{(i)}$, so we have at least $k/2$ evenly spaced midpoint
+  choices. We can thus choose a midpoint that is within $c$ points of
+  any desired midpoint, where $c$ is at most $\frac{1}{k}$ times the
+  length of the subsequence we are splitting.
+  
+  There are at most $k$ midpoints per allowable subsequence, so the number
+  of composition rules is at most $2nk^2$.
+\end{proof}
+
+
+\section{Further Questions}
+
+\subsection{What sorts of grammars are robust to the approximation?}
+In some cases, we may need to modify a grammar slightly so that it
+behaves well with approximate parsing.
+
+For instance, consider approximate parsing of strings with space
+removed. If we use a context-free grammar trained on English, the
+approximation would be very, very inaccurate, since being a single
+letter off will prevent us from recognizing a word as being a
+particular part of speech.
+
+In this case, we could modify our rules so that
+\begin{align*}
+N &\to \mbox{cat} \\
+\intertext{becomes}
+N &\to \mbox{cat} \\
+N &\to \mbox{at} \\
+N &\to \mbox{cath} \\
+N &\to \mbox{cata} \\
+N &\to \mbox{catg} \\
+\ldots
+\end{align*}
+That is, we allow letters to be removed at either end, and allow
+letters to be added at either end. When adding letters, the
+distribution should be realistic (such as from an n-gram model) rather
+than uniform, or else we will pay $\log|\Sigma|$ for every letter
+added.
+
+In general, we can imagine adapting any grammar to deal with such
+problems. The grammar must allow deletion and addition of data at the
+ends of a chunk. The model for addition should be relatively accurate.
+
+\subsection{Data-Dependent Decomposition Families}
+
+Basically, want to build families on top of a good subsampling. Here
+good means that it respects some property of the sequence, which could
+mean either boundary cues or that the subsampled version approximates
+the original well.
+
+\subsection{Correcting Parses through Local Perturbations}
+
+We think it is meaningful to talk about local perturbations of a
+parse. This would hopefully improve the quality of the parse.
+
+We are assuming that all grammars are in CNF, and thus all parse trees
+are binary trees.
+
+Consider every pair of adjacent data points. Some pairs are not
+separated by a constituency boundary (if the two points were the two
+children of an interval of length two), but at least half of the pairs
+are. 
+
+It is then reasonable to consider shifting either of these data points
+across the constituency boundary. We have to somehow rearrange the
+parse tree to keep it binary. 
+
+We want to have a local computation at each of these adjacent
+pairs. How do we do that?
+
+There are a linear number of adjacent pairs. How quickly can we do all
+the perturbations we want to do?
+
+\subsection{Approximation guarantees}
+Can we prove bounds on the cost incurred by moving to sparse
+decomposition families? For example, if we use cost functions
+emulating DTW, what is the cost incurred by using SDF's instead of
+complete decomposition family? As far as I can tell, no such bound is
+obtainable. The conditions I investigated were when the distance
+function and the sequences satisfied
+$$|d(x_i, y_j) - d(x_k, y_\ell) \le C |i-k| + |j-\ell|.$$ It seems
+that we can then figure out how much cost is incurred by applying
+Green's theorem in the DTW square, and the cost is too high. That is,
+it can be larger in magnitude than ...
+
+
+\end{document}

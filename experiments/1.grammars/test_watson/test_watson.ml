@@ -32,25 +32,25 @@ let _ =
       let fnames = ref "" in
 	Array.iteri
 	  begin fun j samp ->
-	    let fname = (sprintf "tmp/watson.%d.%d.curve" i j) in
+	    let fname = (sprintf "tmp/watson_%d_%d.curve" i j) in
 	      save_triangle samp fname;
 	      fnames := !fnames ^ (" " ^ fname);
 	  end
 	  samples;
-	save_triangle shape (sprintf "tmp/watson.%d.true.curve" i);
-	save_triangle est (sprintf "tmp/watson.%d.est.curve" i);
-	doit (sprintf "./show_curve.native tmp/watson.%d.true.curve tmp/watson.%d.true.svg" i i);
-	doit (sprintf "./show_superimposed.native -fname tmp/watson.%d.est.svg tmp/watson.%d.true.curve tmp/watson.%d.est.curve -title '' " i i i);
-	doit (sprintf "./show_curves.native -fname tmp/watson.%d.samples.svg %s -title ''" i !fnames);
+	save_triangle shape (sprintf "tmp/watson_%d_true.curve" i);
+	save_triangle est (sprintf "tmp/watson_%d_est.curve" i);
+	doit (sprintf "./show_curve.native tmp/watson_%d_true.curve tmp/watson_%d_true.svg" i i);
+	doit (sprintf "./show_superimposed.native -fname tmp/watson_%d_est.svg tmp/watson_%d_true.curve tmp/watson_%d_est.curve -title '' " i i i);
+	doit (sprintf "./show_curves.native -fname tmp/watson_%d_samples.svg %s -title ''" i !fnames);
 	fprintf tex "\\item Round %d\\\\ \n" i;
 	fprintf tex "Here is the initial triangle $T$:\n\n";
-	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{./1.grammars/test_watson/output.d/watson.%d.true.eps}\n\n" maxwidth maxheight i;
+	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{experiments/1.grammars/test_watson/output.d/watson_%d_true.png}\n\n" maxwidth maxheight i;
 	fprintf tex "Here are samples from Watson$(T,%f)$:\n\n" trueconc;
-	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{./1.grammars/test_watson/output.d/watson.%d.samples.eps}\n\n" maxwidth maxheight i;
+	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{experiments/1.grammars/test_watson/output.d/watson_%d_samples.png}\n\n" maxwidth maxheight i;
 	fprintf tex "Here is the initial triangle again:\n\n";
-	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{./1.grammars/test_watson/output.d/watson.%d.true.eps}\n\n" maxwidth maxheight i;
+	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{experiments/1.grammars/test_watson/output.d/watson_%d_true.png}\n\n" maxwidth maxheight i;
 	fprintf tex "Here are the initial triangle and the estimated triangle, superimposed. The original triangle is blue, the estimated triangle purple. \n\n";
-	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{./1.grammars/test_watson/output.d/watson.%d.est.eps}\n\n" maxwidth maxheight i;
+	fprintf tex "\\includegraphics[width=%din,height=%din,keepaspectratio]{experiments/1.grammars/test_watson/output.d/watson_%d_est.png}\n\n" maxwidth maxheight i;
 	fprintf tex "The true concentration was %f, while the estimated concentration was %f.\n\n" trueconc est_data.Watson.conc;
     done;
     fprintf tex "\\end{itemize}";

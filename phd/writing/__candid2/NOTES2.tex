@@ -1,0 +1,54 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+
+\part{Readings}
+
+\cite{centaur} refers to about 8 papers on constituency cues
+
+\part{SPECULATIONS}
+
+\subsubsection{KL Divergence corresponds to Likelihood change(?)}
+
+In replacement, we say that every previous parse with $Y$ is now
+  a parse with $X$. We have to pay some cost for this, since
+  $P(d_Y|X)$ is probably lower than $P(d_Y|Y)$. The KL divergence
+  tells you this cost, sort of.
+
+\subsubsection{Rewarding Simplification(?)}
+
+Replacement simplifies the grammar, since we are deleting all rules
+with $Y$ on the left-hand side. It is also possible that some
+nonterminals will become inaccessible after the replacement. These
+nonterminals are no longer functionally part of the grammar, so we
+should delete them and increase the prior probability of the grammar
+accordingly.
+
+\note{
+If we do step by step modifications, we can probably maintain a data
+structure that tells us what things become inaccesible. It's just
+accesibility from the start symbol in the (non-hyper)graph of the
+grammar.
+
+We initialize the data structure such that every node knows its
+incoming edges, and has one of them marked as being on a path from the
+root. When we delete a directed edge, the target node may become
+inaccessible. If the edge we deleted was not the rootward edge of the
+target, we do nothing. If it was, we check all the incoming edges of
+the target; if one of them comes from an accessible node, we switch
+the targets rootward edge to that edge. If none of them are, we delete
+the node and all its edges. 
+
+Need to check the correctness of this algorithm.
+}
+
+
+\part{DISCARDED METHODS AND IDEAS}
+
+\end{document}

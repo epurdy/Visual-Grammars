@@ -1,0 +1,25 @@
+\section{Figure out optimal single-example grammar}
+
+We use explicit correspondences to learn the statistically best set of
+constituents when building a grammar from a single example.
+
+Note that the arms are found as constituents!
+
+There is a strange issue here, but I've seen it before in other code
+and I don't think it's a bug. Converting to Bookstein coordinates
+improves the results (or here, the results are more intuitive to me),
+even though the Watson distribution shouldn't need this.
+
+Here are the constituents selected by the algorithm:
+
+\begin{figure}
+\includegraphics[width=\linewidth]{experiments/6.structure/constituents/output.d/optimal.png}
+\caption{Constituents selected}
+\end{figure}
+
+Here are the constituents that seemed most intuitive to me:
+
+\begin{figure}
+\includegraphics[width=\linewidth]{experiments/6.structure/constituents/output.d/handpicked.png}
+\caption{Constituents selected.}
+\end{figure}

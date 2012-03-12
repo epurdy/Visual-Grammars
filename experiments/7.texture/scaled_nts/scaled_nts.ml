@@ -254,11 +254,11 @@ let _ =
   let fnames = Array.init nsamples curvenamer in
   let fnames = Array.fold_left (fun s fname -> s ^ " " ^ fname) "" fnames in
     Curve.save_all curvenamer curves;
-    doit (sprintf "./show_curves.native -fname tmp/scaled_nts.%d.svg -title '' %s" leafnum fnames);
+    doit (sprintf "./show_curves.native -fname tmp/scaled_nts_%d.svg -title '' %s" leafnum fnames);
 
   let fnames = Array.init ntraining training_namer in
   let fnames = Array.fold_left (fun s fname -> s ^ " " ^ fname) "" fnames in
-    doit (sprintf "./show_curves.native -fname tmp/scaled_nts_training.%d.svg -title '' %s" leafnum fnames);
+    doit (sprintf "./show_curves.native -fname tmp/scaled_nts_training_%d.svg -title '' %s" leafnum fnames);
 
     (* show the grammar *)
     (*     let _ =  *)

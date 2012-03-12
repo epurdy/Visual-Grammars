@@ -1,35 +1,33 @@
 #!/usr/bin/python
 
-import os
+from experiments.common import *
 
-def doit(cmd): 
-  print cmd
-  assert(os.system(cmd) == 0)
-
-dir = 'experiments/4.images/standard_cky/output.d'
+dir = 'experiments/4.images/standard_cky'
 
 example = 'romer/ann/curve0000.curve'
 sdf = 'romer/misc/romer1.sdf'
 
-doit('./show_curve.native %s %s/examples.svg' % (example, dir))
-doit('inkscape %s/examples.svg -E %s/examples.eps' % (dir, dir))
+show_single_curve(dir, example, 'examples.svg', 'examples.png')
 
 curvenames = []
 
 for i in xrange(2):
   curve = 'romer/ann/curve%03d0.curve' % i
   curvenames.append(curve)
-  imname = dir + '/network.im%03d0.pgm' % i
-  prefix = dir + '/cky.im%03d0' % i
+  imname = dir + '/output.d/network.im%03d0.pgm' % i
+  gfname = dir + '/output.d/network.%03d0.gf' % i
+  prefix = dir + '/output.d/cky.im%03d0' % i
 
-  doit('./standard_cky.native %s %s %s %s %s' % (
-      curve, example, sdf, imname, prefix))
+  doit('./net_of_curve.native -curve %s -imname %s -gfname %s -granularity %d -size %d -maxlen %d -curvecost %f -backgroundcost %f -maxcost %f'  % 
+      (curve, imname, gfname, 32, 256, 10, 1.0, 1000.0, 100.0))
 
-  doit('convert %s/network.im%03d0.pgm %s/network.im%03d0.eps' % (dir, i, dir, i))
-  doit('convert %s.final.ppm %s.final.eps' % (prefix, prefix))
+  doit('./standard_cky.native %s %s %s %s %s %s' % (
+      curve, example, sdf, imname, prefix, gfname))
 
-doit('./show_curves.native -fname %s/targets.svg %s' % (dir, ' '.join(curvenames), ))
-doit('inkscape %s/targets.svg -E %s/targets.eps' % (dir, dir))
+  doit('convert %s/output.d/network.im%03d0.pgm %s/output.d/network.im%03d0.png' % (dir, i, dir, i))
+  doit('convert %s.final.ppm %s.final.png' % (prefix, prefix))
+
+show_curves(dir, curvenames, 'targets.svg', 'targets.png')
 
 
 

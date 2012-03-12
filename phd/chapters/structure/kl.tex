@@ -1,0 +1,52 @@
+\marginnote{Beginning of structure/kl.tex}
+
+\subsection{Approximating the KL Divergence}
+
+\marginnote{Desired experiments: Do this calculation and show a
+  similarity table. Along diagonal, show a representative
+  curve. Everywhere else, visually depict the similarity. One easy way
+  would be to draw a black square inside the cell, and have the area
+  of the square be proportional to the KL divergence. (Or have the
+  white area be proportional?) Note that this matrix will of course be
+  non-symmetric. }
+
+The Kullback-Leibler divergence is a popular choice for measuring the
+distance between two distributions. It is defined as 
+$$KL(P || Q) = \sum_x P(x) \log \frac{P(x)}{Q(x)}.$$
+We can rewrite this as
+$$KL(P||Q) = \EE_{x \sim P(\cdot)} \left[ \log \frac{P(x)}{Q(x)}
+\right],$$
+and it is clear that we can approximate it as 
+$$KL(P||Q) \approx \frac{1}{n} \sum_{i}\left[ \log \frac{P(x_i)}{Q(x_i)}
+\right],$$
+where $x_1, \dots, x_n$ are samples from $P$. If $x_1, \dots, x_n$ are
+instead samples from a distribution $R$, then we can approximate 
+\begin{align*}
+KL(P||Q) &= \sum_x R(x) \frac{P(x)}{R(x)} \log \frac{P(x)}{Q(x)}. \\
+&= \EE_{x\sim R(\cdot)} \left[ \frac{P(x)}{R(x)} \log \frac{P(x)}{Q(x)}\right]\\
+&\approx \frac{1}{n} \sum_{i}\left[ \frac{P(x_i)}{R(x_i)}\log \frac{P(x_i)}{Q(x_i)}
+\right].  
+\intertext{When $R()$ is the empirical distribution $R(x_i) =
+  \frac{1}{n}\#\{j\mid~x_j=x_i\}$ this simplifies to: }
+&\approx \sum_{i}\left[ P(x_i) \log \frac{P(x_i)}{Q(x_i)}
+\right].  
+\end{align*}
+
+Let $X$ be a nonterminal. For every subcurve $C$ of any training
+curve, we can use re-weighting to consider $C$ as a sample from $X$'s
+inside distribution. In this case, $P_X, Q_Y$ are the inside
+distributions of $X$ and $Y$, respectively. This approximation is
+especially appealing because the Inside algorithm gives us a very
+efficient way to simultaneously compute $P_X(C_a[i:j])$ for every
+nonterminal $X$ and every subcurve $C_a[i:j]$ of every training curve
+$C_a$. Specifically, we can compute all these in $O(k n^3 |\NNN|)$
+time, where $k$ is the number of training curves, and $n$ is the
+maximum length of a training curve.
+
+When dealing with the initial grammar, this approximation should be
+reasonable, since our initial grammars don't generate any curves that
+are too dissimilar from our training curves. We hope that
+generalization will take place as the grammar is simplified; thus, the
+approximation will get worse as we simplify the grammar.
+
+\marginnote{End of structure/kl.tex}

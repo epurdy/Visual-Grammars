@@ -1,0 +1,1738 @@
+* Working notes - new front burner (limit 5, each should fit on one emacs page)
+** Shock graphs and adaptive SDF's to get good constituents
+  - getting somewhat OK constituents, but getting far too many very
+    similar ones
+  - probably want to incorporate information from the outside skeleton
+    at some point, but it's unclear how to mix the two (maybe we don't
+    have to do anything, can just mix the two)
+  - setting the threshold to -5 makes it crash on the spoon, should
+    figure that out
+  - having a lot of trouble with markov-style rules. it seems like
+    this is kind of a weakness of shock graphs in general. how do we
+    defeat it? 
+    - deleting vertices of degree 2 helps some, but there are cases
+      where we don't want to do that.
+    - some markov-style rules come from singleton branches. how do we
+      detect those???
+
+** 2D parsing
+  - datacosts
+    - seemed to be workign somewhat OK, thresholding was not doing well though
+  - low-level curves available
+    - currently i believe we are just thresholding
+    - we were thinking about a thinning strategy, it seemed somewhat reasonable?
+  - search strategy
+    - standard CKY is on the edge of acceptability, depending on how
+      sparse the set of curves is
+    - we had fuzzy_cky, which worked sort of ok but was probably too messy
+    - we came up with an elaborate multipass strategy that should
+      optimize the same thing as standard cky, except that it had
+      trouble with d(p,r) < d(p,q), d(q,r)
+
+** Discriminative EM
+  - subsample the leaves to be smallish
+  - make a niceish sdf with bottom_out function
+  - make the initial grammars
+  - get the viterbi parses and/or soft counts
+  - make a vector with on entry for every X->l rule and one entry for every midpoint
+
+  - write an svm
+    - use stochastic gradient descent, pedro thinks it should work
+    - give it some reasonably separable dataset from bishop or something to test
+* Working notes - front burner (limit 5)
+** Adaptive SDF's
+  - Next step: unfuck the subsampling code to the point where it will
+    give us an intelligent subsampling that has like 8-10 points.
+
+    easiest is to search on a trellis so that we know exactly how long
+    the curve is that we are constructing. then we can pick the one we
+    like best among the available lengths. This will run in time tl,
+    where t is old time and l is max length. Therefore, we want to
+    limit it to the last iteration or so.
+
+    this is kind of hard to think about. how do we know what length we
+    want? some curves are just more open to being approximated by
+    fewer lines.
+
+    in fact, this seems like a bad idea. We should just construct the
+    full family on the coarsest curve. If we want to have fewer
+    compositions there, we will just have to do it with constituency
+    heuristics
+
+  - can just have the subsampler call itself again with a higher
+    regularization weight if it is above a hard maximum length
+
+  - That's still 8*7*6/2 ~ 160. But if we require balance etc. it
+    might get lower than that. Coding it is the easiest way to find out.
+
+  - do several iterations of subsampling
+
+  - we wrote down a rule in the notebook that keeps the family
+    \theta-flexible
+
+  - need to figure out what to do with the top-level, it still has 18
+    points. Can we actually have that many rules? it would be
+    18*17*16? Certainly at least that over 6, which is about 800,
+    probably that over 2, about 2400
+
+  - the subsampling algorithm doesn't want to make the curve much coarser
+
+
+  - can decrease the number of rules slightly be only looking at
+    relatively balanced ones, that won't exclude many reasonable
+    parses
+
+  - for every sub-interval of the top-level, it is either short or
+    long. For the long ones, we can add its rules now.
+
+  - For short intervals at the top level, we remember them and use
+    them as seeds for the next level
+
+  - At the next level, look at every seed. Sub-intervals of these
+    seeds are allowable intervals now. Iterate over all sub-intervals
+    of every seed. If they are long enough, add rules now. Otherwise,
+    make them seeds for the next level.
+
+  - Try parsing a full Romer curve with the hand-built Romer. Good
+    test because it needs to have very good constituents and it needs
+    to be very efficient.
+
+  - can we tie the cost function to the original curve throughout, or
+    will it be tied to the current approximation? More important for
+    length balance terms than data terms, probably
+
+** 2D approximate parsing
+  - thoughts on the curve network
+    - we want a curve network that contains some representative of
+      every reasonable segment, but that doesn't have many
+      representatives of each (i.e., nms). We also want to make sure
+      that every pair of reasonable curves C_pq, C_qr has a
+      representative pair C_p'q', C_q'r', so that we do not lose any
+      compositions. If we have both of those things, we should be OK
+      during parsing.
+
+    - Make a list of all line segments which have some evidence under
+      them.
+
+    - Remove C_pq if there is a nearby segment C_pq' which has more
+      evidence, and such that, for every C_qr, there is a C_q'r which
+      has more evidence than C_qr, with q~q'. Might be sufficient if
+      there is a C_q'r for which C_pq', C_q'r together have more
+      evidence than C_pq, C_qr together, with q~q'.
+
+      Question: Do we have to fix p? Imagine taking our favorite curve
+      and trying to prove that it was not thrown out. We can move any
+      one point q by considering p,r on either side of it, and finding
+      the relevant q' such that C_pq', C_q'r were preserved. 
+
+      But then we want to fix both p and q...
+
+      i thought of a way out of this, just have to remember. involved
+      thinking of the curve evolving over time as we remove things, as
+      long as we can always move the curve to something that still
+      exists, is close, and has better qual, then we're OK
+
+      could think of just queuing everything up and somehow counting
+      references or otherwise making sure we have what we want
+
+  - How do we make a better curve network for an image? This sounds promising:
+    - take gradients, calculate costs as now
+    - look at (avg_gradient*length + A)/length as a way to reward
+      longness, and pick the single best curve
+    - using the current data functions, make that curve and a few
+      longer and shorter versions of it
+    - remove the gradient near that curve. Should probably leave it
+      near the endpoints. HOW do we remove gradient? We want to be
+      fairly agressive about it, but we also want to avoid deleting
+      data necessary for compositions. We could mask the gradient
+      images, so that we don't see used data while choosing the next
+      curve, but do still see it when we actually compute the cost of
+      the segment.
+    - How do we mask based on C_pq? First, chop off 10-20% on each
+      side. Then, round each remaining point to the grid. Then, return
+      0 on future gradient queries at (x,y) if (x,y) rounds to the
+      same grid point.
+    - need large while loop.
+    - consider relaxing the angle requirement
+
+  - We need to break the link between the network and the parsing
+    paradigm. This means separate executables, one that makes the
+    network and one that reads it in. That will make the code much
+    easier to maintain and adapt. It should be easy:
+    - construct the net, save network image, save edge file
+    - load the net
+    - could even have a separate noise-adding function
+
+  - Going from easier versions to hard versions:
+    - how much geometric variation is there?
+
+      Can add a ton of geometric variation by simply iterating over
+      Romer curves.
+
+    - how many extra fake edges are there?
+
+      We can add 10? random edges. We should pick edges that are
+      relatively short, that is most realistic and most confusing
+
+      To be most brutal, we can independently set the cost of each
+      default edge from a distribution that has a tiny bit of weight
+      at cost 1.0, and set the cost of each true edge from a
+      distribution that has some weight at costs higher than 1.0, and
+      include default edges at scales that include the scales of the
+      true edges, the longest of which has length 9. (But we can
+      probably say that the larger scales have a lower false positive
+      rate for edge detectors?)
+
+      OK, now it takes 40 minutes and the results are
+      garbage. Probably not that bad a sign, since the input looks
+      super bad.
+
+      If we can do reasonably on this, we are ready to run on images.
+
+      how do we run on images? We need a cost for each line
+      segment. we could just get a canny pyramid and round the line
+      segment. Or we could just run canny on it, and then count the
+      number of edge pixels with the right one of 8 (4?) orientations
+
+      we could do canny, round orientations, spread slightly, and then
+      simply take the average value under the segment. that seems
+      cleanest. Scale shouldn't matter because it's an average, the
+      spreading should make it relatively robust.
+
+      we want cheapness to be good, so what should we do with
+      gradient? Could do 1/(1+gradmag), that has an upper bound on the
+      cost and dies off relatively slowly as gradient builds up. Need
+      to think about weighting of data vs. geometry, obviously.	
+
+      the grid is trimming the image a bit too much. Should round the
+      image size up to the next multiple of granularity by copying
+      border pixels
+
+      not working at all. try taking absolute value after summing.
+
+      big problem - a segment has high gradient/low cost if it is 45
+      degrees off of the correct direction, which is no good at
+      all. We only actually want it to have low gradient if it is very
+      close to the correct angle. We can get the sine of the angle
+      between gradient and segment for each pixel. We should just give
+      no gradient if the angle is off by more than a bit
+
+      Before we do that, we should start running in parallel, because
+      this will slow it way the fuck down.
+
+      OK, it's failing utterly, but it's obvious why. Since we don't
+      allow any structural variation, not even L->LL, and since we
+      only include default edges of length <= 3, the long missing
+      segments are simply impossible to create. Think about it, should
+      be easy to fix...
+
+    - how many true edges are missing?
+
+      We can fail to add the true curve edges in with some probability.
+
+  - Speed: takes 181 minutes / 3 hours to run on 16 images with 32x32
+    grid and maxlen=8. This is about 11-12 minutes per image.
+
+    That's relatively slow. Running 16x16 standard takes 3 minutes,
+    for comparison. Running 32x32 would presumably take 24 minutes.
+
+    Could start running these in parallel. Can do in python? 
+
+  - We have a hierarchy of grids, similar to an image pyramid.
+
+    We have curves between each pair of points. (Really they specify
+    only the beginning and end of the curve, not the behavior in
+    between.)
+
+    We can compose two curves C_pq, C_qr to get another curve, C_pr.
+
+    Unfortunately, the number of curves and compositions is
+    prohibitively high (N^2=n^4 and N^3=n^6, respectively, where we
+    have a grid of size nxn with N points), and we would like to use a
+    restricted subset of them as a proxy for the full set.
+
+    We would like it to be the case that any parse tree over the full
+    set can be modified very slightly to be over the restricted
+    subset.
+
+    There are many issues with this.
+
+  - Our current strategy is as follows: we allow only curves of length
+    <= maxlen * (current side length of grid square). Currently we are
+    using maxlen=8.
+
+    We parse by starting at the finest grid, looking for compositions
+    in the current grid, and then lifting P(X\to C_pq) up to the next
+    coarser grid by rounding p and q to the next coarser
+    grid. Terminal line segments are inserted at the beginning of
+    parsing without regard to their length, so they will be lifted up
+    along with everything else until the grid is coarse enough for them.
+
+    We only lift C_pq when d(p,q) is at least the step size of the new
+    grid. Unsure if that is the right idea.
+
+  - How much can the segment pq be deformed by the lifting process,
+    especially given that we lift the same thing repeatedly? We can
+    say the following: let pq be a segment, and G be any rectangular
+    subset of the grid that is aligned to coarse grid points at level
+    i. If p lies inside of G initially, then even after rounding it
+    will always lie inside of G. If p lies outside of G initially,
+    then rounding it can push it to lie on the boundary of G, but can
+    never push it to lie in the interior of G.
+
+    This gives us some lower bound on the length distortion. If d(p,q)
+    is larger than 1.414*gridlength_i, then p and q must lie in
+    different grid squares, and they will not be collapsed together by
+    rounding to level i.
+
+  - We should almost certainly use the trick of making the maxlen
+    longer as we go up. Think about that, it's probably not so bad. It
+    means we can terminate safely sooner, which we should think about.
+
+    Q: when can we stop?
+
+  - If we switched to a more direct for-loop over the grid, we could
+    potentially save a lot of computation by restricting to the maxlen
+    linf-neighborhood.
+
+  - Notes on visualizing parses:
+    - It might be good to color the segments by their grid level,
+      rather than their depth in the parse tree (although we can
+      always look up either)
+
+    - drawing is imperfect, because a segment can be covered up by its
+      cousin in a righter subtree. Only way to ensure that
+      highest-level color is used is to make a list sorted by rank and
+      then do it. Since we know the depth, we could be inserting into
+      lists, so it wouldn't be hard at all. Might also be good to
+      label each segment as belonging to whichever levels it belongs
+      to, and then commingling the colors, so that we know *all* the
+      levels.
+
+  - A much riskier optimization is to drop parse table entries that
+    are high relative to other comparable entries. this could save a
+    *huge* amount of time, but it would be easy to get rid of
+    necessary pieces. 
+
+    One interesting idea: suppose we throw out X\to C_pq when its cost
+    is above a threshold T, say 100 times the cheapest cost of X\to
+    C_xy, or 100 more than the cheapest cost. Then, suppose that
+    future queries to cost(X\to C_pq) have maximum cost T, rather than
+    infinity. This would not actually get rid of any parses, since we
+    would essentially assume the existence of any parse that could
+    have been dropped. The one issue is that we can then no longer
+    skip X\to YZ, Y\to C_pq if cost(Y\to C_pq) is infinity. But, we
+    might get some amount of the same effect if we check whether
+    cost(Y\to C_pq) > T_X. If the factor 100 was instead set somewhat
+    adaptively, so that it got lower as we went up, then we would be
+    OK, because when cost(Y\to C_pq) is infinity in the current model,
+    it would instead be T_Y, and if T_Y > T_X, we would be good. We
+    would need to work out some sort of threshold schedule such that
+    we would usually get that savings.
+
+    Suppose that the factor is an additive A_X (in the log domain)
+    rather than multiplicative. Then we would like it to usually be
+    the case that
+
+      T_X < T_Y
+
+    which means we need
+
+      bestcost(X) + A_X < bestcost(Y) + A_Y, 
+
+    even though cost(X) = cost(Y) + cost(Z) + geometry. So in
+    particular, we would need that bestcost(Z) + geometry + A_X < A_Y
+    most of the time.
+
+    What if we did multiple passes with different A_X, but used
+    infinity as the default value instead of T_Y? The advantage of
+    this is that we are finding true parses, so we are building up
+    legitimate values of bestcost, which gives us a much better idea
+    of how strict to be.
+    
+    Alternatively, we can ask for the bestcost in a restricted
+    region. Clearly we can discard something if it is not the best in
+    a trivial region including only itself. Clearly doing this
+    globally could prevent something useful from being found. What if
+    we do it with a k x k breakdown of the points? We are probably
+    just replicating the fuzzy algorithm at that point.
+
+    What if we change the algorithm to be coarse to fine somehow? We
+    run parsing from fine to coarse as we do now, but we start at a
+    relatively coarse level the first time, and then repeat it with
+    finer and finer levels.
+
+    The point is that we can potentially skip looking at X\to C_pr if
+    we have a lower bound on the cost, which the previous iteration
+    should give us (modulo the shape costs being slightly inaccurate)
+
+    One problem with this idea is that we iterate over p,q first
+    instead of p,r.
+
+    We could say that when looking at X\to YZ, we skip Y\to C_pq if
+    its cost at the current pass is more than the maximum cost of X\to
+    C_pr (over reachable r) at the previous pass. So it could not
+    improve on any parse that we know about, and in the coarse-to-fine
+    world we would (hopefully?) know about every parse. (We would have
+    to be sure to lift *all* the segments when doing coarser
+    passes. It seems like it might be important to get stuff that
+    would have have length 0, because it would allow us to actually
+    always see the true curve.)
+
+    As a slight modification of the above, we could use, instead of
+    max_r cost(X\to C_pr), min_r cost(X\to C_pr) + buffer. This on the
+    theory that good parses are very sparse, so max_r cost(X\to C_pr)
+    will always be extremely high and basically meaningless. We would
+    be assuming that the true parse would pass this test, but it
+    doesn't seem that bad. Since p is fixed, we're not considering
+    everything, so we will only be tricked if this subset of the true
+    parse is close to a place where this subset fits *much*
+    better. (Depending on buffer, obviously.)
+
+    This sounds pretty cool but is slightly too complicated for
+    now. It can be one of the next things we try, though, since
+    speeding it up is important.
+
+    More thoughts on ctf fuzzy: when we are searching over the first
+    two points p,q, arguably the most relevant quantity is how good of
+    a *context* exists for X\to C_pq. Thus if we have a lower bound on
+    the "outside cost" of a parse tree containing X\to C_pq, we know
+    whether we are interested in X\to C_pq. If cost(X\to C_pq) +
+    lboutside(X\to C_pq) > bestparsequality, then we can safely ignore
+    X\to C_pq.
+
+    How do we define/calculate the "outside cost"? The regular
+    "inside" cost of X\to C_pr is defined to be the minimum cost of a
+    tree rooted at X\to C_pr which has no unexpanded nodes, and is
+    calculated as 
+
+      min_{q, X\to YZ} geom(X\to YZ, p,q,r) + cost(Y\to C_pq) +
+      cost(Z\to C_qr).
+
+    So the outside cost should be defined as the minimum cost of a
+    tree rooted at S\to C_xy for some x,y, which has a single
+    unexpanded node X\to C_pq. We can calculate it as the minimum of:
+
+      min_{r, Z\to XY} geom(Z\to XY, p,q,r) + cost(Y\to C_qr) + 
+      outside(Z\to C_pr)
+
+    and
+
+      min_{r, Z\to YX} geom(Z\to YX, r,p,q) + cost(Y\to C_rp) + 
+      outside(Z\to C_rq)
+
+    So, the best plan would be to use the outside tables of the
+    previous detail. This will be fine, because we will be seeing all
+    true trees and some false trees, just as in the current model.
+
+    We should start writing up notes for this, it's very complicated
+    and a lower bound is needed.
+
+    Also, might think of increasing maxlen every round instead of
+    increasing the fineness of the bottom grid.
+
+  - Fuzzy cky: we have a hierarchy of curve networks. Each point in a
+    given curve network gets mapped to a particular point in the curve
+    network above it. We have a maximum distance that is allowed
+    between p,q, and r at each level.
+
+    We do parsing as usual at each level (with the constraint that
+    p,q,r must be close), and then map the parse table up a level by
+    coarsening points.
+
+  - every curve lives at a particular scale. We can think of there
+    being k grids, where points are connected in grid i if their
+    distance is at most maxlen * gridstep, and greater than maxlen *
+    (gridstep/2)
+
+    We want there to be compositions that turn two curves into one, of
+    the form C_{pq} + C_{qr} -> C_{pr}.
+
+    We would like it to be the case that any composition tree in the
+    finest grid, paying no attention to the maximum length, can be
+    approximated well in this system. It would be sufficient if every
+    C_pq + C_qr -> C_pr in the full system could be rounded
+    simultaneously without destroying the parse. That is, we round
+    C_pq, C_qr, C_pr, but require that the composition continue to
+    exist. (There is a small and manageable issue, which is that the
+    shape of the triangle will be changed slightly. For the watson
+    distro, this should not be a problem.)
+
+    How can we generate this set without actually iterating over all
+    triples, which is after all the thing we are trying to avoid. We
+    can easily generate the set of curves by simply iterating over
+    each grid, including only short enough curves. But how can we say
+    what compositions should exist between C_pq and other curves? We
+    can say that we will only search over curves that are of length
+    between d(p,q)/zeta and zeta * d(p,q). (Actually, can search only
+    over curves that are longer, since one curve must be longer.)
+
+    If we need only search over longer curves C_qr, then we are good,
+    since they will be on the current grid or a coarser one, so we can
+    simply iterate over nearby points in the current grid and round
+    them if necessary.
+
+    The only issue here is that d(p,r) can be smaller than either
+    d(p,q) or d(q,r). Then we will have correctly identified C_pq +
+    C_qr as a composition, but we may only know a too-coarse version
+    of C_pr. We could, in the case that d(p,r) < min(d(p,q), d(q,r)),
+    impose a minimum value on d(p,r)/min(d(p,q),d(q,r)) (say d(p,r) >=
+    d(p,q) / 2, or over 3?) 
+
+    Then, in the case that d(p,r) is smallest, we can project it to
+    all its finer copies, hopefully not gaining too many productions
+    in the process. We will just test it out and see. In order to do
+    this, we need to know, given a coarse curve, what fine curves get
+    mapped to it (even more than one level below)
+
+    There is a minor issue that we may not know that d(p,r) is
+    smallest, because we see only coarse copies of p and r. But
+    hopefully we can deduce a lower bound on d(p,r), and do the right
+    thing.
+
+    This all seems like it should work pretty well, we are only making
+    two assumptions about the parse tree.
+
+    We can visualize this. The center point should be kosher in every
+    scale, so we can look at all edges leaving it at each level, and
+    for each of these all the associated compositions.
+
+    It would also be good to show what happens to some random parse
+    trees. If we generate a random curve somehow and then decompose it
+    arbitrarily, this gives us a parse tree to look at.
+
+  - The correct thing probably is to stop passing up once we are sure
+    it has gotten to everyone that needs it. The problem is that if
+    p,q,r is unbalanced, say d(p,q) = 1 and d(q,r) = 10, then we need
+    to have pq and qr available during the same scan. 
+
+    If we assume that when we combine things, the ratio between the
+    two lengths is at most zeta, then we are good as long as 2 *
+    minlen * zeta >= maxlen. We can prove this as follows:
+
+    For the two to be present at the level with granularity STEP, we
+    would have to have:
+
+      minlen*STEP <= d(p,q), d(q,r) <= maxlen * STEP 
+
+    Therefore, for pq and qr to be unable to combine, we would need
+    that there is no STEP such that that holds. Assume wlog that
+    d(p,q) < d(q,r). If we let STEP_pq be the largest used STEP such
+    that minlen*STEP <= d(p,q), then pq and qr unable to combine would
+    imply (assuming that steps are chosen as powers of 2)
+
+      minlen*STEP_pq <= d(p,q) < minlen*2*STEP_pq
+      maxlen*STEP_pq < d(q,r)
+
+    and then we would have d(p,q)/d(q,r) < 2*minlen/maxlen. Assuming
+    that d(q,r)/d(p,q) <= \zeta, then
+
+    maxlen / (2*minlen) < d(q,r) / d(p,q) <= \zeta
+
+    maxlen < 2 * \zeta * minlen,
+
+    contrary to assumption.
+
+  - What zeta do we want? 3-5 sounds reasonable. Whatever we pick, we
+    can check that it is appropriate for a hand-built grammar by
+    calculating the ratio of d(C_i,C_j) to d(C_j,C_k) for [i,k] ->
+    [i,j][j,k]. We can even use a different ratio for each rule.
+    Alternatively, we could have different lifting rules for each
+    symbol.
+
+
+  - We would like it to be the case that the children of a node have
+    similar colors to their parent, but are distinguishable from each
+    other. So we essentially want a binary tree over color space? If
+    we imagine colors
+
+0 1 2 3 4 5 6 7 8
+
+then we could assign colors
+. 0
+.. 1
+.. 2
+. 4
+.. 5
+.. 6
+
+Then cousins will not be confused, because the parent will lie between
+them and the other.
+
+. 0
+.. 1/6
+... 4/18
+... 5/18
+.. 2/6
+... 7/18
+... 8/18
+. 1/2 = 3/6
+.. 4/6
+.. 5/6
+
+  - So the children of x will be x + a/3, x + 2a/3, where a = spacing
+    on x's level. a = 1/2, 1/6, 1/18.
+
+  - We can then use that to index into some heat range or what have
+    you. Could also map the first half into blue-red, second half into
+    red-green. Then first two colors are (br,0,1) (rg,0,1), and we
+    always map (br,a,b) to (br, (2a+b)/3, (a+2b)/3), (sim for rg) and
+    use the left endpoint for coloring. 
+  
+  - If we had such a rule, then would it be important to only add in
+    segments once they were long enough?
+
+** Incremental incorporation
+  - can think of adding one additional midpoint each round. we can
+    look at the viterbi parses. (we will have to add in the rule id as
+    well as the symbol id). one of the rules used will have the most
+    unhappy midpoint. we can then add a new rule centered at the
+    observed midpoint (what is the concentration? can just copy that
+    of the other one). if we want to get something that really works,
+    we need to somehow duplicate symbols... suppose we duplicate the
+    two symbols on the rhs of the new rule, and duplicate their rules,
+    but leave the targets of those rules the same. So, we turn two
+    symbols into four symbols, and double however many rules. 
+
+  - we're missing something. we want to know about correlations with
+    siblings, but we only know about correlations with children
+
+    how would we figure out correlation with parents? let's say that
+    instead of just having a new rule, we also copy the top
+    symbol. then any rule targeting it gets copied. then if we do both
+    siblings, we'll get 4 copies of the rule, 2 of which will be right.
+
+  - still not working all that well. why? it has two compatible leg
+    bending rules, but doesn't know they go together. this is
+    happening because the sdf we gave it puts one of the leg bends a
+    level lower than the other. since the rule above it it never
+    particularly unhappy, it's impossible for one leg-bending rule to
+    see the other one
+
+  - we could switch to copying the whole subtree of the parent of the
+    bad rule's lhs symbol, or picking an optimal subtree
+    somehow... but how do we choose an optimal tree when their parse
+    scores will not be comparable? could look at score / (number of
+    rules + 1), on the assumption that score is proportional to that
+
+  - could take grammar from the bad curve, with same sdf, choose a
+    particular subtree, and then merge it with the corresponding
+    subtree. how to pick the subtree? could pick one with a good
+    midpoint as root.
+
+  - could take grammar from the bad curve, with same sdf, and merge
+    the tops, and then do KL-based merging
+
+  - aside: could we make a nicer picture of parses by just matching up
+    the model subcurve with the target subcurve for every pair in the
+    viterbi parse?
+** Structure: Constituency heuristics
+  - evaluating this
+    - need to finish the sdf's
+    - build a grammar
+    - parse as in shorter_curves
+    - should think about trimming sdf by finding compositions that are
+      too similar and deleting them
+
+  - computing shock graphs
+    - compute signed distance function (we've done this before)
+    - compute flux at each interior point
+    - get a priority queue
+    - enqueue points on boundary
+    - iteratively dequeue and remove based on tests
+
+    - [X] fix branch point detection
+    - [ ] figure out 2x2 problem
+    - [X] assign boundary points to nearest shock point
+    - [X] build graph on shock points
+    - [ ] contract away shock points of degree 2
+    - [ ] copy the graph
+    - [ ] iteratively delete leaves of the shock graph, choosing the one
+      which, together with the edge connecting it to the graph, is
+      responsible for the fewest points
+    - [ ] (should we be thinking about edges of boundary instead of
+      vertices of boundary?)
+    - [ ] when the root is found, go back to the old graph and compute
+      responsibilities by dfs.
+    - [ ] for every non-leaf vertex of the graph, create a symbol
+      representing its responsibility, and the necessary
+      decompositions to represent the responsibilities of each of its
+      subtrees.
+    - [ ] look at the resulting sdf?
+
+  - getting constituents from shock graphs
+    - the subtree of any branch point is often a good
+      constituent. but look at the hand, sometimes one of the
+      endpoints is at a natural boundary and the other one
+      isn't. Also, look at the thumb, sometimes the shock graph has a
+      huge bend in it that does not have any associated branch points,
+      and that looks like it should generate a constituent
+
+      we can simplify the shock graph by assuming that all edges are
+      straight lines, and introducing bend points when this creates
+      too much of a difference. (Think of the CDT paper's approach to
+      that.) This captures some of the constituents that seemed to be
+      missing before. It should detect discontinuities arising from
+      the circle turning a corner and having more freedom to
+      grow. Have to think about how to pick a threshold or whatever to
+      decide to insert a bend.
+
+      actually, just setting the flux threshold relatively high seems
+      to result in pretty straight bends
+
+      as for getting rid of the extras, unclear. maybe we don't care
+      all that much?
+
+      we're missing some branch points. we have to think harder about
+      the condition. also have to watch out for 2x2's?
+
+      how do we extract actual constituents from the shock graph? we
+      can assign every boundary point to the nearest point in the
+      shock graph. we can then say, for every branch point, look at
+      the division it induces in the boundary. how would we compute
+      that? we have a list of endpoints, and a list of branch
+      points. we can compute the degrees of branch points pretty
+      easily. with the threshold where it is, it seems like the
+      closest point is usually one of the roads to the endpoint
+
+      we can compute a list of nodes and edges, and every boundary
+      point will be closest to some node or some edge. We can then
+      look at the graph. (We can construct the graph by making every
+      shock point into a vertex, and then removing vertices with
+      degree two and preserving the path. If every initial vertex
+      remembers the boundary points it owns, we can update this and
+      store these with the new edge. )
+
+      Once we have a graph where all vertices have degree 1 or >= 3,
+      we can pick an arbitrary root and do dfs from it to assign a set
+      of boundary points to each subtree. (think about this.)
+
+      where to put the root? we could continue the thinning procedure
+      without protecting the endpoints, presumably the last point left
+      would be a reasonable root.
+
+      we could also try to pick the root which splits the tree most
+      evenly, or gives the most balanced tree somehow.
+
+      if instead of dfs from a root, we delete leaves iteratively,
+      always deleting the leaf responsible for the least amount of
+      stuff, then we would get a very reasonable root.
+
+      once we have a root, this gives us a decomposition family. it is
+      close to unambiguous, ambiguity only comes when we have branch
+      points, and it's kind of meaningless ambiguity resulting from
+      CNF-ification.
+
+      I think we get another df from the outside skeleton? think about
+      it. outside skeleton seems to have multiple components...
+      
+      once we have a df, we can construct a grammar.
+
+  - should also look at the outside skeleton, it might tell us how to
+    omit holes intelligently, which is something we need to know about
+
+  - shock graphs offer a natural transition to thinking about
+    constellations, which is nice
+
+  - ***********************
+
+  - a thought about constituency: maybe think about shock graphs? They
+    certainly have the property that protuberances are constituents
+
+  - Arguably this has to wait until after we can find a really good
+    "optimal" set of constituents, since the easiest way to evaluate
+    these is by comparing them to the actual optimum.
+
+  - Next step: make an experiment for this
+
+  - When the shape is close to convex, we should proceed by
+    straightness. When it is not, we should proceed by protuberance,
+    in order to get it closer to being convex. We identify a
+    protuberance, and then we recursively go into it. If it is locally
+    convex, we use straightness. If it too is locally concave, we use
+    protuberance again.
+
+  - how do we decide what is close to convex? can just say that we
+    don't want any negative triangles with large area, that should do
+    quite nicely
+
+  - if we look at protuberances, it seems like often one of their
+    bounding vertices is the middle vertex of a very negative
+    triangle. The other one isn't necessarily, so we might have to use
+    that point's closest neighbor or something. For the head, both
+    bounding points have very negative triangles. Instead of thinking
+    of it as negative triangles with large area, we could think of it
+    as the displacement of the midpoint to the left of the line
+    joining the endpoints, if we are going ccw (q: how do we know if
+    we're cw or ccw? could try voting on it, under the assumption that
+    ccw <-> midpoint to the right (given local convexity))
+
+  - General thought: if removability is a good constituency test, then
+    what tells us that a subcurve is removable? Protuberance obviously
+    does, since we can imagine cutting it off at the bottleneck.
+    Straightness also does, because we can just make it straighter.
+
+  - For triangle decay: think about multiplying area by perimeter. It
+    would eliminate some of the super long and skinny triangles that
+    were a problem.
+
+  - the triangle decay algorithm is working somewhat interestingly. we
+    should think about the super long and skinny triangles; maybe we
+    want them as constituents, maybe we don't.
+
+  - How do we turn the triangle decay path into an SDF? If we run the
+    decay backwards, it gives a decomposition whose top-most level is
+    ambiguous (can break a triangle in three ways), but otherwise
+    unambiguous
+
+  - it is a semi-reasonable decomposition, but it acts weirdly around
+    certain protuberances. it cannot search over all decompositions of
+    a protuberance, only those that correspond to growing it by
+    triangles. For some protuberances, the negative triangle check is
+    actually preventing the most intuitive decomposition.
+
+  - so, maybe replace negative triangle check with something more
+    subtle. Have to think about this.
+
+  - Is this a reasonable thing? It seems relatively reasonable. It's
+    really much more about constituency than about adaptive SDF's now,
+    though.
+
+** EM: discriminative training
+Think about doing discriminative training a la LSVM. Once we have the
+soft counts of a parse, we can use that as an x-vector in a
+discriminative setting. This should work to retrain rule costs.
+
+Imagine that we have two classes of curves.
+
+We want to make sure that the relative values of $P(C|G_1)$ and
+$P(C|G_2)$ are consistent with the labels.
+
+For every curve $C$, we wish to compute vectors $X_{C, G_1}$, $X_{C,
+G_2}$ such that $\log P(C|G_1) = \langle X_{C, G_1} | \theta_1 \rangle$ and
+$\log P(C|G_2) = \langle X_{C, G_2} | \theta_2 \rangle$, where $\theta_1,
+\theta_2$ are vectors derivable from the grammar parameters.
+
+If we consider the midpoint distributions to have fixed means, but not
+fixed concentrations, then $X_{C, G_1}$ can just be a vector of rule
+counts, and a sum of $|z^* \mu|^2$ values, while the $\theta$ vectors
+can have the corresponding rule costs and concentrations.
+
+* Working notes - back burner
+** Structure: Merge and Replace
+  - compute merge and replace heuristics on Romer I hand-built
+    grammar, apply, sample. Limit to nt's with scale > thresh (1/4,
+    1/8?) to avoid triviality
+
+  - we might want a grammar copying function as part of this
+
+** Constituents in MPEG-7
+  - Running a full evaluation means doing matching 1400 * 1400 =
+    1,960,000 times. We can start with a simpler version by limiting
+    ourselves to two similar classes, which would mean doing parsing
+    only 40*40=1600 times. We can further simplify things by examining
+    only 10 from each class, which brings the number down to 100,
+    which we should be able to run in less than a day.
+
+  - We would like to approximate each curve by a very short curve
+    whose interior has small symmetric difference with the true
+    interior.
+
+  - We can extract curves from binary images now
+
+  - We can drop points if they lie on the line connecting the points
+    before and after them.
+      
+** Multiple jittered midpoints in EM
+  - Next step: try upweighting the original midpoint, might keep parses less
+    insane (if that helps, it tells us a *lot* about the weaknesses of
+    EM)
+
+  - some of the ugliness might come from the 3rd to last
+    hand-annotated romer curve. try training on less data
+
+  - weird bullshit went away, but there is less geometric
+    variability. maybe just kill that one particular example.
+
+  - OK, the weird flips are gone, and there is still a lot of
+    variability. 
+
+  - took out upweighting, it reintroduced a small flip at the end of
+    the arm when the arm is crossed. It seems like this is comes from
+    a flip in the data. The grammar has not learned that the inside of
+    the arm should be flipped if the outside of the arm is... this
+    suggests that we just need more EM iterations, because that should
+    be an easy enough thing to learn. If it doesn't work, then we
+    might need to keep rules alive longer, presumably by adding
+    artificial counts
+
+  - actually, it's impossible to learn. You have to duplicate
+    nonterminals to achieve that, since it needs to associate the
+    context of a symbol with a different distribution on the rules of
+    the symbol.
+
+  - how do you do that? we could have 5 copies of the entire grammar
+    with disjoint symbols, but that prevents factorization. we could
+    have 5 copies of each symbol, and give a different midpoint to
+    each one. but then we kind of want each of them to have 25 rules
+    so that it can go to all symbols at the next level. We could give
+    it ~3 random rules to the next level, each with the same midpoint.
+  
+    higher up, we should maybe have more rules (all of them?) so that
+    we don't lose any of the grammar.
+
+    should start a new experiment for this thought, call it
+    correlated_tuning? the point is that we want to get rid of the
+    independence
+
+  - it seems to be alternating between two grammars at the end...
+
+  - upweighting did not help much. it might have helped some?
+
+  - works sort of OK, need to think about what's going wrong, but
+    pretty respectable
+
+  - might also want to use fewer copies, or somehow delete more rules?
+** General thoughts on 2D parsing
+|-------------------------+---------------------------------------|
+| Grammar source          | Data cost                             |
+|-------------------------+---------------------------------------|
+| hand-built              | take fixed curve, make cost very low  |
+|                         | for segment close to a curve segment, |
+|                         | very high o/w                         |
+|-------------------------+---------------------------------------|
+| automatically generated | draw filled curve in black, run canny |
+|                         | to get edge quality, charge cost      |
+|                         | accordingly                           |
+|-------------------------+---------------------------------------|
+|                         | Take image, run canny or PB           |
+|-------------------------+---------------------------------------|
+
+  - think about how to only look at midpoints close to the Watson mode
+
+  - can speed up parsing by only considering X\to C_{p,q} when p and q
+    are "about the right distance apart" given that we know the global
+    scale approximately, and that we know how far apart they tend to
+    be relative to that (can answer that by sampling, or learn it)
+
+  - work only with a fixed parse tree for now, since L\to LL was the
+    source of more than half our woes. as long as we have $P(X\to
+    \ell_{p,q})$ for all $p,q$, and we think that our segments are
+    straight, it's fine to do this.
+** Structure: Constituency
+  - Next step: draw the grammar we selected, show samples
+
+  - Load the hand-built sdf, highlight agreements
+
+  - run on articulator, run on n-armed shape 
+
+** Datasts: mpeg7
+** Datasets: horses
+** Datasets: labelme polygons
+** Datasets: ETHZ
+** recover a grammar
+  - build some simple grammar, see what we learn
+  - maybe have to measure KL divergence or some such if recovering the
+    exact grammar is impossible
+** Parsing: Parsing curves of variable length
+  - Next step: Probably stuck until we get better SDF's for long curves.
+
+  - The experiment "longer_curves" works pretty well.
+
+  - The experiment "shorter_curves" works less well.  I think the SDF
+    is to blame.
+
+  - If we had aligned training data, we could build the optimal
+    sdf. But we don't.
+
+  - Recover a correspondence with both missing and extra points. Go
+    from one ground-truth Romer curve to another?
+
+  - try using scale-based rules, but just using straight
+    midpoints. Getting the straightcosts correct will already take us
+    fairly far away from the current mess. think about having all
+    concs be equal, as that would make all parses have the same sum of
+    concs, although it seems unrealistic
+** Grammars: Watson distribution
+  - think about using Kent instead? Kent is harder to fit.
+  - figure out how to fit differently constrained watsons, e.g.,
+    watson with fixed mean, watson with mean constrained to lie on a
+    line, etc.
+** Texture: Modeling nonterminals with scale
+  - We have nonterminals $L_s$ indexed by their *scale* $s$. In a
+    curve of length $n$, $L_s$ is meant to model curves of length
+    approximately $sn$.
+
+  - We have productions $L_s \to L_t L_{s-t}$.
+
+  - For compactness and efficiency, we choose a restricted set of
+    scales. Choosing this set is basically a continuous version of the
+    SDF problem. We solve it simply by allowing scales $s_{a,k}
+    =2^{-k}a$, where $1\le a\le 4$, and $2\le k$. When $k$ is
+    sufficiently large, the scale is very small, and we can ignore
+    $L_s$ or model it slightly incorrectly.
+
+  - We choose productions $L_{as} -> L_{bs}L_{(a-b)s}$,
+    for all $1 \le b \le a$. We let the probability of that rule be
+    ${a \choose b}/2^a$, this is arbitrary but seems reasonable
+    enough.
+
+  - For each rule $L_{as} -> L_{bs}L_{(a-b)s}$, we need to pick a
+    midpoint distribution. Currently we do this by considering all
+    triples of points $i,j,k$ where $k-i \approx asn$, and $j-i
+    \approx bsn$, and fitting a Watson distribution.
+
+  - The sampling is blowing up for the maple; it is generating very
+    large triangles from its Watson distributions. We might want to
+    somehow constrain the watson to not be crazy far off the
+    midpoint. In general, the issue may be that the global structure
+    is not modeled well by texture.
+
+  - We can tune with EM, although we haven't tried this yet.
+
+  - It is interesting to look at the many-part leaves (leaf classes
+    10,14). Their texture is not understood at all, because it cannot
+    be described by a stationary model. You cannot fill in this
+    texture unless you know whether you are on the tip of a sub-leaf
+    or in one of the valleys between sub-leaves.
+
+    The training procedure described above will obviously only learn
+    stationary textures, because it incorporates all samples $(i,j,k)$
+    of the same general size into a single model without considering
+    how that sample fits into the larger texture.
+
+  - For leaf classes that do have stationary textures, like leaf class
+    1, the samples look reasonable at a fine scale
+
+  - It is interesting to consider the problem of having two
+    textures. If we look at the stems and the leaves (in leaf classes
+    2,13,etc.), we see that there are two very different textures,
+    which cannot be modeled by what we have described above. Even if
+    we fit a mixture of Watsons to each midpoint instead of a single
+    Watson, it is clear that this model cannot capture both textures
+    without mixing them somehow.
+
+    It seems like what we want for the leaf/stem problem is to
+    duplicate the whole grammar, seed with random midpoints to
+    differentiate the copies, and then tune with EM. But we need to
+    stitch the two grammars together at some scale, and this is not a
+    very general-purpose solution.
+
+  - what is the method below doing? at any given step, we assume that
+    the curve is made up of chunks at the current scale s, each
+    labeled with a nonterminal (and possibly one or two smaller
+    scales, consider a scale of length 3, might want scales of length
+    2 interspersed), that each chunk and its nonterminal are
+    independently chosen from a distribution CHUNK_s, and that each
+    chunk is composed of two chunklets living at a lower scale, but
+    that these two chunklets, and the way in which they are combined,
+    are chosen from a distribution G_X, where X is the nonterminal
+    labeling this chunk
+
+    When retuning at scale s, the probability of $S\to SX$ can be
+    interpreted as the probability of X in CHUNK_s. This will not be
+    used higher up, but we can use it to prune at scale $s$ before
+    moving up.
+
+    Thus, we are bootstrapping by making and then unmaking a series of
+    independence assumptions. Each time, the independence assumption
+    allows us to treat the data as being uncorrelated beyond the
+    current scale, and thus we have many independent samples that we
+    can combine.
+
+    It seems like we cannot get very badly "stuck" because of a
+    mistake at some lower level. If the model really wants X and Y to
+    be distinct at a level, then their subparts will probably be
+    fairly distinct at a lower level. If not, then X and Y are
+    probably different mainly in how they combine their subparts, and
+    not in what those subparts look like, in which case it is not a
+    problem that we have identified their subparts.
+
+  - Go from the bottom up. start with a single nonterminal at the
+    lowest level. whenever going up a level, construct all possible
+    rules * -> YZ, and give a unique new nt for the lhs of each. dup
+    each such rule with different midpoints, duping the symbol at the
+    same time. then retrain the grammar, assuming that the entire
+    curve is a concatenation of nonterminals at the current scale (and
+    thus competing explanations like $/\backslash$ and $\backslash/$
+    actually are forced to compete).
+
+    How do we parse/get soft counts with concatenation? We introduce a
+    symbol S, and have rules $S \to -> SX$, where X is any symbol at the new
+    level. The cost of the rule will be zero. Then the only legal
+    parse is a concatenation of symbols at the new level, with
+    whatever internal structure below.
+
+    Do this, and then prune the new level down to acceptable levels,
+    either by killing things with low counts, or by killing some and
+    then retuning, etc.
+
+    How to deal with length fuzziness here? want to be able to
+    concatenate nts that are slightly longer or shorter than the ideal
+    length. also want to be able to parse with some lengthening and
+    shortening inside the grammatical part. can use X->l, L->LL, as
+    long as we make sure that we don't stray from the appropriate
+    scale.
+
+    There are two issues - are the chunks the right length, and are
+    the parses inside the chunks balanced? we can keep the parses
+    inside the chunks balanced by using our straightcost heuristic
+    (it's a little bit funky at the lowest scale, where we probably
+    have to have old-school L->LL. This will hopefully be isolated
+    enough...)
+
+    We can keep the chunks the right length by charging a penalty in
+    the S->XS rule when X is not the expected length. We can also just
+    not allow X that is significantly off of the expected
+    length. (Note that we have to change the sdf to allow really long
+    S things. not that big a deal with the full sdf, but it's not
+    clear we can afford the full sdf. actually, we might be OK, as
+    long as the scale does not get too large. we have quadratically
+    many S-ready scurves, but each has relatively few rules attached,
+    because it only has to break at the right...)
+
+    can break curves into scale or double-scale sized pieces, but then
+    how do we know to ignore the ends... could say that any
+    double-scale-sized piece created by concatenating two scale-sized
+    pieces inside a triple-scale-sized curve is goal-worthy
+
+    maybe make that (k-1) concatenated pieces inside a k-scale curve,
+    so that it can't avoid problematic pieces of the curve
+
+    code thoughts: can jam markov into the allowable distribution, and
+    then do something a little annoying during sampling (take (p,q) ->
+    (p,q,markov(p,q)) instead of (p,q) -> (p, watson(p,q), q))
+
+
+
+** Parsing: One-to-one
+  - We could show actual scores for the 27 possible rotations
+  - do this with some more examples
+** Parsing: Recover a 1-1 correspondence with misleading intermediate points
+  - given curves with corresponding points, and also somewhat
+    misleading intermediate points, make sure that we can recover the
+    correspondence
+    - want to see ambiguity (fake stubby finger parsed by L->LL or some such)
+
+
+** Constellation grammars
+  - Consider an x, or a 6. We can model the outside curve of these
+    objects, but we are in some sense missing the picture. Suppose
+    that our goal is to model the set of curves that lie under the
+    ink.
+
+o   o
+ o o
+  o
+ o o
+o   o
+
+a   o  _ -> X_ab
+ o o
+  o
+ o o
+o   b
+
+a   c  X_ab -> Y_ac C_ab
+ o o
+  o
+ o o
+o   b
+
+If this triangle is close to a right triangle, then ac is
+approximately perpendicular to bc, which distinguishes an x
+
+a   c  Y_ac -> Z_ac C_cd
+ o o
+  o
+ o o
+d   b
+
+Similarly for triangle acd. If both triangles are approximately right,
+then acbd is approximately a rectangle. And, since we are also
+modeling the relative side lengths, we can demand that it have an
+appropriate aspect ratio.
+
+Z_ac -> _
+
+C_pr -> C_pq C_qr
+o-o-o
+
+The only modifications the grammar needs is to allow rules of the form
+X_ab -> Y_ab Z_ac, instead of just X_ab -> Y_ac Z_cb. This would not
+be difficult in the parsing code, just have to specify which kind of
+rule it is.
+
+How would a 6 be modeled?
+
+  ooa
+ o   
+ bood
+ o   o
+  eoc
+
+S_ac -> C_ab X_bc
+X_bc -> Y_bc Z_cb
+
+Y_bc -> C_bd C_dc
+Z_cb -> C_ce C_eb
+
+How do you build such a thing from a single curve? If you are
+considering a simple curve, no need. How does one even specify a
+non-simple curve? Can just give vertices and edges.
+
+One can then identify vertices with deg >= 3. If they are removed (or
+better, if a distinct copy of them is made for each of their edges),
+you get a collection of simple curves. If you then model the
+relationship of the endpoints of these simple curves, you are done. 
+
+One can then model these relationships by picking two base points, and
+iteratively adding in points c by rules of the form 
+X_ab -> Y_ab Z_bc
+
+What constraints are desired? We want it to be the case that the set
+of curves is exactly covered by the set of lowest-ranked nonterminals
+created by this process. So, it might make more sense to think of
+composing these curves. We have a preference for composition that is
+straightforward, X_ac -> Y_ab Z_bc. 
+
+Note that loops like that in the 6 make the above slightly more
+complicated. It might be good to break loops at their furthest point
+from the end, so that we have more landmarks to use when building the
+global model.
+
+So, we now have a set of simple curves, connected at various
+points. We want to split the set of contours in half, in such a way
+that the two sets are connected at only one point. We can then model
+that with a rule of the form X_ab -> Y_ab Z_bc, where b is the shared
+point, and a and c are point in the respective parts.
+
+What if there is no point b that splits the graph in half? Consider
+
+oooo
+o  o
+aoob
+o  o
+oooo
+
+How would we model this by hand?
+
+cood
+o  o
+aoob
+o  o
+eoof
+
+S_cf -> X_cf Y_cf
+X_cf -> C_ca C_af
+Y_cf -> C_cf C_ab
+
+but this last rule is not allowed by our ruminations above
+
+S_cf -> X_cf Y_cf
+X_cf -> [ca] [aef]
+Y_cf -> Z_cb [bf]
+Z_cb -> [cdb] [ab]
+
+would work. Our strategy above was to pick two points of degree two,
+and write the rule
+
+X_ab -> Y_ab Z_ab
+
+This cuts some loops, making the graph into
+
+c  c'ood
+o      o
+aoooooob
+o      o
+eoof   f'
+
+which is then decomposable by previous methods.
+
+In general, if the graph is simple, we decompose by finding a
+separator point. If the graph is a single loop, we decompose it in the
+standard way. If the graph has genus 1, but is not a single loop, we
+decompose by finding a separator point. If the graph has genus 2 or
+more, and has no separator points, we identify two cycles, and
+decompose by finding one point with degree 2 in each cycle that is not
+in the other cycle, and cutting the two loops at these points. This
+then reduces the genus by 2, hopefully.
+
+Looking at the example of the x, we see that the above method would
+work, but it might not give us the most appealing decomposition. The
+genus-2 slice is probably fine, as long as we choose points that are
+far apart. The genus-1 slice is also probably fine. But if we
+decompose by finding a separator point, we want to think about exactly
+what we do with it. The graph may shatter into more than two pieces,
+and we may not even want to use the separator point as a
+landmark. (Although if we don't, the grammar may look pretty weird.)
+Looking again at the x, if we choose the crossing point as a
+separator, we would like to split the remaining curves into the two
+strokes, which we are free to do. We can then model each stroke as
+X_{end cross} -> C_{end cross} C_{cross end'}.
+
+Thus, given such a curve, we can decompose it via a series of
+steps. These decompositions can be embedded in rules of a simple form,
+and their geometric content modeled by Watson distributions. Given
+these decompositions, we can regenerate the original curve, and
+distort it by sampling from the Watson distributions. By modifying the
+parsing algorithm slightly, we can parse with these models.
+
+The main change in the code that would be needed would be to add a
+"type" to the rules. Currently, they are all of two forms:
+
+I   ac -> ab bc
+II  ab -> ab ba
+
+But we would also like
+III ab -> ab ac   (to make a into a separator point)
+IV  ab -> ab ab   (to slice two loops at a and b)
+
+This would actually be trivial to implement, though. Type IV is not
+even necessary, since it has the same form as a closed production. We
+would only need to change sdata.closed from boolean to Open | Closed |
+Junction
+
+The grammar construction code could be left as is, and only used to
+construct standard grammars. Actually, it could even handle this new
+stuff, since it is generic enough to use any frozen_grammar.
+
+So, if we construct some sort of frozen_grammar that models the above,
+which would be trivial, we can build shape grammars on top of it.
+
+How do we build such a frozen grammar? write a recursive function that
+takes in a graph structure, chooses a rule to apply to it, and then
+either calls itself on the new graph (in the case of a genus-2 slice)
+or it breaks the graph into two pieces and calls itself on each piece
+(in the case of a separator, or a genus-1 slice). So, the only thing
+we really need is a data structure for the graph, which curve_network
+essentially is. 
+
+We could hand-annotate some MNIST digits to play with these
+structures. This would also give us an extremely fruitful testbed for
+attaching part filters to shape models, since Yali knows how to make
+really good part filters for mnist.
+
+** Parsing scenes in real images
+
+
+** javascript annotation tool, 
+  - figure out labelme's 
+
+** Image Parsing: 2-D Parsing with part filters
+  - Center a part filter around every point of the curve
+  - Could also try to center a part filter around the base of every
+    constituent's triangle
+
+* Working notes - attic
+** Datasets: Correcting Romer "ground truth"
+  - Once we get image parsing working even a little bit, we should use
+    the hand-built Romer grammar to extract better curves from those
+    images.
+** CODE: Drawing grammars
+  - filp rule-level samples? attach them to the base curve?
+
+  - give a curve of length 2 as the canonical example for $L\to LL$
+    rules
+
+** CODE: Curve file comments
+  - Write a curve loading function that knows to ignore comments
+  - Write a curve loading function that reads in comments, returns
+    them as an aligned string
+  - Make labeled curve drawing do this
+
+** CODE: Turn show-samples-midpoints into an executable
+  - Give the midpoints in a separate curve file
+** CODE: Coding style
+  - general rule of thumb(?) - the library files should not have
+    serious choices in them, they should give enough support for the
+    experiments and executables to make choices. when a choice is
+    needed, take a relatively generic function instead of various
+    parameters. this is good for keeping the library current and
+    correct, and as long as we don't change the sort of function we
+    accept, it also means that old experiments will still run, even if
+    we have moved on to different choices in newer experiments
+
+  - rename curve_network maybe? think about the data structure in there
+
+  - think about moving geometry into basically a module about complex #s
+
+** Grammars: Various grammatical models
+
+|---------------------------+--------------------+--------------------|
+| *Length-related rules*    | *Decompositions*   | *Midpoints*        |
+|---------------------------+--------------------+--------------------|
+| no length-related rules   | Single hand-picked | Single midpoint    |
+|                           | decomposition      |                    |
+|---------------------------+--------------------+--------------------|
+| scale-free L\to LL        | Single arbitrary   | Multiple midpoints |
+| where necessary           | decomposition      |                    |
+|---------------------------+--------------------+--------------------|
+| scaled L\to LL where      | Single optimal     |                    |
+| necessary                 | decomposition      |                    |
+|---------------------------+--------------------+--------------------|
+| scaled L\to LL everywhere | All decompositions |                    |
+|---------------------------+--------------------+--------------------|
+|                           | Arbitrary subset   |                    |
+|                           | of decompositions  |                    |
+|---------------------------+--------------------+--------------------|
+|                           | Decompositions     |                    |
+|                           | weighted by        |                    |
+|                           | constituency       |                    |
+|---------------------------+--------------------+--------------------|
+
+** Metrics
+  - examine samples
+  - examine pictures of midpoint distributions
+  - examine cross-entropy, i.e., ($-\frac{1}{N} \sum_{i=1}^N
+    \log q(x_i)$ ), where q(x) is probability according to the
+    model. Very important to make sure that q is normalized, which
+    could be difficult.
+
+** Datasets: Get hand datasets
+  - www.idiap.ch/resource/gestures/
+  - personalpages.manchester.ac.uk/staff/timothy.f.cootes/data/hand_data.html
+
+
+** Grammars: Compare grammar models to Markov models
+  - implement markov models (already done somewhere?)
+  - parse with markov models? this is probably easy, but it would
+    require a bunch of coding.
+  - alternatively, we found a paper that shoehorns a markov model into
+    a bingham distro or some such. Also, Mardia and Dryden have
+    something like this.
+** Grammars: Compare grammars to procrustes / watson / bingham as baseline
+  - need to implement whatever, which will require figuring out the
+    math for it
+  - can represent shapes as curves, so we just need to know how to map
+    shape to procrustes-style coordinates, how to compute score (just
+    a dot product?)
+  - should compare to learned watson etc., so we need to be able to learn a
+    watson etc.
+  - need to write code to organize the cross-entropy calculation
+  - need to make sure that both grammars and watson are normalized distros
+  - should do a grid search over the concentration parameter, at least
+    for watson. can either report all or choose one by xval
+** Grammars: Build interesting grammars by hand
+Simplest is probably a simplified hand.
+ - want to see choice (thumb vs. no thumb)
+ - want to see shared parts (fingers)
+ - want to see meaningful MP dist (ideally, articulation of
+   fingers and thumbs)
+ - check that samples look nice
+
+  - if we build a model for hand-annotated romer or asl, compare a
+    hand-built grammar with rich structure to an auto-generated
+    one. this is not that important here, because without EM the
+    structure is not that important.
+** Grammars: build interesting and valid grammars from shapetrees
+Want to have good shape deformation given simple hand-picked midpoint
+models, with no structural variability whatsoever, not even X->l or
+L->LL
+  - use hand-built grammars based on hand-annotation and
+    hand-choosing the shapetree
+  - see how choosing different shape trees will influence the
+    samples
+  - try comparing samples to samples from a standard
+    procrustes/watson/bingham model
+  - look at cross-entropy
+
+  - what kind of dataset do we need? want enough images that the
+    watson distro or whatever can actually be fit. need to have
+    explicit correspondences. hand could work, or we could put
+    explicit annotations on romer.
+
+  - what code is needed?
+    - k-ary watson, need to be able to calculate probability
+      (including normalization), sample, and learn
+    - need to specify a single parse tree
+    - need to be able to train, use, and sample from 3-ary watson,
+      given hand-labelings
+
+** Grammars: Figure out how to deal with variation in length
+  - Either have good shape models that include X->l and L->LL (or
+    figure out a different way to deal with variable length curves)
+
+  - need to make LLL rules for some of the subcurves. if we are going
+    to change this to have scaled L's, this becomes kind of scary. do
+    we generate scaled L's on the fly during parsing, or do we
+    generate a whole bunch of statically scaled L's during grammar
+    creation, and just go down fairly far (thus making the grammar far
+    bigger than it is now) a compromise would be to statically
+    generate the L's but have them for a number of scales, and link
+    them all up appropriately (rounding the scales a bit) that seems
+    like it would work just fine.
+
+  - again, want cross-entropy to support this, although it's not
+    clear what the non-grammatical version would be
+
+  - X->l L->LL may(???) be basically mandatory for classification or for
+    cluttered parsing, both domains have length bias problems to
+    consider
+
+    - for classification, we are parsing a single curve with many
+      grammars. therefore, it is important that we use the same number
+      of rules in parsing the curve with each grammar. using X->l and
+      L->LL makes this sort of true, since we always use n X->l rules
+      and (n-1) X->YZ rules, including L->LL. The concentrations make
+      this not work perfectly, since those (n-1) rules will not all
+      have the same concentration, and it seems like concentration
+      tells you a lot about the magnitude of the terms (but not
+      everything)
+
+      in the past we have used $\log P(X->l) \propto scale(X)^2$, since
+      we are guaranteed that sum scale(X) = 1 for the set of
+      nonterminals used in any parse. EXCEPT, this does not apply to
+      the leaves, since they exist at multiple scales once L->LL is
+      invoked
+
+      so maybe the answer is to have an infinite chain of nonterminals
+      that AREN'T self-similar. The most obvious thing to do would be
+      to have the leaves be L_s, and have L_s -> L_t L_{s-t}.
+
+      This leaves us with the problem of deciding the properties of
+      L_s as a function of s. The probability of L_s -> l can be set
+      as before, since the ell-2 norm of things that sum to 1 seemed
+      pretty solid - mostly unbiased, some push towards balance
+
+      this still leaves us with picking a midpoint distribution, and
+      also with deciding P(L_s -> L_t L_{s-t}) as a function of t. We
+      could simply fix t=s/2.
+
+      Picking the midpoint distributions seems like it should just be
+      done empirically. Pick a class of shapes, and just look at what
+      L_s -> L_s/2 L_s/2 would look like. We can use either euclidean
+      arclength or simply the index to think about the scale. To get
+      enough data, we should group the scales somehow? Good scales
+      are: 1/2, .4, .3, .2, .1, .09, .08, .07, ..., .01, .009, etc.
+      We can look at every subcurve and just round everything to the
+      nearest scale.
+
+      This still does not address texture, but it would at least let
+      us do our classification in a principled way.
+
+      This might even get at texture, since it gets relatively close
+      to the GP "correlation at a specific distance" phenomenon.
+
+      results: there is an interesting amount of variation between
+      classes in swedish leaves, very different watson concentrations,
+      slightly different patterns wrt scale
+
+  - next thing to do: sample from this somehow, see if we like the
+    generated subcurves
+
+  - ultimately, can bottom out the single-example grammars in this
+    way, sample from them, see what happens. it seems like different
+    classes would switch from shape to texture at different scales.
+
+    we could even explicitly allow a choice for this, i.e., have L->LL
+    rules even for nonterminals that do have rules. then EM could try
+    to decide about the global/local decision for us (although EM is
+    completely untrustable!!!!!)
+
+  - a good start would be to just do some exploratory work, figure out
+    what short curves tend to look like, then we know more about things...
+** Grammars: Have good shape models using more complex grammars
+    - try building them by hand by hand-parsing example curves,
+      choosing intuitively reasonable correspondences.
+    - imposing a hand-built grammar on Romer seems relatively
+      reasonable, especially if we hand-pick and use the ground truth
+      curves
+    - can also impose a hand-built grammar on ASL
+
+
+** Structure: Figure out optimal single-example grammar
+  - figure out the correct way to build a grammar from a single example
+    - random thought: what if we formulate some notion of
+      triangle-skinniness, and use this to define the optimal
+      subtree. this seems like it would help with a lot of
+      issues. ratio of shortest to longest side is one measure, maybe
+      we would add logs of that
+
+  - we can optimize any function of the form sum_{examples}
+    sum_{i,j,k} f(i,j,k) if we let f(i,j,k) be the negative log
+    probability of the shape deformation cost (which we know because
+    we have correspondences) then we can get cross-entropy this way
+
+  - we are getting good constituents!
+
+** Structure: Implement Merge and Replace
+  - demonstrate that merging and replacement do something reasonable,
+    given an auto-generated grammar
+  - start from ideal single use grammar, show a Replace (finger models)
+  - start from ideal single use grammar, show a Merge (thumb vs no thumb)
+
+** Structure: Implement Merge and Replace KL heuristics
+  - actually compute the KL tables for these two guys
+  - demonstrate that merging and replacement heuristics do something
+    reasonable, given hand-built grammar
+
+** Structure: Use Merge and Replace to search for good grammar
+  - demonstrate that we can learn interesting grammars from scratch,
+    i.e., that beam search or whatever works well given the
+    heuristics. probably have to do something more clever than
+    applying individual merges and replacements based on pairwise
+    similarity.
+
+  - using ASL alphabet seems like it gives a lot of opportunities for
+    interesting grammars
+
+  - can hope to learn symmetries of human figure
+  - sample a shape and decide whether it looks plausible
+  - generate novel but correct shapes?
+
+** Structure: Figure out how to optimally incorporate new samples
+
+
+** Texture: Try to learn a grammar that combines global shape with local texture
+
+  - Build both kinds of rules, and then connect them so that shape
+    nonterminals are allowed to use the texture rules appropriate to
+    their scale
+
+  - Tune with EM, see what happens
+
+** Texture: GP thoughts
+  - current thoughts: think of a curve as coming from a gaussian
+    process. map to modified bookstein coordinates, subtract out some
+    global trend (perhaps the optimal parabola centered midway, e.g.)
+    and then figure out what the covariance of f(x_1) and f(x_2) is as
+    a function of x_1 - x_2. Graph this as a function of dx to see if
+    anything pops out, it should for various sawtooth-like curves
+
+
+** EM: Tuning with curves of variable length
+  - do with fixed parses
+  - do without fixed parses
+  - difficulty here is mainly in modeling length-related rules. This
+    is very messy since these parameters are essentially just measures
+    of scale, and thus it is not very meaningful to learn them.
+
+** EM: Tune rich grammars correctly with EM
+  - do with fixed parses
+  - do without fixed parses
+
+** EM: Show that EM fails given bad parses
+  - impose bad grammar, see what happens
+
+** EM: Contrastive EM and POE
+  - Think about parsing samples from the current, using those soft
+    counts as negative training. This would hopefully correct for bad
+    parses that the current grammar favors inappropriately?
+
+  - Think about this with mixture models, see if it makes sense there
+
+  - Think about the product-of-experts version of the shape
+    grammar. Think of it as creating exponentially many grammars. How
+    would we train those gramars correctly using EM?
+
+
+** SDF: SDF approximate parsing notes
+thoughts: can we turn any binary decomposition of a string into an
+SDF, using Pedro's construction?
+
+can we derive a lwoer bound on cost of any parse using sdf parses?
+
+we can imagine trimming any parse tree by intersecting every interval
+in it with a particular interval. the question then becomes, if T_1
+gets trimmed to T_2, and T_3 gets trimmed to T_4, and T_1 and T_3
+compose to give T, how can we know about that?
+
+we could also look at parsing where we try to optimize density, or
+just optimize X->>[i,j] for each length of observed yield
+
+if we know that X->YZ, and
+Y ->> [ ?i, <=j ] and Z ->> [ <=j, ??k ], then we *might* have X ->> [ ?i, ??k ]
+
+can think more generally of assertions X ->> [ I,J ] where I,J are
+sets. Then Y ->> [I,J], Z ->> [K,L], and J,K not disjoint, then we can have X ->> [I,L]
+
+also, if i in I, then X -> a, data[i]=a, can deduce X ->> [{i},{i+1}]
+
+also can deduce X->>[I,J] |= X->>[I',J'] if I subset I', J subset J'
+
+guarantee is cost~ <= cost, i.e.
+think of cost~(X->>[I,J]) = theta as an assertion that cost(X->>[i,j]) >= theta for any i in I, j in J
+
+rephrasing, cost~(X->>[I,J]) <= min_{i in I, j in J} cost(X->>[i,j])
+
+can also look at cost~ >= cost, this has false negatives instead of false positives
+
+other random thought - maybe we can turn any binary decomposition into
+an SDF via pedro's construction, we could even do that with 2-d stuff
+like a hierarchical segmentation.
+
+
+
+
+
+** Image Parsing: More 2D Parsing notes
+
+
+*** TODO Parse cluttered image with hand-built grammar, localization information?
+  - GOAL: be able to parse from a cluttered image, using a hand-built
+    grammar, given lots of localization information
+
+*** TODO Parse cluttered image with hand-built grammar
+  - GOAL: be able to parse from a cluttered image using a hand-built
+    grammar
+
+*** TODO Parse cluttered image with auto-generated grammar
+  - GOAL: be able to parse from a cluttered image using an
+    auto-generated grammar
+
+*** TODO Parse cluttered image with hand-built rich grammar, get pose info
+  - GOAL: be able to detect pose information from a cluttered image
+    using a hand-built rich grammar
+
+*** TODO Tune hand-built grammar with hand-parsed cluttered images
+  - GOAL: be able to use hand-picked parses from cluttered images to
+    tune a hand-built grammar, possibly discriminatively
+
+*** TODO Tune hand-built grammar with cluttered images
+  - GOAL: be able to use parses from cluttered images to tune a
+    hand-built grammar
+
+*** TODO Tune auto-generated grammar with cluttered images
+  - GOAL: be able to use parses from cluttered images to tune an
+    auto-generated grammar
+
+*** TODO Improve 2-D parsing with image filters with hand-picked grammars, keypoints
+  - look at a small window around the point, and use this to know
+    where various points are. Use this to more accurately parse ASL
+    images. at this point we are tackling a special case of a pushpin
+    grammar. (where the pins are connected via a shape grammar rather
+    than some other model) Do this with hand-picked keypoints.
+
+*** TODO Improve 2-D parsing with image filters with hand-picked grammars, auto keypoints
+  - As above, but try to pick keypoints automatically. That is, take
+    images with ground-truth silhouettes, and try to simplify these to
+    a few points such that the curve is still approximately
+    represented, and such that the points are at distinctive
+    locations, e.g. look more or less like SIFT keypoints.
+
+*** TODO Improve 2-D parsing with image filters with auto grammar, auto keypoints
+
+*** More general pushpin grammars?
+  - do something with more general pushpin grammars? can have some
+    arrangement of pushpins tied together with procrustes models. that
+    is, can grow existing set of pushpins by imposing a procrustes
+    model on some collection of old and new points (in the normal
+    case, two old points and one new point)
+
+*** Do detection and segmentation on real images
+*** With working EM
+ - [ ] Filter out most false positives with Pedro's hog model
+ - [ ] Run pose-estimating detector as a benchmark, mark pixels according to rectangles
+ - [ ] Parse with model grammar to filter out more false positives, mark pixels according to MAP curve
+*** With working structure learning
+
+*** Foreground detection
+ - Look at Pedro's thesis
+ - Sample from the posterior using the inside weights
+ - Can have a lot of false detections and a good filtration
+   algorithm - sampling is cheap compared to parsing
+ - Can look at a slightly more complicated version of the generic grammar from Pedro's thesis
+
+
+

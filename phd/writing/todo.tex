@@ -1,0 +1,253 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+\maketitle
+\bitem
+
+\item Generalize sparse decomposition families. Would be nice to allow
+  for a data-dependent SDF.
+
+\item Think about fixing an approximate parse by applying local wiggles.
+
+\item Reread the prior work section from Centaur et al.
+
+\item Research plan:
+
+1. Build multiple choice grammar, from examples. Think about what that
+grammar actually looks like - how do we set the variances of the
+midpoint distribution, for example?
+
+2. Investigate various mergings of nonterminals, or cluster all the nonterminals.
+
+Some ideas: two nonterminals $X$ and $Y$ define distributions over
+curves; are they the same distribution? The KL divergence is a general
+purpose tool for this question, and it can easily be approximated by
+MCMC. Any other distributional comparison tool would work.
+
+This is a correspondence problem; do Parikh's methods work?
+
+There are two sorts of similarities between nonterminals, inner and
+outer similarity. If $X$ and $Y$ are inwardly similar, they should be
+merged, and their subparts should be merged, because $X$ and $Y$
+describe the same shared part. Inward similarity means that $X$ and
+$Y$ generate the same sort of curves. 
+
+If $X$ and $Y$ are outwardly similar, they should be merged, and their
+rules should be combined. $X/Y$ is now a mixture model over the two
+previous internal structures. Outward similarity means that $X$ and
+$Y$ may generate different sorts of curves, but they are
+interchangeable in function. This is very hard to describe, but
+examples abound, like the n-armed object. In practice, this must
+probably be judged by local context rather than full context, since
+the full context will in general vary an awful lot.
+
+Pedro suggests that local context should be defined as follows: $X$
+and $Y$ are similar to the left if some nonterminal immediately to the
+left of $X$ in the grammar is inwardly similar to some nonterminal
+immediately to the left of $Y$ in the grammar.
+
+CNF plus good constituents implies that we only care about left
+context or right context, not both.
+
+3. Once we have picked the structure, fit with EM, using the
+inside/outside counts. If possible, use a sparsifying prior, and do
+posterior EM.
+
+Various options discarded along the way: incremental incorporation as
+a simple merging approach.
+
+\item Sublinear search can be done with hashed image patches. Why is
+  grammar superior?  One answer is that we can hope to capture
+  structural similarity rather than any specific patch. But this
+  doesn't really justify our ``dictionary'' claim.
+
+  Our dictionary could even be used with hashed image patches. The
+  difference is whether we hash lots of random patches, or try to have
+  a smaller dictionary...
+
+  If we imagine the random hashed thing in action, it would generate
+  more hypotheses. It is then necessary to check all these
+  hypotheses. So the algorithm will be linear in the number of
+  hypotheses, which theoretically could grow large, but practically
+  seems like it would remain relatively small.
+
+  A grammatical method which does a good job of sharing parts at
+  multiple levels could possibly defeat this potential explosion,
+  since doing a decent job of filtering each part would mean that
+  false positives would have to face multiple, somewhat independent
+  tests and would be exponentially unlikely to pass all of them.
+
+  So this becomes really an argument that modeling intermediate parts
+  is useful?
+
+  Also, maybe we can argue that the random approach leads to some sort
+  of pollution - eventually false positives overwhelm the true
+  positives? Whereas we, having a higher bar for membership in this
+  patch table, would keep it uncluttered?
+
+  Can argue that a grammatical approach would encourage
+  ``characteristic'' patches, since non-characteristic patches would
+  more likely be identified as random noise in the training data and
+  not incorporated into the model.
+
+\item Still haven't talked about reflecting models, which seems like a
+  natural transformation. Also, our code has started explicitly doing
+  this.
+
+\item Can picture a decompositional model of words where we break the
+  letters up in a binary parse tree and have to pay the bigram or
+  n-gram cost to stick two chunks together.
+
+\item Come up with an example of two collective objects that are made
+  up of the same objects, and differ only in the relationships between
+  them.
+
+\item Pedro prefers a different example showing the contrast between
+  Markov and grammar.
+
+  Imagine modeling a curve with an HMM, which is a regular grammar.
+
+  Then there is no structural variation. In particular, the number of
+  sample points is fixed.
+
+  There is drift.
+
+  Pedro's work solves the drift and the number of sample points, but
+  does not allow for structural variation.
+
+\item Work on parse-tree definition. Might be easier if rule is stuck
+  in node. Pedro suggests doing two versions, formal and
+  informal. Formal should be like what we have now, informal can be
+  recursive. Informal: a parse of C rooted at Y and a parse of D
+  rooted at Z can be combined to yield a parse of C+D rooted at X, if
+  X->YZ is a rule. We can parse a line segment with $\ell$ as a
+  basecase.
+
+\item Describe what experiments are to be done. Try to give some
+  details on a proposed experiment to demonstrate factoring. There
+  should be an exponential gap between the number of examples needed
+  in a nearest neighbor framework and a grammatical framework. Explain
+  how incremental incorporation would be able to build up the grammar.
+
+\item Possible new section in motivation: argue that visual grammars
+  are possible, i.e., that this problem is not actually
+  impossible. The most reasonable case seems to be that we can
+  consider some well-established methods as degenerate cases of visual
+  grammars, and then show that we can move the algorithm into a
+  grammatical setting without trouble, and then hope that more general
+  grammars give us more modeling power. Also need to have some
+  argument that this will not always lead to overfitting; in general,
+  the simplest method is to just use a prior on grammatical structure
+  that can be tuned to keep grammars very close to whatever degenerate
+  case we started from.
+
+  One important special case to consider is ball and springs models of
+  2-D parts; defining a grammatical formalism over that would be
+  pretty convincing. Pedro and David McAllester have looked at
+  something like this for Pascal, I think. I don't know how well it works.
+
+  In general, good models would be some deformable model with
+  deformable parts?
+
+  Constituency is probably a generic problem here, so we also need to
+  think about at least a hand-waving argument that this barrier can be overcome somehow.
+
+\item We can think about more general forms for shape grammars to
+  have. In particular, instead of just specifying the endpoints of
+  \m{_pX_q}, we can think about specifying some sort of parametric
+  curve. Possibilities are a Bezier curve, a circular arc, an Euler
+  spiral (a curve such that curvature changes linearly with
+  arclength). We then need to think about how we specify the
+  coordinates of subcurves in such a system. We would want to specify
+  both where the midpoint is, and what sort of curves can be found
+  between each endpoint and the midpoint. We would also like this
+  specification to be context-free, in the sense that no matter what
+  sort of curve we have postulated between the endpoints, any
+  specification of the midpoint coordinates will make
+  sense. Furthermore, we desire that there is some neutral midpoint
+  coordinate such that the curve remains unchanged if we specify this
+  substitution.
+
+  We can then ask if this formalism generates smooth curves given a
+  recursive grammar. If the answer is no, this is less of a problem,
+  since we might be able to more convincingly generate all the curves
+  that we care about with a grammar that is either finite or that
+  bottoms out with $L\to LL$ rules with fixed ``neutral'' midpoint.
+
+  This has the potential for capturing a notion of ``curve texture''
+  (this is related to our thoughts on shapemes), i.e., we can imagine
+  wrapping a sawtooth pattern around a straight line or a rounded
+  curve, so the curve has a sort of local character independent of its
+  global structure.
+
+  Using Bezier curves would have one appealing aspect: we could then
+  train on SVG's. This would open up some interesting possible
+  experiments; we could try to do document classification on
+  OpenClipArt.org, for example. We could also theoretically create
+  modules for Inkscape that render certain stochastic line textures,
+  or even generate random shapes according to distributions of
+  interest.
+
+  Another appealing aspect of Bezier curves is that there is an
+  existing algorithm that works pretty well to approximate curves via
+  Bezier curves with a small number of points. This is not that
+  important, as a very similar algorithm could be formulated for any
+  parametric curve family that is simple to fit to a set of data
+  points.
+  
+\item Think about building non-deterministic grammars from a single
+  example curve. This has the potential to defeat the constituency
+  barrier: good constituents should arise simply from looking at
+  reusability between examples.
+
+  Pedro suggests a grammar in which every subcurve $D$ generates a
+  nonterminal, and every pair of adjacent subcurves generates a rule
+  sticking them together. This grammar is appealing because it allows
+  any decompostion of the curve to appear as a parse.
+
+  This grammar is way too large to actually parse with efficiently,
+  since parsing is linear in the number of rules, and we have
+  $\Theta(n^3)$ rules as compared to $\Theta(n)$ rules in the
+  deterministic grammar. Pedro believes that we can still make a
+  grammar that is only a little bit bigger than the deterministic
+  grammar(\m{\Theta(n)} or \m{\Theta(\log n)}) and still allows most
+  reasonable parses to appear at least approximately. Pedro suggests
+  thinking about wavelets for this.
+
+  
+
+\item Examine discussion of closed curves in ``Stochastic Shape
+  Grammars''. Settle on a formalism for them, and also on the exact
+  nature of the starting symbol or set of symbols.
+
+  Current formalism might not work with our definition of parse trees? Think about it, anyway.
+
+\item Discuss the idea of scale, and explain that the grammar has to
+  produce arbitrarily long curvilinear forms to really make sense.
+\item Think: formulate necessary conditions for \GGG\ to generate
+  smooth curves almost surely. When will $L \to LL$ rules satisfy this?
+\item Define almost-single-use in the correct place. There's a definition somewhere later.
+\item  Define the class of ``Restricted Grammars'' that we are searching over. It's probably ASU, but at this point a clear and correct description is more useful.
+\item Discretizing for efficiency: Change ``segmentation'' to ``discretization''.
+\item Parameter Priors - explain thinking behind priors. Essentially
+  it's about preventing bias. Maybe mention that Pedro's thing
+  couldn't overcome bias and had to be run backwards.
+\item Is MDL prior correct? Are we describing an actual minimal encoding? What happens if we allow Shannon encoding??
+\item Reconcile the basically arbitrary initial grammar's ``initial
+  estimate'' with the desired prior on continuous parameters.
+\item Actually explain the idea of optimizing the initial grammar
+\item Now that we actually formalized the set of parses in a way that
+  is friendly to dynamic programming, is it straightforward to explain
+  almost-single-use and prove that we can optimize over it?
+\item Explain merging the leaves.
+\item Actually make the incremental incorporation formula readable and correct
+\item Experimental Plans: add a description of plans for Romer dataset of videos of people moving
+\item Formulate the incremental incorporation formula as (in negative logs) the sum of terms for each parse node.
+\eitem
+
+\end{document}

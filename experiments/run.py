@@ -96,6 +96,10 @@ for request in sys.argv[1:]:
     doit('cd experiments/ && latex experiments.tex && latex experiments.tex && latex experiments.tex && dvips experiments.dvi')
     continue
 
+  if request == 'export2':
+    doit('cd experiments/ && latex experiments2.tex && latex experiments2.tex && latex experiments2.tex && dvips experiments2.dvi')
+    continue
+
   if request == 'all':
     print "\n>>> Running all experiments\n"
     for sd in subsubdirs:

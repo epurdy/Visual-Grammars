@@ -1,0 +1,291 @@
+\marginnote{Beginning of learning/doing\_em.tex}
+
+\section{EM}
+\marginnote{We want pictures of a grammar that does visible learning
+  in a single iteration. The simplified hand is a nice
+  example. Perturb the midpoint distributions and then try to recover
+  them by retraining.}
+
+\marginnote{Pictures to represent what EM does generically? Not clear
+  how much insight it provides.}
+
+Let $C_1,\dots, C_n$ be independent samples from a grammar $\GGG$, for
+which we know the structure, but not the parameters. We would like to
+set the parameters of $\GGG$ such that the posterior $P(\GGG\mid
+C_1,\dots,C_n)$ is maximized. We can write the posterior as
+\begin{align*}
+  P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \prod_i P(C_i\mid \GGG)\\
+  &= P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
+  &= P(\GGG) \cdot \sum_{\{T_i\}}\prod_i P(C_i, T_i \mid \GGG)\\
+\end{align*}
+Unfortunately, it is not known how to maximize this posterior, or even
+the likelihood. The likelihood is known to have many local maxima in
+the case of context-free grammars for natural languages
+\cite{charniak}. Therefore, we are forced to use approximation
+techniques. We use the Expectation-Maximization algorithm \cite{em},
+which is a standard approach to finding maximum likelihood or maximum
+a posteriori estimates in the case where important variables are
+unobserved. In our case, the unobserved variables are the parse trees
+$\{T_i\}$.
+
+Let $\mathbf{C} = (C_1,\dots,C_n)$, and let $\mathbf{T}$ be the latent
+variable $(T_1,\dots,T_n)$. We then iteratively find better and better
+grammars $\GGG^{(t)}$:
+\begin{enumerate}
+\item \textbf{E step:} Let 
+  \begin{align*}
+Q^{(t)}(\GGG) &= \sum_{\mathbf{T}} \big[P(\mathbf{T}\mid \mathbf{C},
+\GGG^{(t)}) \log P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log
+P(\GGG)\\
+&= E_{\mathbf{T} \sim \mathbf{T} | \mathbf{C}, \GGG^{(t)}}\big[\log
+P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log P(\GGG)
+  \end{align*}
+\item \textbf{M step:} Let
+$$ \GGG^{(t+1)} = \argmax_{\GGG} Q^{(t)}(\GGG)$$
+\end{enumerate}
+
+\subsection{The E Step}
+
+$$Q^{(t)}(\GGG) = E_{\mathbf{T}\sim \mathbf{T}, \GGG^{(t)}} [\log
+P(C,T\mid \GGG)] + \log P(\GGG)$$
+Since $P(\mathbf{C},\mathbf{T}\mid \GGG) = \prod_a P(C_a, T_a\mid \GGG),$
+and by linearity of expectation:
+$$Q^{(t)}(\GGG) = \sum_a E_{T_a\sim \Delta^{(t)}_a} [\log
+P(C_a,T_a \mid \GGG)] + \log P(\GGG),$$
+where $\Delta^{(t)}_a(T_a)$ is the distribution $P(T_a\mid C_a,
+\GGG^{(t)})$.
+
+Let $Q_a^{(t)}(\GGG) =E_{T_a \sim \Delta_a^{(t)}}[\log P(C_a,T_a\mid
+\GGG)].$ We can decompose $P(C_a, T_a\mid \GGG)$ by using Proposition
+\ref{prop-inside-corr} \footnote{If $\GGG$ is a grammar for closed curves,
+  $P(C_a,T_a\mid \GGG)$ will have an extra factor of
+  $\frac{1}{|C|}$. We can ignore this because the logarithm turns it
+  into an additive constant, which is irrelevant in the M step.}:
+
+\begin{align*}
+  Q_a^{(t)}(\GGG) &=
+E_{T_a \sim \Delta_a^{(t)}}\left[\log
+    \prod_{\langle X_{ij} \to \lambda\rangle \in T_a} P_{sub}(\langle
+    X_{ij} \to \lambda\rangle)\right]\\
+&=
+E_{T_a \sim \Delta_a^{(t)}}\left[
+    \sum_{\langle X_{ij} \to \lambda\rangle \in T_a} \log P_{sub}(\langle
+    X_{ij} \to \lambda\rangle)\right]\\
+\intertext{
+We can rewrite this as a sum over all possible concrete
+  substitution rules, using indicator variables to eliminate absent terms:}
+&=
+E_{T_a \sim \Delta_a^{(t)}}\Bigg[
+\sum_{i < j < k} \sum_{[X\to YZ]\in \RRR}\ind [ 
+\langle X_{ik}
+\to Y_{ij} Z_{jk} \rangle] \quad \log P_{sub}(\langle X_{ik} \to Y_{ij}
+Z_{jk}\rangle )\\
+&\qquad+\qquad \sum_{i} \sum_{[X\to \ell]\in \RRR}\ind [ \langle X_{i i+1}
+\to \ell_{i i+1} \rangle] \quad \log P_{sub}(\langle X_{i i+1} \to \ell_{i i+1}\rangle)
+\Bigg]\\
+&=
+\sum_{i < j < k} \sum_{[X\to YZ]\in \RRR} \log P_{sub}(\langle X_{ik} \to Y_{ij}
+Z_{jk}\rangle ) \quad E_{T_a \sim \Delta_a^{(t)}}[\ind [ 
+\langle X_{ik}
+\to Y_{ij} Z_{jk} \rangle]]\\
+&+ \sum_{i} \sum_{[X\to \ell]\in \RRR}
+\log P_{sub}(\langle X_{i i+1} \to \ell_{i i+1}\rangle)
+\quad E_{T_a \sim \Delta_a^{(t)}}[\ind [ \langle X_{i i+1}
+\to \ell_{i i+1} \rangle]] 
+\end{align*}
+In the case of closed curves, the sum over $i < j < k$ will instead be
+over $0\le i,k \le n$, and $j\in cw_n(i,k)$.
+
+\marginnote{Pick a particular rule $X\to YZ$ and show the heaviest few
+  values over $a,i,j,k$. This should give a lot of insight into the
+  soft counts.}
+
+Let 
+\begin{align*}
+  Count_a^{(t)}(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle) &=  E_{T_a \sim \Delta_a^{(t)}}[\ind [ 
+\langle X_{ik}
+\to Y_{ij} Z_{jk} \rangle]]\\
+&= P_{T_a \sim \Delta_a^{(t)}}( \langle X_{ik} \to Y_{ij} Z_{jk}
+\rangle \in T_a)\\
+Count_a^{(t)}(\langle X_{ii+1} \to \ell_{i i+1} \rangle) &=
+E_{T_a \sim \Delta_a^{(t)}}[\ind [ \langle X_{i i+1}
+\to \ell_{i i+1} \rangle]] \\
+&= P_{T_a \sim \Delta_a^{(t)}}( \langle X_{i i+1} \to \ell_{i i+1} \rangle \in T_a)\\
+\end{align*}
+and let
+\begin{align*}
+  Q^{(t)}_{a,i,j,k,[X\to YZ]}(\GGG) &= 
+\log P_{sub}(\langle X_{ik} \to Y_{ij}
+Z_{jk}\rangle ) \cdot   Count_a^{(t)}(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)\\
+Q^{(t)}_{a,i,[X\to \ell]}(\GGG) &=
+\log P_{sub}(\langle X_{i i+1} \to \ell_{i i+1}\rangle)
+\cdot Count_a^{(t)}(\langle X_{ii+1} \to \ell_{i i+1} \rangle).
+\end{align*}
+
+\subsection{Computing the Soft Counts}
+In this section, we show how to compute the soft counts from the inside and outside weights.
+
+Firstly,
+\begin{align*}
+\Delta_a^{(t)} &= P(T_a \mid C_a, \GGG^{(t)})\\
+ &= \frac{P(C_a, T_a \mid \GGG^{(t)})}{P(C_a \mid \GGG^{(t)})}\\
+&= \frac{P(T_a \mid \GGG^{(t)})}{P(C_a \mid \GGG^{(t)})}.\\
+\end{align*}
+
+\begin{defn}
+A {\em complete parse tree} is a parse tree with root node $S_{0n}$,
+and which has no unexpanded nodes. We will denote the set of complete
+$\GGG$-parse trees of $C$ by $\FF_\GGG^C$. We will denote the set of
+complete $\GGG$-parse trees of $C$ which contain a node $\langle
+X_{ij}\to \lambda \rangle$ by $\FF_\GGG^C(X_{ij}, \lambda)$.
+\end{defn}
+
+\begin{prop}
+Every parse tree $T \in \FF_\GGG^C(X_{ij}, \lambda)$ can be obtained as
+$$T_{out} \triangle^{\cancel{X_{ij}}}_{(X_{ij},\lambda)} T_{in},$$ 
+where $T_{out}\in \Outer_\GGG^C(X_{ij})$ and $T_{in} \in
+\Inner_\GGG^C(X_{ij}, \lambda)$.
+\end{prop}
+\begin{proof}
+If we remove the subtree rooted at the node $\langle X_{ij} \to
+\lambda \rangle$ and replace it with an unexpanded node $X_{ij}$, the
+resulting tree is an outer parse tree in $\Outer_\GGG^C(X_{ij})$. The
+subtree rooted at $\langle X_{ij} \to \lambda\rangle$ is an inner
+parse tree with root $\langle X_{ij} \to \lambda \rangle$.
+\end{proof}
+
+\begin{obs}
+For open curves $C$,
+\begin{align*}
+P(\langle X_{ij} \to \lambda \rangle \in T \mid \GGG) &=
+\sum_{T \in \FF_\GGG^C(X_{ij}, \lambda)} W_\GGG(T)\\
+\intertext{which, by the previous proposition can be broken up as}
+&=
+\left(\sum_{T_{out}\in \Outer_\GGG^C(X_{ij})}
+  W_\GGG(T_{out}) \right)
+\left(\sum_{T_{in}\in \Inner_\GGG^C(X_{ij},\lambda)} W_\GGG(T_{in})
+\right)\\
+&= Outside_\GGG^C(X_{ij}) Inside_\GGG^C(X_{ij}, \lambda).
+\end{align*}
+For closed curves $C$, 
+\begin{align*}
+P(\langle X_{ij} \to \lambda \rangle \in T \mid \GGG) &=
+\frac{1}{|C|} \sum_{T \in \FF_\GGG^C(X_{ij}, \lambda)} W_\GGG(T)\\
+&= \frac{1}{|C|} COutside_\GGG^C(X_{ij}) CInside_\GGG^C(X_{ij}, \lambda).
+\end{align*}
+
+\end{obs}
+
+In particular, for open curves, $P(C \mid\GGG) = Inside_{\GGG}^{C}(S_{0n})$, and for closed curves, 
+$P(C\mid \GGG) = \frac{1}{|C|} \sum_{i=0}^{n-1} CInside_\GGG^C(S_{ii})$.
+Thus, for open curves,
+$$Count_a(\langle X_{ij} \to \lambda \rangle) = 
+\frac{Outside_{\GGG^{(t)}}^{C_a}(X_{ij}) Inside_{\GGG^{(t)}}^{C_a}(X_{ij},\lambda)}{
+Inside_{\GGG^{(t)}}^{C_a}(S_{0n})}, $$
+and for closed curves,
+$$Count_a(\langle X_{ij} \to \lambda \rangle) = 
+\frac{COutside_{\GGG^{(t)}}^{C_a}(X_{ij}) CInside_{\GGG^{(t)}}^{C_a}(X_{ij},\lambda)}{
+\frac{1}{|C_a|} \sum_{i=0}^{n-1} CInside_{\GGG^{(t)}}^{C_a}(S_{ii})}, $$
+
+To summarize,
+
+\begin{centering}
+\framebox{
+\parbox{5in}{
+\begin{align*}
+  Q^{(t)}(\GGG) &= \sum_a \sum_{i,j,k} \sum_{[X\to YZ]\in \RRR}
+  Q^{(t)}_{a,i,j,k,[X\to YZ]}(\GGG)\\
+&+ \sum_a \sum_{i} \sum_{[X\to \ell]\in \RRR}
+  Q^{(t)}_{a,i,[X\to \ell]}(\GGG)\\
+&+ \log P(\GGG)
+\end{align*}
+
+\begin{align*}
+  Q^{(t)}_{a,i,j,k,[X\to YZ]}(\GGG) &= 
+\log P_{sub}(\langle X_{ik} \to Y_{ij}
+Z_{jk}\rangle ) \cdot   Count_a^{(t)}(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)\\
+Q^{(t)}_{a,i,[X\to \ell]}(\GGG) &=
+\log P_{sub}(\langle X_{i i+1} \to \ell_{i i+1}\rangle)
+\cdot Count_a^{(t)}(\langle X_{ii+1} \to \ell_{i i+1} \rangle) \\
+\end{align*}
+
+\begin{align*}
+Count_a(\langle X_{ij} \to \lambda \rangle) &= 
+\frac{Outside_{\GGG^{(t)}}^{C_a}(X_{ij}) Inside_{\GGG^{(t)}}^{C_a}(X_{ij},\lambda)}{
+Inside_{\GGG^{(t)}}^{C_a}(S_{0n})}, 
+\intertext{for open curves, and}
+Count_a(\langle X_{ij} \to \lambda \rangle) &= 
+\frac{COutside_{\GGG^{(t)}}^{C_a}(X_{ij}) CInside_{\GGG^{(t)}}^{C_a}(X_{ij},\lambda)}{
+\frac{1}{|C_a|} \sum_{i=0}^{n-1} CInside_{\GGG^{(t)}}^{C_a}(S_{ii})}, 
+\intertext{for closed curves.}
+\end{align*}
+}
+}
+\end{centering}
+
+\subsection{The M Step}
+
+We want to find the probabilities $p_{X,\lambda}$ for $\rho_X([X\to
+\lambda])$ so that $Q^{(t)}$ is maximized.
+
+We wish to optimize $Q^{(t)}$ with respect to the multinomial
+distributions $\rho_X$ for each $X$. Let us fix $X$, and denote
+$\rho_X([X\to \lambda])$ by $p_\lambda$. Then
+
+\begin{align*}
+\frac{\partial Q^{(t)}(\GGG)}{\partial p_{YZ}} &=
+\sum_{a,i,j,k} \frac{\partial Q^{(t)}_{a,i,j,k,[X\to
+    YZ]}(\GGG)}{\partial p_{YZ}} + \frac{\partial \log P(\GGG)}{\partial p_{YZ}} \\
+&= 
+\sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
+\frac{\partial \log P_{sub}(\langle X_{ik} \to
+  Y_{ij}Z_{jk}\rangle)}{\partial p_{YZ}} + \frac{\partial
+  \log P(\GGG)}{\partial p_{YZ}} \\
+\intertext{Since $ \log P_{sub}(\langle X_{ik} \to
+  Y_{ij}Z_{jk}\rangle) = \log \rho_X([X\to YZ]) + \log \mu_{X\to
+    YZ}(C[i],C[j],C[k]),$ }
+&= 
+\sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
+\frac{1}{p_{YZ}} + \frac{\partial
+  \log P(\GGG)}{\partial p_{YZ}}. \\
+\intertext{Similarly,}
+\frac{\partial Q^{(t)}(\GGG)}{\partial p_{\ell}} &=
+\sum_{a,i} Count^{(t)}_a(\langle X_{i i+1} \to \ell_{i i+1} \rangle)
+\frac{1}{p_{\ell}} + \frac{\partial
+  \log P(\GGG)}{\partial p_{\ell}}. \\
+\end{align*}
+
+\marginnote{Show midpoint distributions here (in bookstein
+  coordinates): original midpoint distribution, perturbed midpoint
+  distribution, soft-count midpoint distribution, learned midpoint
+  distribution, sample midpoints}
+
+\marginnote{Show samples from retrained hand}
+
+If we use the Dirichlet prior with parameters $\alpha_\lambda$ (as described in Section
+\ref{sec-multinomial}), then $\frac{\partial \log P(\GGG)}{\partial
+  p_{\lambda}} = \frac{\alpha_\lambda - 1}{p_\lambda}$. Combining this
+with the constraint that $\sum_\lambda {p_\lambda}=1$, we get the
+following solution\footnote{This is assuming that all $\alpha\ge 1$,
+  which is not required. When some $\alpha < 1$, we have to be more
+  careful, because the constraint $p_\lambda \ge 0$ becomes active
+  when the soft counts for $[X\to \lambda]$ are small.}:
+\begin{align*}
+  \rho_{X}([X\to YZ]) &\propto \sum_{a,i,j,k} Count^{(t)}_a(\langle
+  X_{ik} \to Y_{ij} Z_{jk} \rangle) + \alpha_{YZ} - 1\\
+  \rho_{X}([X\to \ell]) &\propto \sum_{a,i} Count^{(t)}_a(\langle
+  X_{i i+1} \to \ell_{i i+1} \rangle) + \alpha_{\ell} - 1\\
+\end{align*}
+
+Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
+distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
+midpoint distribution, so this question is ill-posed. We adapt the
+Parzen window density estimator by using the soft counts instead of
+multiplicities, as described in Section \ref{sec-learn-midpoint}. When
+estimating $\mu_{X\to YZ}$, we have, for each $C_a$, and for all valid
+indices $i,j,k$, an observation with weight $Count_a^{(t)}(\langle
+X_{ik} \to Y_{ij} Z_{jk}\rangle)$ that the midpoint was $C_a[j]$ when
+the endpoints were $C_a[i]$ and $C_a[k]$.
+
+
+\marginnote{End of learning/doing\_em.tex}

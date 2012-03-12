@@ -1,19 +1,13 @@
 #!/usr/bin/python
 
-import os
-
-def doit(cmd): 
-  print cmd
-  assert(os.system(cmd) == 0)
+from experiments.common import *
 
 doit('./hand_built.native')
 
-cmd = ('inkscape tmp/hand_built_curve.svg -E ' +
-       'experiments/1.grammars/hand_built/output.d/hand_built_curve.eps')
-doit(cmd)
+dir = 'experiments/1.grammars/hand_built'
 
-cmd = ('inkscape tmp/hand_built_sdf.svg -E ' +
-       'experiments/1.grammars/hand_built/output.d/hand_built_sdf.eps')
-doit(cmd)
+svg_to_png(dir, 'hand_built_curve.svg', 'hand_built_curve.png')
+svg_to_png(dir, 'hand_built_sdf.svg', 'hand_built_sdf.png')
+
 
 

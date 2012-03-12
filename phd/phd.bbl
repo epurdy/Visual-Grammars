@@ -1,0 +1,286 @@
+\begin{thebibliography}{34}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Amit and Trouv\'{e}(2007)]{pop}
+Yali Amit and Alain Trouv\'{e}.
+\newblock Pop: Patchwork of parts models for object recognition.
+\newblock \emph{International Journal of Computer Vision}, 75\penalty0
+  (2):\penalty0 267--282, November 2007.
+\newblock ISSN 0920-5691.
+\newblock \doi{10.1007/s11263-006-0033-9}.
+\newblock URL \url{http://dx.doi.org/10.1007/s11263-006-0033-9}.
+
+\bibitem[Bar(2004)]{visual-context}
+Moshe Bar.
+\newblock Visual objects in context.
+\newblock \emph{Nature Reviews Neuroscience}, 5\penalty0 (8):\penalty0
+  617--629, August 2004.
+\newblock ISSN 1471-003X.
+\newblock \doi{10.1038/nrn1476}.
+\newblock URL \url{http://dx.doi.org/10.1038/nrn1476}.
+
+\bibitem[Basri et~al.(1998)Basri, Costa, Geiger, and Jacobs]{basri-jacobs}
+R.~Basri, L.~Costa, D.~Geiger, and D.~Jacobs.
+\newblock Determining the similarity of deformable shapes.
+\newblock \emph{Vision Research}, 38\penalty0 (15-16):\penalty0 2365--2385,
+  August 1998.
+\newblock \doi{10.1016/S0042-6989(98)00043-1}.
+\newblock URL \url{http://dx.doi.org/10.1016/S0042-6989(98)00043-1}.
+
+\bibitem[Bernstein and Amit(2005)]{amit-bernstein}
+E.~J. Bernstein and Y.~Amit.
+\newblock Part-based statistical models for object classification and
+  detection.
+\newblock volume~2, pages 734--740 vol. 2, 2005.
+\newblock \doi{10.1109/CVPR.2005.270}.
+\newblock URL \url{http://dx.doi.org/10.1109/CVPR.2005.270}.
+
+\bibitem[Bienenstock et~al.()Bienenstock, Geman, and
+  Potter]{potter-geman-bienenstock}
+Elie Bienenstock, Stuart Geman, and Daniel Potter.
+\newblock Compositionality, mdl priors, and object recognition.
+\newblock URL
+  \url{http://citeseer.ist.psu.edu/old/bienenstock97compositionality.html}.
+
+\bibitem[Blei et~al.(2003)Blei, Ng, and Jordan]{lda}
+David~M. Blei, Andrew~Y. Ng, and Michael~I. Jordan.
+\newblock Latent dirichlet allocation.
+\newblock \emph{J. Mach. Learn. Res.}, 3:\penalty0 993--1022, 2003.
+\newblock ISSN 1533-7928.
+\newblock URL \url{http://portal.acm.org/citation.cfm?id=944919.944937}.
+
+\bibitem[Canny(1986)]{canny}
+J.~Canny.
+\newblock A computational approach to edge detection.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, PAMI-8\penalty0 (6):\penalty0 679--698, November 1986.
+\newblock ISSN 0162-8828.
+\newblock \doi{10.1109/TPAMI.1986.4767851}.
+\newblock URL \url{http://dx.doi.org/10.1109/TPAMI.1986.4767851}.
+
+\bibitem[Charniak(1996)]{charniak}
+Eugene Charniak.
+\newblock \emph{Statistical Language Learning (Language, Speech, and
+  Communication)}.
+\newblock The MIT Press, September 1996.
+\newblock ISBN 0262531410.
+\newblock URL
+  \url{http://www.amazon.com/exec/obidos/redirect?tag=citeulike07-20\&path=ASI%
+N/0262531410}.
+
+\bibitem[Cook(1976)]{cook}
+C.~Cook.
+\newblock Grammatical inference by hill climbing.
+\newblock \emph{Information Sciences}, 10\penalty0 (1):\penalty0 59--80, 1976.
+\newblock ISSN 00200255.
+\newblock \doi{10.1016/0020-0255(76)90061-X}.
+\newblock URL \url{http://dx.doi.org/10.1016/0020-0255(76)90061-X}.
+
+\bibitem[Dempster et~al.(1977)Dempster, Laird, and Rubin]{em}
+A.~P. Dempster, N.~M. Laird, and D.~B. Rubin.
+\newblock Maximum likelihood from incomplete data via the em algorithm.
+\newblock \emph{Journal of the Royal Statistical Society. Series B
+  (Methodological)}, 39\penalty0 (1):\penalty0 1--38, 1977.
+\newblock ISSN 00359246.
+\newblock \doi{10.2307/2984875}.
+\newblock URL \url{http://dx.doi.org/10.2307/2984875}.
+
+\bibitem[Fellbaum(1998)]{wordnet}
+Fellbaum.
+\newblock \emph{WordNet: An Electronic Lexical Database (Language, Speech, and
+  Communication)}.
+\newblock The MIT Press, illustrated edition edition, May 1998.
+\newblock ISBN 026206197X.
+\newblock URL
+  \url{http://www.amazon.com/exec/obidos/redirect?tag=citeulike07-20\&path=ASI%
+N/026206197X}.
+
+\bibitem[Felzenszwalb and Huttenlocher(2003)]{pictorial}
+P.~Felzenszwalb and D.~Huttenlocher.
+\newblock Pictorial structures for object recognition, 2003.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.12.6365}.
+
+\bibitem[Felzenszwalb and Schwartz(2007)]{hcm}
+P.~Felzenszwalb and J.~Schwartz.
+\newblock Hierarchical matching of deformable shapes.
+\newblock In \emph{Computer Vision and Pattern Recognition, 2007. CVPR '07.
+  IEEE Conference on}, pages 1--8, 2007.
+\newblock \doi{10.1109/CVPR.2007.383018}.
+\newblock URL \url{http://dx.doi.org/10.1109/CVPR.2007.383018}.
+
+\bibitem[Felzenszwalb and McAllester(2010)]{grammar-tr}
+Pedro~F. Felzenszwalb and David McAllester.
+\newblock Object detection grammars.
+\newblock Technical report, University of Chicago, February 2010.
+\newblock URL
+  \url{http://www.cs.uchicago.edu/files/tr\_authentic/TR-2010-02.pdf}.
+
+\bibitem[Fu(1986)]{ks-fu}
+K.~S. Fu.
+\newblock A step towards unification of syntactic and statistical pattern
+  recognition.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, PAMI-8\penalty0 (3):\penalty0 398--404, May 1986.
+\newblock ISSN 0162-8828.
+\newblock \doi{10.1109/TPAMI.1986.4767800}.
+\newblock URL \url{http://dx.doi.org/10.1109/TPAMI.1986.4767800}.
+
+\bibitem[Geman et~al.()Geman, Potter, and Chi]{potter-geman-chi}
+Stuart Geman, Daniel~F. Potter, and Zhiyi Chi.
+\newblock Composition systems.
+\newblock Technical report, Brown University.
+\newblock URL
+  \url{http://www.cs.umd.edu/\~{}djacobs/CMSC828/Composition\%2520Systems.pdf}.
+
+\bibitem[Grenander and Miller(2007)]{grenander}
+Ulf Grenander and Michael Miller.
+\newblock \emph{Pattern Theory: From Representation to Inference}.
+\newblock Oxford University Press, Inc., New York, NY, USA, 2007.
+\newblock ISBN 0199297061, 9780199297061.
+\newblock URL \url{http://portal.acm.org/citation.cfm?id=1512854}.
+
+\bibitem[Han and Zhu(2009)]{zhu-han}
+Feng Han and Song~C. Zhu.
+\newblock Bottom-up/top-down image parsing with attribute grammar.
+\newblock \emph{IEEE Trans. Pattern Anal. Mach. Intell.}, 31\penalty0
+  (1):\penalty0 59--73, 2009.
+\newblock ISSN 0162-8828.
+\newblock \doi{10.1109/TPAMI.2008.65}.
+\newblock URL \url{http://dx.doi.org/10.1109/TPAMI.2008.65}.
+
+\bibitem[Huttenlocher et~al.(1993)Huttenlocher, Klanderman, and
+  Rucklige]{hausdorff}
+D.~Huttenlocher, D.~Klanderman, and A.~Rucklige.
+\newblock Comparing images using the hausdorff distance.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, 15\penalty0 (9):\penalty0 850--863, September 1993.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.2238}.
+
+\bibitem[Jin and Geman(2006)]{jin-geman}
+Ya~Jin and S.~Geman.
+\newblock Context and hierarchy in a probabilistic image model.
+\newblock In \emph{Computer Vision and Pattern Recognition, 2006 IEEE Computer
+  Society Conference on}, volume~2, pages 2145--2152, 2006.
+\newblock \doi{10.1109/CVPR.2006.86}.
+\newblock URL \url{http://dx.doi.org/10.1109/CVPR.2006.86}.
+
+\bibitem[Johnson et~al.(2007)Johnson, Griffiths, and Goldwater]{johnson-naacl}
+Mark Johnson, Thomas~L. Griffiths, and Sharon Goldwater.
+\newblock Bayesian inference for pcfgs via markov chain monte carlo.
+\newblock In \emph{In Proceedings of the North American Conference on
+  Computational Linguistics}, 2007.
+\newblock URL \url{http://acl.ldc.upenn.edu/N/N07/N07-1018.pdf}.
+
+\bibitem[Lee(\# 1996)]{lee-induction}
+Lillian Lee.
+\newblock Learning of context-free languages: A survey of the literature.
+\newblock Technical Report TR-12-96, Harvard University, \# 1996.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.40.7989}.
+
+\bibitem[Manning and Sch\"{u}tze(1999)]{manning-schutze}
+Christopher~D. Manning and Hinrich Sch\"{u}tze.
+\newblock \emph{Foundations of Statistical Natural Language Processing}.
+\newblock The MIT Press, 1 edition, June 1999.
+\newblock ISBN 0262133601.
+\newblock URL
+  \url{http://www.amazon.com/exec/obidos/redirect?tag=citeulike07-20\&path=ASI%
+N/0262133601}.
+
+\bibitem[Marr(1983)]{marr}
+David Marr.
+\newblock \emph{Vision: A Computational Investigation into the Human
+  Representation and Processing of Visual Information}.
+\newblock W. H. Freeman, March 1983.
+\newblock ISBN 0716715678.
+\newblock URL
+  \url{http://www.amazon.com/exec/obidos/redirect?tag=citeulike07-20\&path=ASI%
+N/0716715678}.
+
+\bibitem[Martin et~al.(2001)Martin, Fowlkes, Tal, and Malik]{bsd}
+David Martin, Charless Fowlkes, Doron Tal, and Jitendra Malik.
+\newblock A database of human segmented natural images and its application to
+  evaluating segmentation algorithms and measuring ecological statistics.
+\newblock In \emph{in Proc. 8th Int'l Conf. Computer Vision}, volume~2, pages
+  416--423, 2001.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.22.7314}.
+
+\bibitem[Nevill-Manning and Witten(1997)]{nevill-manning}
+Craig~G. Nevill-Manning and Ian~H. Witten.
+\newblock Identifying hierarchical structure in sequences: A linear-time
+  algorithm, 1997.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.51.3846}.
+
+\bibitem[Parzen(1962)]{parzen}
+E.~Parzen.
+\newblock On the estimation of a probability density function and mode.
+\newblock \emph{Annals of Mathematical Statistics}, 33:\penalty0 1065--1076,
+  1962.
+\newblock URL
+  \url{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.8666}.
+
+\bibitem[Potter(1999)]{potter}
+Daniel~F. Potter.
+\newblock \emph{Compositional pattern recognition}.
+\newblock PhD thesis, Providence, RI, USA, 1999.
+\newblock URL \url{http://portal.acm.org/citation.cfm?id=929684}.
+
+\bibitem[Russell et~al.(2008)Russell, Torralba, Murphy, and Freeman]{labelme}
+Bryan~C. Russell, Antonio Torralba, Kevin~P. Murphy, and William~T. Freeman.
+\newblock {LabelMe}: A database and web-based tool for image annotation.
+\newblock \emph{International Journal of Computer Vision}, 77\penalty0
+  (1):\penalty0 157--173, May 2008.
+\newblock ISSN 0920-5691.
+\newblock \doi{10.1007/s11263-007-0090-8}.
+\newblock URL \url{http://dx.doi.org/10.1007/s11263-007-0090-8}.
+
+\bibitem[Stolcke(1994)]{stolcke}
+Andreas Stolcke.
+\newblock \emph{Bayesian learning of probabilistic language models}.
+\newblock PhD thesis, Berkeley, CA, USA, 1994.
+\newblock URL \url{http://portal.acm.org/citation.cfm?id=221997}.
+
+\bibitem[Tu et~al.(2005)Tu, Chen, Yuille, and Zhu]{zhu-tu-chen-yuille}
+Zhuowen Tu, Xiangrong Chen, Alan Yuille, and Song-Chun Zhu.
+\newblock Image parsing: Unifying segmentation, detection, and recognition.
+\newblock \emph{International Journal of Computer Vision}, 63\penalty0
+  (2):\penalty0 113--140, July 2005.
+\newblock ISSN 0920-5691.
+\newblock \doi{10.1007/s11263-005-6642-x}.
+\newblock URL \url{http://dx.doi.org/10.1007/s11263-005-6642-x}.
+
+\bibitem[Wertheimer(1938)]{gestalt}
+M.~Wertheimer.
+\newblock \emph{Laws of Organization in Perceptual Forms (partial
+  translation)}, pages 71--88.
+\newblock Harcourt, Brace, 1938.
+\newblock URL \url{http://psychclassics.asu.edu/Wertheimer/Forms/forms.htm}.
+
+\bibitem[Zhu et~al.(2009)Zhu, Chen, and Yuille]{zhu-chen-yuille}
+Long Zhu, Yuanhao Chen, and Alan Yuille.
+\newblock Unsupervised learning of probabilistic grammar-markov models for
+  object categories.
+\newblock \emph{IEEE Trans. Pattern Anal. Mach. Intell.}, 31\penalty0
+  (1):\penalty0 114--128, 2009.
+\newblock ISSN 0162-8828.
+\newblock \doi{10.1109/TPAMI.2008.67}.
+\newblock URL \url{http://dx.doi.org/10.1109/TPAMI.2008.67}.
+
+\bibitem[Zhu and Mumford(2006)]{zhu-mumford}
+Song~C. Zhu and David Mumford.
+\newblock A stochastic grammar of images.
+\newblock \emph{Found. Trends. Comput. Graph. Vis.}, 2\penalty0 (4):\penalty0
+  259--362, 2006.
+\newblock ISSN 1572-2740.
+\newblock \doi{10.1561/0600000018}.
+\newblock URL \url{http://dx.doi.org/10.1561/0600000018}.
+
+\end{thebibliography}

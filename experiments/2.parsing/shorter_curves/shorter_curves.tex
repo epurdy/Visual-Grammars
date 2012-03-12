@@ -1,0 +1,37 @@
+
+\FloatBarrier
+
+\section{Recover a correspondence where some points are missing}
+
+Here we build a grammar from a ground-truth Romer curve, and try to
+parse one of the (much shorter) hand-annotated Romer curves. We can
+safely assume that every point in the parsed curve has a corresponding
+one in the example curve, which is the reverse of the previous
+experiments.
+
+In order to do this successfully, the grammar needs shortening rules,
+but not lengthening rules.
+
+\begin{figure}
+\includegraphics[width=\linewidth]{experiments/2.parsing/shorter_curves/output.d/parse_00.png}
+\caption{On the left, the model curve. On the right, the parsed curve}
+\end{figure}
+
+This is really quite bad. We are using a pretty bad SDF to initialize
+the grammar, so maybe that is why. Here is the SDF:
+
+\includegraphics[width=5in]{experiments/2.parsing/shorter_curves/output.d/sdf_8.png}
+
+It is somewhat troubling that it does this badly, though. Let us try
+it again with less geometric variation.
+
+\begin{figure}
+\caption{On the left, the model curve. On the right, the parsed curve}
+\includegraphics[width=6in]{experiments/2.parsing/shorter_curves/output.d/parse_80.png}
+\end{figure}
+
+This is basically correct, although the fine details are not very good
+looking. This is probably because of the SDF. The shortening rules
+only allow the parser to chop off constituents. If the constituents
+look bad, then the parse will look bad.
+

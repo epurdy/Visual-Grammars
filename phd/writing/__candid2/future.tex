@@ -1,0 +1,55 @@
+\documentclass{article}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+
+\author{Eric Purdy \footnote{Department of Computer Science,
+    University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+\DeclareMathOperator*{\len}{len}
+\newcommand\fakecite[1]{ {\bf [#1]} }
+
+%% \newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
+
+\newcommand\spk[2]{\framebox{images/#2.png}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\part{FUTURE DIRECTIONS}
+
+\section{Dependency Grammars on SIFT features}
+
+
+\section{LabelMe}
+
+LabelMe is a good dataset to work on because it has pretty rich,
+semi-grammatical annotations.
+
+One task is pixel-wise labeling of LabelMe images with the $n$ most
+common object labels.
+
+There is a very good algorithm \fakecite{sift-flow} for this that is
+sort of a nearest-neighbor algorithm.
+
+\subsubsection{Grammatical Model}
+
+Picture the following model:
+\bitem
+%% \item parse nodes are connected sets of pixels.
+%% \item each parse node is labeled with one of $n$ labels
+%% \item the probability associated with merging two parse nodes with
+%%   different labels is a product over pairs of neighboring points of some
+%%   complicated function of the edge strength
+
+%% \item the probability of a parse node being at a particular image
+%%   position is the product over its pixels of the probability that each
+%%   pixel had the parse node's label in the training data
+
+\item parse of an image is given by sift flow between the image and training image
+
+\eitem
+
+
+\end{document}
