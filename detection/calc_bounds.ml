@@ -49,6 +49,9 @@ let print_pt = Geometry.print_cpt
 let verbose = false
 let bsim = I.create 1 1 (0,0,0)
 
+let calc_bounds_fake gram filt = 
+  None
+
 let calc_bounds gram filt =
   let size = 60 in
   let topids = top_level_ids filt.levels.(filt.depth-1) in  

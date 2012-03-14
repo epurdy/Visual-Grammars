@@ -7,20 +7,36 @@ open Grammar
 open Graph
 open Filtration
 
+open Detection.Parsing2d
+
 module Gridparsing = Detection.Gridparsing
 module Calc_bounds = Detection.Calc_bounds
 
-(*
-  - line_costs + insert_lexical_costs need to be merged, and
-  modified. this will slow things down slightly because lifting from
-  the bottom takes time, but honestly it doesn't take that much time.
-  modify linecost code to treat edges as marked when they go the wrong
-  way relative to a chosen thing. might have to integrate with another
-  fn, since linecost produces undirected costs (should be done now)
+(* - load orientation file, use to modify segment costs
 
-  - need to think briefly if the polarity on the masking is right
+   - update check_direction, first half of new_insert_lexical_costs
+
+   - go back to inadmissible heuristic probably, or linear combination
+
+   - parse all the way, or quit early?
+
+   current big problem: infer_orientations is working with a different
+   edge map than this code is, because of coarsening (and possibly
+   different thresholds/sigma)
+
+   infer_orientations could just load the coarse edges from an image,
+   but it wants to know the gradient. safest may be to do both
+   somehow???
 
 *)
+
+let anglevectors = [|
+  (1,0); (1,1); (0,1); (-1,1); (-1,0); (-1,-1); (0,-1); (1,-1)
+|]
+
+(* let max_len_auto_edge = 10. *)
+let max_len_auto_edge = 5.
+let backwards_factor = 2.
 
 module I = Image
 
@@ -39,88 +55,12 @@ type cid = int
 type pid = int
 type pt = int * int
 
-type image_parse_data = {
-  costs: (sid*pid*pid, float) hash;
-  bestleftcost: (sid*pid, float) hash;
-  split: (sid*pid*pid, (cid*pid) option) hash;  
-  thisbest: (sid, pid*pid) hash;
-  thisbestqual: (sid, float) hash;
-}
-
-type outside_parse_data = {
-  ocosts: ((sid*pid*pid), float) hash;
-  bestocost: ((sid*pid), float) hash;
-}
-
-type image_parse_tree = {
-  nt: sid;
-  bg: pid;
-  en: pid;
-  yield: (pid*pid) list;
-(*   mutable simple: bool; *)
-  left: image_parse_tree option;
-  right: image_parse_tree option;
-  qual: float;
-  thesplit: (cid*pid) option;
-}
-
-type thing = {
-  (* do we really want parsedata here? prob not... *)
-  parsedata: image_parse_data;
-  edgemap: bool Image.t;
-  usedpixels: int Image.t;
-  mutable directions: (int*int) array; (* q-p *)
-  mutable parent_truecost: float;
-  mutable iteration: int;
-}
-
 let draw_curve im curve closed color = 
   let n = Array.length curve in
   let maxi = if closed then n-1 else n-2 in
   for i = 0 to maxi do
     Draw.draw_line im curve.(i) curve.((i+1) mod n) color;
   done
-
-let new_outside_data (nsyms,npts) =
-  let bigsize = min (nsyms*npts*npts) 100000 in 
-  {ocosts = mkhash bigsize;
-   bestocost = mkhash (nsyms*npts);
-  }
-
-let new_parse_data (nsyms,npts) = 
-  let bigsize = min (nsyms*npts*npts) 100000 in 
-  {costs = mkhash bigsize;
-   bestleftcost = mkhash (nsyms*npts);
-   split = mkhash bigsize;
-   thisbest = mkhash nsyms;
-   thisbestqual = mkhash nsyms;
-  }
-
-let new_scene edgemap ptruecost = 
-  {iteration = -1; 
-   parsedata = new_parse_data (1,1);
-   edgemap = edgemap;
-   usedpixels = I.map (fun x -> (-1)) edgemap;
-   directions = [| |];
-   parent_truecost = ptruecost;
-  }
-
-let copy_parse_data pdata = 
-  {costs = Hashtbl.copy pdata.costs;
-   bestleftcost = Hashtbl.copy pdata.bestleftcost;
-   split = Hashtbl.copy pdata.split;
-   thisbest = Hashtbl.copy pdata.thisbest;   
-   thisbestqual = Hashtbl.copy pdata.thisbestqual;
-  }
-
-let copy_scene scene =
-  {iteration = -1;
-   parsedata = copy_parse_data scene.parsedata;
-   edgemap = Image.copy scene.edgemap;
-   usedpixels = Image.copy scene.usedpixels;
-   directions = Array.copy scene.directions;
-   parent_truecost = scene.parent_truecost;
-  }
 
 let add_direction scene p q =
   let scene = copy_scene scene in
@@ -149,6 +89,7 @@ let add_direction scene p q =
 let check_direction (vx,vy) (dx,dy) =
   let dprod = dx*vx + dy*vy in
     (dprod >= 0)
+(*     (dprod <= 0) *)
 
 let draw_parse ptree points edgemap =
   let im = Image.map (function true -> (0,0,0) | false -> (255,255,255)) edgemap in
@@ -166,6 +107,17 @@ let print_the_yield ptree points =
       end 
       curve;
     printf "/YIELD\n%!"
+
+let save_the_yield ptree points fname =
+  let f = open_out fname in
+  let curve = List.map (fun (pid,qid) -> (points.(pid), points.(qid))) 
+    ptree.yield in
+    List.iter
+      begin fun ((px,py), (qx,qy)) ->
+	fprintf f "(%d,%d)-(%d,%d)\n" px py qx qy;
+      end 
+      curve;
+    close_out f
 
 let rec harvest_best_tree gram pdata nt (bg,en) = 
   printf "harvest %d -> p%d p%d\n%!" nt bg en;
@@ -234,18 +186,18 @@ let voutside gram best_tri_cost points ranks topnodes masking_left masking_right
   let nnodes = Array.length topnodes in
   let nsymbols = Frozen.num_symbols gram in
 
-  let rule_cost prod (pid,qid,rid) = 
-    Bloom.query best_tri_cost (prod.cid,pid,qid,rid)
-  in
+(*   let rule_cost prod (pid,qid,rid) =  *)
+(*     Bloom.query best_tri_cost (prod.cid,pid,qid,rid) *)
+(*   in *)
 
 (*   let rule_cost prod (pid,qid,rid) =  *)
 (*     best_tri_cost >> (prod.cid,pid,qid,rid) *)
 (*   in *)
 
-(*   let rule_cost prod (p,q,r) =  *)
-(*     let shape = Shape.shape_of_ints_bme points.(p) points.(q) points.(r) in *)
-(*       Models.Simple.prod_cost prod shape  *)
-(*   in *)
+  let rule_cost prod (p,q,r) =
+    let shape = Shape.shape_of_ints_bme points.(p) points.(q) points.(r) in
+      Models.Simple.prod_cost prod shape
+  in
 
     (* the start symbol has a trivial outer tree at every point! *)
     Frozen.iter_symbols_rev gram 
@@ -321,13 +273,13 @@ let vinside gram best_tri_cost usepts points ranks topnodes masking masking2 mas
     let leftcost  = data.costs >>! (leftkey,  infinity) in
     let rightcost = data.costs >>! (rightkey, infinity) in
     let shapecost = 
-      if usepts then
+(*       if usepts then *)
 	let shape = Shape.shape_of_ints_bme points.(p) points.(q) points.(r) in
 	  Models.Simple.prod_cost prod shape
-      else begin
-(* 	best_tri_cost >> (prod.cid,p,q,r)  *)
-	Bloom.query best_tri_cost (prod.cid,p,q,r) 
-      end
+(*       else begin *)
+(* (\* 	best_tri_cost >> (prod.cid,p,q,r)  *\) *)
+(* 	Bloom.query best_tri_cost (prod.cid,p,q,r)  *)
+(*       end *)
     in
       leftcost +. rightcost +. shapecost
   in
@@ -410,56 +362,7 @@ let vinside gram best_tri_cost usepts points ranks topnodes masking masking2 mas
       end; (* end iter_symbols *)
     ()
 
-
-(* let line_costs net scenedata =  *)
-(*   (\* use length-based formulation or symmetric formulation? *\) *)
-(*   let pixel_cost r = *)
-(*     assert (I.inside scenedata.onpixels r); *)
-(*     if (I.get scenedata.onpixels r) then  *)
-(*       0. (\* already marked foreground, all factors in formula cancel *\) *)
-(*     else begin *)
-(*       if (I.get scenedata.edgemap r) then *)
-(* 	edge_term +. length_term *)
-(*       else *)
-(* 	length_term *)
-(*     end *)
-(*   in *)
-
-(*   let fnet = { *)
-(*     vertices = Array.copy net.vertices; *)
-(*     edges = mkhash (Hashtbl.length net.edges); *)
-(*     nbrs = Hashtbl.copy net.nbrs; *)
-(*   } in *)
-    
-(*     printf "Have to process %d lines\n%!" (Hashtbl.length net.edges); *)
-(*     Hashtbl.iter *)
-(*       begin fun (pi,qi) () -> *)
-(* 	let p, q = net.vertices.(pi), net.vertices.(qi) in *)
-(* 	let line = Draw.line p q in *)
-(* 	let cost = ref 0. in *)
-(* 	let non = ref 0. in *)
-(* 	let ntot = ref 0. in *)
-(* 	  List.iter *)
-(* 	    begin fun r -> *)
-(* 	      cost := !cost +. (pixel_cost r); *)
-(* 	      if (I.get scenedata.edgemap r) then begin *)
-(* 		non := !non +. 1.; *)
-(* 	      end; *)
-(* 	      ntot := !ntot +. 1.; *)
-(* 	    end *)
-(* 	    line; *)
-
-(* (\* 	  if (!non /. !ntot >= 0.75) || (!ntot <= 3.) then begin *\) *)
-(* (\* 	  if !cost < 0. then begin *\) *)
-(* (\* 	  if true then begin *\) *)
-(* 	  if (!non /. !ntot >= 0.5) || (!ntot <= 10.) then begin *)
-(* 	    fnet.edges << ((pi,qi), !cost); *)
-(* 	  end *)
-(*       end *)
-(*       net.edges; *)
-(*     fnet *)
-
-let new_insert_lexical_costs gram net pdata state =
+let new_insert_lexical_costs gram net pdata theorientations theinterior state =
   Hashtbl.iter 
     begin fun (pid,qid) () ->
       let p,q = net.vertices.(pid), net.vertices.(qid) in
@@ -467,6 +370,7 @@ let new_insert_lexical_costs gram net pdata state =
       let cost_fwd, cost_rev = ref 0., ref 0. in
       let non = ref 0. in
       let ntot = ref 0. in
+      let ninterior = ref 0. in
       let (px,py), (qx,qy) = p, q in
       let (vx,vy) = (qx-px, qy-py) in
 	List.iter
@@ -475,15 +379,26 @@ let new_insert_lexical_costs gram net pdata state =
 	    if I.get state.edgemap r then begin 
 	      non := !non +. 1.;
 	    end;
-	    if I.get state.usedpixels r >= 0 then begin 
+
+	    if (theinterior <> None) &&
+	      (I.get (get theinterior) r = (0,255,0)) then begin 
+		ninterior := !ninterior +. 1.;
+	      end;
+
+	    if (theorientations <> None) &&
+	      (I.get (get theorientations) r <> 255)
+	    then begin 
 	      (* directional masking *)
-	      let idx = I.get state.usedpixels r in
-		if check_direction (vx,vy) state.directions.(idx) then begin 
+	      let ang = I.get (get theorientations) r in
+		if check_direction (vx,vy) anglevectors.(ang) then begin 
 		  if I.get state.edgemap r then begin
 		    cost_fwd := !cost_fwd +. edge_term +. length_term;
-		    cost_rev := infinity;
+(* 		    cost_rev := infinity; *)
+		    cost_rev := !cost_rev -. 
+		      backwards_factor *. (edge_term +. length_term);
 		  end
 		  else begin
+		    assert(false);
 		    cost_fwd := !cost_fwd +. length_term;
 		    cost_rev := infinity;
 		  end
@@ -491,9 +406,12 @@ let new_insert_lexical_costs gram net pdata state =
 		else begin 
 		  if I.get state.edgemap r then begin
 		    cost_rev := !cost_rev +. edge_term +. length_term;
-		    cost_fwd := infinity;
+(* 		    cost_fwd := infinity; *)
+		    cost_fwd := !cost_fwd -. 
+		      backwards_factor *. (edge_term +. length_term);
 		  end
 		  else begin
+		    assert(false);
 		    cost_rev := !cost_rev +. length_term;
 		    cost_fwd := infinity;
 		  end
@@ -514,7 +432,8 @@ let new_insert_lexical_costs gram net pdata state =
 
 (* 	  if (!non /. !ntot >= 0.75) || (!ntot <= 3.) then begin *)
 (* 	  if true then begin *)
-	if (!non /. !ntot >= 0.5) || (!ntot <= 10.) then begin
+	if (!ninterior /. !ntot < 0.5 ) &&
+	  ((!non /. !ntot >= 0.5) || (!ntot <= max_len_auto_edge)) then begin
 	  Frozen.iter_symbols gram 
 	    begin fun sym ->
 	      if (not sym.startable && sym.sdata.straightcost < infinity) then begin
@@ -543,34 +462,6 @@ let new_insert_lexical_costs gram net pdata state =
     end
     net.edges;
   ()
-
-(* let insert_lexical_costs gram pdata linecosts = *)
-(*   let lexical sym =  *)
-(*     (not sym.startable && sym.sdata.straightcost < infinity) *)
-(*   in *)
-(*     Frozen.iter_symbols gram *)
-(*       begin fun sym -> *)
-(* 	if lexical sym then begin  *)
-(* 	  Hashtbl.iter *)
-(* 	    begin fun (pid,qid) cost -> *)
-(* 	      let cost = cost +. sym.sdata.straightcost in *)
-(* 		if cost < (pdata.costs >>! ((sym.sid,pid,qid), infinity)) then begin  *)
-(* 		  pdata.costs << ((sym.sid, pid, qid), cost); *)
-(* 		  pdata.costs << ((sym.sid, qid, pid), cost); *)
-(* 		  pdata.split << ((sym.sid, pid, qid), None); *)
-(* 		  pdata.split << ((sym.sid, qid, pid), None); *)
-
-(* 		  if cost < (pdata.bestleftcost >>! ((sym.sid, pid), infinity)) then begin  *)
-(* 		    pdata.bestleftcost << ((sym.sid, pid), cost); *)
-(* 		  end; *)
-(* 		  if cost < (pdata.bestleftcost >>! ((sym.sid, qid), infinity)) then begin  *)
-(* 		    pdata.bestleftcost << ((sym.sid, qid), cost); *)
-(* 		  end; *)
-(* 		end *)
-(* 	    end *)
-(* 	    linecosts.edges *)
-(* 	end *)
-(*       end *)
 
 (* now also coarsening given costs *)
 let coarsen_lexical_costs map pdata cpdata =
@@ -713,8 +604,7 @@ let update_outside gram best_tri_cost filt pdata odata ubound =
       pdata odata
 
 
-let doit gram nlvls net filt state name ubound_want =
-(*   let coarsest = copy_partition filt.levels.(filt.depth-1) in *)
+let doit gram nlvls net filt theorientations theinterior state name ubound_want =
   let ubound = ref ubound_want in 
   let iter = ref 0 in
   let outside = ref None in
@@ -722,13 +612,14 @@ let doit gram nlvls net filt state name ubound_want =
     (Frozen.num_symbols gram, Array.length filt.points) in
   let old_map = ref None in
   let best_fine = ref None in
-    new_insert_lexical_costs gram net bottom_pdata state;
+(*     new_insert_lexical_costs gram net bottom_pdata state; *)
+    new_insert_lexical_costs gram net bottom_pdata theorientations theinterior state;
 
     printf "depth=%d\n%!" filt.depth;
     begin try  
     while true do 
       printf "starting iter %d\n%!" !iter;
-      let best_tri_cost = Calc_bounds.calc_bounds gram filt in
+      let best_tri_cost = Calc_bounds.calc_bounds_fake gram filt in
       let pdatas = propagate_lexical_costs gram filt bottom_pdata in
       let top_pdata = pdatas.(Array.length pdatas - 1) in
       let best_coarse = 
@@ -776,49 +667,9 @@ let doit gram nlvls net filt state name ubound_want =
 	  Pnm.save_ppm im (sprintf "bestfine.%s.final.ppm" name);	
 
 	  print_the_yield (get !best_fine) filt.points;
-	  exit 0;
       end;
     end;
     get !best_fine
-
-    
-let get_conflict state ptree points =
-  let yield = Array.of_list ptree.yield in
-  let nyield = Array.length yield in
-  let lines = Array.map
-    begin fun (pid,qid) ->
-      (* don't want to see conflicts at endpoints *)
-      List.tl (Draw.line points.(pid) points.(qid))
-    end
-    yield
-  in
-  let bestpair, bestnum = ref None, ref 0 in
-
-    for i=0 to nyield-1 do 
-      for j=i+1 to nyield-1 do 
-	let conflicts = ref 0 in
-	  List.iter 
-	    begin fun ipt ->
-	      List.iter 
-		begin fun jpt ->
-		  if (ipt = jpt) && (I.get state.usedpixels ipt < 0) then
-		    incr conflicts;
-		end
-		lines.(j)
-	    end
-	    lines.(i);
-
-	  if !conflicts > !bestnum then begin 
-	    let pid1,qid1 = yield.(i) in
-	    let pid2,qid2 = yield.(j) in
-	      bestpair := Some ((pid1,qid1), (pid2,qid2));
-	      bestnum := !conflicts;
-	  end
-      done
-    done;
-
-    !bestpair
-
 
 let true_cost gram ptree scene points =
   let qual = ref 0. in
@@ -855,110 +706,28 @@ let true_cost gram ptree scene points =
     proc ptree;
     !qual
 
-(* let true_cost ptree scene points = *)
-(*   let diff = ref 0. in *)
-(*   let w,h = Image.width scene.edgemap, Image.height scene.edgemap in *)
-(*   let seen_new = Image.create w h false in *)
-(*     List.iter *)
-(*       begin fun (pid,qid) -> *)
-(* 	let line = Draw.line points.(pid) points.(qid) in *)
-(* 	  List.iter *)
-(* 	    begin fun r -> *)
-(* 	      (\* if on before, do nothing. is this right??? *\) *)
-(* 	      if not (I.get scene.onpixels r) then begin *)
-(* 		if I.get seen_new r then begin *)
-(* 		  if I.get scene.edgemap r then *)
-(* 		    (\* were paying for edge, now not *\) *)
-(* 		    diff := !diff -. (edge_term +. length_term) *)
-(* 		  else *)
-(* 		    (\* were paying for non-edge, now not *\) *)
-(* 		    diff := !diff -. length_term; *)
-(* 		end *)
-(* 		else begin *)
-(* 		  I.set seen_new true r; *)
-(* 		end *)
-(* 	      end *)
-(* 	    end *)
-(* 	    line *)
-(*       end *)
-(*       ptree.yield; *)
-(*     ptree.qual +. !diff *)
-
-
 let reparse gram nlvls net filt edgemap =
-  let bestparse, bestqual = ref None, ref infinity in 
-  let sstates = ref [new_scene edgemap infinity] in
+  let bestparse, bestqual = ref None, ref infinity in
+  let theorientations = ref None in
+  let theinterior = ref None in
   let reiter = ref 0 in
-    while !sstates <> [] do
-(*     for foofoofoo = 1 to 20 do *)
+    while true do 
+      let state = new_scene edgemap infinity in
       let filt = copy_filtration filt in
-      let state = List.hd !sstates in
-      let _ = sstates := List.tl !sstates; in
-
-      let bestfine = doit gram nlvls net filt state
-	(sprintf "x%d" !reiter) !bestqual in
+      let bestfine = doit gram nlvls net filt !theorientations !theinterior state (sprintf "x%d" !reiter) !bestqual in
       let truecost = true_cost gram bestfine state filt.points in
-      let bestpair = get_conflict state bestfine filt.points in
+	save_the_yield bestfine filt.points "theyield.yield";
+	doitq "./infer_orientations.native";
+	theorientations := Some (Pnm.load_pgm "orientations.pgm");
+	theinterior := Some (Pnm.load_ppm "theinterior.ppm");
 
-      let newstates = 
-	if bestpair <> None then begin 
-	  let (pid1,qid1), (pid2,qid2) = get bestpair in
-	    [add_direction state filt.points.(pid1) filt.points.(qid1);
-	     add_direction state filt.points.(pid2) filt.points.(qid2)]
-	end
-	else begin 
-	  (* found simple parse! *)
-	  printf "found simple parse!\n";
-	  ignore (read_line ());
-	  []
-	end
-      in
+	if truecost < !bestqual then begin 
+	  bestparse := Some bestfine;
+	  bestqual := truecost;
+	end;
 
-	List.iter
-	  begin fun ss ->
-	    ss.iteration <- !reiter;
-	    ss.parent_truecost <- truecost;
-	    List.iter
-	      begin fun ss2 ->
-		if abs_float (ss2.parent_truecost -. truecost) < 0.1 then begin 
-		  ss.parent_truecost <- infinity;
-		end
-	      end
-	      !sstates
-	  end 
-	  newstates;
-
-	  printf "bestfine.qual=%f\n" bestfine.qual;	
-	  printf "true cost=%f\n" truecost;
-	  printf "nnew states=%d\n" (List.length newstates);		  
-	  printf "nold states=%d\n" (List.length !sstates);		  
-
-(* 	  if truecost < 0. then begin *)
-	  if true then begin
-	    (* 	    sstates := !sstates @ newstates; *)
-	    sstates := !sstates @ newstates;
-	  end;
-	  sstates := List.sort
-	    begin fun x y -> 
-	      compare x.parent_truecost y.parent_truecost
-	    end
-	    !sstates;
-
-	  List.iter
-	    begin fun ss ->
-	      printf "[x%d: %f],  " ss.iteration ss.parent_truecost;
-	    end 
-	    !sstates;
-	  printf "\n%!";
-(* 	  ignore (read_line ()); *)
-
-	  if truecost < !bestqual then begin 
-	    bestqual := truecost;
-	    bestparse := Some bestfine;
-	  end;
-	  incr reiter;
-    done;
-    ()
+	incr reiter
+    done
 
 let _ = 
   (*   let excurve = Curve.load "romer/newann/IMG0000.curve" in *)
@@ -981,13 +750,9 @@ let _ =
   let granularity, size = (242/4), (242/4) in
   let net = Gridparsing.make_net granularity size in
 
-(*   let scene = new_scene edgemap in *)
-(*   let linecosts = line_costs net scene in *)
-(*     (\*   let bestline = find_best_line linecosts in *\) *)
-
-
 (*   let nlvls = 4 in *)
-  let nlvls = 6 in
+(*   let nlvls = 6 in *)
+  let nlvls = 4 in
   let filtration = make_filtration net.vertices nlvls in
     
 (*   let _ = doit gram nlvls net filtration linecosts in *)
