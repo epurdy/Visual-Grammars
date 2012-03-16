@@ -379,7 +379,11 @@ must allow placed symbols $X_{ij}$, where $j<i$. In this case,
 $X_{ij}$ will be understood to be a placed symbol that ultimately
 expands to be all the indices between $0$ and $n$ that are after $i$
 or before $j$. To simplify matters, we introduce clockwise intervals:
-\marginnote{Picture of the three kinds of clockwise intervals}
+
+\begin{marginfigure}
+\includegraphics[width=\linewidth]{figures/circular_intervals/cw.png}
+\caption{The three kinds of clockwise intervals.}
+\end{marginfigure}
 $$cw_n(i,j) = 
 \begin{cases}
 \{k \in \ZZ \mid i < k < j\} & i < j \\
@@ -389,7 +393,10 @@ $$cw_n(i,j) =
 These are the indices in between $i$ and $j$ on the curve, where we
 move ``clockwise'' in the direction of increasing indices.  We also
 introduce counter-clockwise intervals
-\marginnote{Picture of the three kinds of counter-clockwise intervals}
+\begin{marginfigure}
+\includegraphics[width=\linewidth]{figures/circular_intervals/cw.png}
+\caption{The three kinds of counter-clockwise intervals.}
+\end{marginfigure}
 $$ccw_n(i,j) = 
 \begin{cases}
 \{k \in \ZZ \mid 0 \le k < i \mbox{ or } j < k < n \} & i < j \\
