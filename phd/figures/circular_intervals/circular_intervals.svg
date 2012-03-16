@@ -14,7 +14,7 @@
    id="svg8976"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="New document 2">
+   sodipodi:docname="circular_intervals.svg">
   <defs
      id="defs8978">
     <marker
@@ -193,7 +193,10 @@
      inkscape:groupmode="layer"
      id="layer1">
     <g
-       id="g9138">
+       id="g9138"
+       inkscape:export-filename="/home/blueboard/phd/cw.png"
+       inkscape:export-xdpi="10.00604"
+       inkscape:export-ydpi="10.00604">
       <g
          transform="translate(-1637.4921,-3073.6331)"
          id="g62444">
@@ -287,7 +290,10 @@
       </g>
     </g>
     <g
-       id="g9152">
+       id="g9152"
+       inkscape:export-filename="/home/blueboard/phd/ccw.png"
+       inkscape:export-xdpi="10.00604"
+       inkscape:export-ydpi="10.00604">
       <g
          transform="translate(71.49754,-484.9449)"
          id="g9103">
