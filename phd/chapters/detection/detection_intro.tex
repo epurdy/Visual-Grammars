@@ -1,0 +1,73 @@
+\marginnote{Beginning of detection\_intro.tex}
+
+\subsection{Soft Decisions}
+\label{sec-soft}
+
+While human vision crucially relies on global context to resolve local
+ambiguity \cite{visual-context}, computer vision algorithms often have
+a pipeline which makes hard low-level decisions about image
+interpretation, and then uses this output as input to higher-level
+analysis. Algorithms will be more accurate and less brittle if they
+can avoid making such hard decisions, as advocated in \cite{pop,
+  jin-geman}.
+
+For example, in the visual chalkboard, there will be various stray
+marks on the chalkboard. We would prefer not to filter these out with
+some sort of quality threshold, but instead mark them as
+possibilities, try to assemble an overall interpretation of the board,
+and then discount any stray marks that do not participate in the
+interpretation. This seems much more fruitful than filtering out stray
+marks, along with some genuine letters, and then having to be very
+forgiving of words actually missing some of their letters altogether.
+
+This requires us to combine and resolve information at different
+levels. Grammatical methods provide us with powerful inference
+algorithms for determining the most likely decomposition of a scene
+under a given compositional model. Since important local ambiguities
+will lead to different global decompositions, this is exactly what is
+needed: the overall likelihood of the decomposition is a common
+currency that allows us to negotiate between fitting the local data
+well, and explaining the local data in a way that allows a good
+decomposition of the rest of the image.
+
+\subsection{Modeling Clutter with Object Sub-parts}
+\label{sec-clutter}
+
+We would like to build specific and accurate models of clutter.  For
+instance, for the visual chalkboard, it would be helpful to have a
+model for stray chalk marks, rather than a model for arbitrary
+unexplained patches; otherwise we will be tempted to explain stray
+chalk marks as some letter, possibly a lower-case 'i'. If we try to
+set our threshold high enough that we don't do this, we might start
+labeling some genuine i's as background. If we instead have a model
+for chalk marks, we can explain stray chalk marks and i's as
+particular sorts of chalk marks, and differentiate them based on
+context and appearance.
+
+\cite{jin-geman} suggests modeling clutter in the background with
+sub-parts of the objects of interest. Since objects in the background
+are still objects, and are often related to the objects of interest,
+this might allow us to build a much stronger background model in many
+cases. In addition, by modeling clutter with sub-parts, we are less
+likely to hallucinate whole objects when we see sub-parts. Thus, it is
+especially important that we have a cheap way to explain clutter that
+closely resembles sub-parts of the objects of interest.
+
+With such a system, we might even be able to ignore rather subtle
+clutter, such as some stray letters, or even words, from a previous
+lecture that was not completely erased. Clutter words would not be
+part of a line of text, and would thus be identifiable as clutter in
+the parsed output, where they would be excluded from the main body of
+text.
+
+\subsection{Whole Scene Parsing}
+\label{sec-whole}
+
+It is useful to demand whole scene parses, since it avoids the need to
+fine-tune detection thresholds and decision boundaries
+\cite{pop}. Consider the example of the visual chalkboard. Instead of
+having to set a filter on chalk marks to filter out stray chalk marks,
+we simply explain them and discount them, since they are not part of
+any larger structure, such as a word, that we find interesting.
+
+\marginnote{End of detection\_intro.tex}

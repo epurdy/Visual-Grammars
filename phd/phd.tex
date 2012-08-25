@@ -1,8 +1,19 @@
 \documentclass{tufte-book}
 \usepackage{leonine,cancel,amsmath,amssymb,amsthm,graphicx, setspace, subfig}%%xy, setspace, amscd (commutative diagram)
+\usepackage{grffile, algorithm, algorithmic}
 
 \newcommand{\bow}[1]{\colorbox{black}{\color{white} #1}}
 \newcommand{\experiment}[1]{\bow{This section's results can be recreated by running #1}}
+
+\def\tne{=\joinrel\mathrel|}
+\newcommand{\algorithmicinput}{\textbf{Input:}}
+\newcommand{\INPUT}{\item[\algorithmicinput]}
+
+\newcommand{\tree}[3]{\frac{#1}{#2 \qquad \mid \qquad #3}}
+\newcommand{\treee}[4]{\frac{#1}{#2 \qquad \mid \qquad #3 \qquad \mid \qquad #4}}
+
+\newcommand\infrul[1]{\ensuremath{\frac{\qquad \qquad}{\qquad\qquad}\quad #1}}
+
 
 \newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
 %% \newcommand\spk[2]{\framebox{images/#2.png}}
@@ -21,7 +32,7 @@ DOCTOR OF PHILOSOPHY\\
 \ \\
 DEPARTMENT OF COMPUTER SCIENCE
 }
-%\publisher{Submitted to Satisfy the Requirements for a Ph.D. at the University of Chicago}
+\publisher{Submitted to Satisfy the Requirements for a Ph.D. at the University of Chicago}
 
 %%
 % If they're installed, use Bergamo and Chantilly from www.fontsite.com.
@@ -145,11 +156,11 @@ DEPARTMENT OF COMPUTER SCIENCE
 % }
 
 
-\newpage\thispagestyle{empty}
-\openepigraph{%
-  Penetrating so many secrets, we cease to believe in the
-  unknowable. But there it sits nevertheless, calmly licking its
-  chops.}{H. L. Mencken}
+% \newpage\thispagestyle{empty}
+% \openepigraph{%
+%   Penetrating so many secrets, we cease to believe in the
+%   unknowable. But there it sits nevertheless, calmly licking its
+%   chops.}{H. L. Mencken}
 
 % ... they are ill discoverers that think there is no land when they can see nothing but sea.
 %     Francis Bacon (1561-1626) English essayist, philosopher, statesman.
@@ -195,29 +206,23 @@ DEPARTMENT OF COMPUTER SCIENCE
 
 \chapter{Grammatical Models of Shape}
 
-  \section{Introduction}
+  \section{TODO}
+    \input{chapters/models/models_wishlist}  
+
+  \section{Curve Models}
     \input{chapters/models/models_intro}  
-
-  \section{Goals}
-    \input{chapters/models/models_goals}
-
-  \section{Prior Work}
 
   \section{Motivating Example: L-Systems}
     \input{chapters/models/lsystems}
 
-  \section{Motivating Example: A Simple Hand-built grammar}
-    \input{experiments/1.grammars/hand_built/hand_built}
+  \section{Example Grammars}
+    \input{chapters/models/hand_built}
 
   \section{Dealing with Curves}
     \input{chapters/models/curves}
 
   \section{Stochastic Shape Grammars: A Generative Model for Curves}
     \input{chapters/models/curvegrammars}
-
-    \marginnote{Add a short section on inference. Explain that the
-      details of parsing are deferred to the learning section.}
-    \input{experiments/2.parsing/one_to_one/one_to_one}
 
   \section{Building a Grammar From a Single Curve}
     \input{chapters/models/single_curve}
@@ -226,16 +231,23 @@ DEPARTMENT OF COMPUTER SCIENCE
     \input{chapters/models/triangle}
 
   \section{Dealing with Variation in Length}
-    \input{experiments/2.parsing/shorter_curves/shorter_curves}
-    \input{experiments/2.parsing/longer_curves/longer_curves}
+    \input{chapters/models/scale_dirichlet}
+
+  \section{Parsing to Recover Correspondences}
+    \input{chapters/models/parsing}
 
   \section{Sampling Experiments}
-
   \section{Classification Experiments}
-
   \section{Constellation Grammars}
+  \section{Product Grammars}
 
 \chapter{Detecting Objects in Cluttered Images}
+
+  \section{TODO}
+    \input{chapters/detection/detection_wishlist}  
+
+  \section{Introduction}
+    \input{chapters/detection/detection_intro}
 
   \section{Goals}
     \input{chapters/detection/detection_goals}
@@ -243,22 +255,94 @@ DEPARTMENT OF COMPUTER SCIENCE
   \section{Prior Work}
 
   \section{Motivating Examples}
+%    \input{chapters/detection/detection_motivation}
 
-  \section{Parsing Scenes}
-
-  \section{Data Models for Object Detection}
-
-  \section{Speeding up Detection with Filtrations}
+%  \section{Speeding up Detection with Filtrations}
     \input{chapters/detection/filtrations}
 
+  \section{Data Models for Object Detection}
+    \input{chapters/detection/datamodel}
+
+  \section{Parsing Scenes}
+    \input{chapters/detection/scenes}
+
   \section{The Problem of Unintended Reuse}
+    \input{chapters/detection/reuse}
 
   \section{Experimental Results}
+
+\begin{figure*}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.2.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.2.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.2.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.3.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.3.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.3.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.4.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.4.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.4.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.5.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.5.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.5.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.6.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.6.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.6.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.7.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.7.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.7.d/local.x5.interior.png}
+\end{figure*}
+\begin{figure*}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.8.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.8.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.8.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.9.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.9.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.9.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.10.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.10.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.10.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.11.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.11.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.11.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.12.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.12.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.12.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.13.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.13.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.13.d/local.x5.interior.png}
+\end{figure*}
+\begin{figure*}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.14.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.14.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.14.d/local.x5.interior.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.15.d/thefinalparse.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.15.d/local.x5.orientations.png}
+\includegraphics[width=0.3 \linewidth]{output/2.detection/image_parsing/out.15.d/local.x5.interior.png}
+\end{figure*}
+
 % \input{experiments/4.images/standard_cky/standard_cky}
 % \input{experiments/4.images/fuzzy_cky/fuzzy_cky}
 % \input{experiments/4.images/image_parsing/image_parsing}
 
+
+
+\section{Probabilistic Derivation Problems}
+
+\marginnote{Figure this out}
+
+In general, we will be interested in probabilistic interpretations of
+lightest derivation problems, where the probability of a derivation is
+defined to be the product of the probability of each inference rule
+used in the derivation. If we consider the weight of a rule to be the
+negative log of its probability, then this formulation is equivalent
+to the lightest derivation problem.
+
+
+
 \chapter{Parameter Learning for Grammatical Models}
+
+  \section{TODO}
+    \input{chapters/learning/learning_wishlist}  
 
   \section{Goals}
     \input{chapters/learning/learning_goals}
@@ -278,30 +362,33 @@ DEPARTMENT OF COMPUTER SCIENCE
     \input{chapters/learning/parsing_em}
     \input{chapters/learning/doing_em}
 
-    \marginnote{Merge the following with the previous. The subsection
-      ``Scale-dependent Dirichlet Prior'' should have much of its
-      material moved to the Models chapter, since it is largely about
-      selecting an initially plausible set of parameters.}
+    \marginnote{The subsection ``Scale-dependent Dirichlet Prior''
+      should have much of its material moved to the Models chapter,
+      since it is largely about selecting an initially plausible set
+      of parameters.}
 
     \input{chapters/learning/parameters}
 
   \section{Practical Use of the EM Algorithm with Curve Grammars:
     Obstacles and Strategies}
-    \input{experiments/3.em/simple_tuning/simple_tuning}
-    \input{experiments/3.em/multi_tuning/multi_tuning}
-    \input{experiments/3.em/correlated_tuning/correlated_tuning}
-    \input{experiments/3.em/sdf_tuning/sdf_tuning}
-    \input{experiments/3.em/incremental/incremental}
 
-    \marginnote{Can slide naturally into talking about discriminative
-      and shadowcasting learning. Train, sample, and then hand-tag
-      some samples as bad, and then retrain with them weighted
-      negatively. (And probably with good samples weighted positively.)}
+    \input{chapters/learning/using_em}
 
-  \section{Shadowcasting Priors}
-    \input{chapters/learning/shadowcasting}
+%     \marginnote{Can slide naturally into talking about discriminative
+%       and shadowcasting learning. Train, sample, and then hand-tag
+%       some samples as bad, and then retrain with them weighted
+%       negatively. (And probably with good samples weighted positively.)}
+
+%   \section{Shadowcasting Priors}
+%     \input{chapters/learning/shadowcasting}
 
 \chapter{Structure Learning for Grammatical Models}
+
+  \section{TODO}
+    \input{chapters/structure/structure_wishlist}  
+
+  \section{Introduction}
+    \input{chapters/structure/structure_intro}
 
   \section{Goals}
     \input{chapters/structure/structure_goals}
@@ -356,22 +443,22 @@ DEPARTMENT OF COMPUTER SCIENCE
   \section{SDF's, part 2}
     \input{chapters/sdf/sdf2}
 
-\chapter{Unincorporated Material}
+% \chapter{Unincorporated Material}
 
-  \section{Weird stuff}
-    \input{chapters/singleuse}
-    \input{chapters/deformation}
-    \input{chapters/structure_notes}
-    \input{chapters/parsing}
+%   \section{Weird stuff}
+%     \input{chapters/singleuse}
+%     \input{chapters/deformation}
+%     \input{chapters/structure_notes}
+%    \input{chapters/parsing}
 
-  \section{Experimental Plans}
-    \input{chapters/plans}
+%   \section{Experimental Plans}
+%     \input{chapters/plans}
 
-  \section{Datasets}
-    \input{chapters/datasets}
-    \input{experiments/0.datasets/synth/synth}
-    \input{experiments/0.datasets/romer/romer}
-    \input{experiments/0.datasets/leaves/leaves}
+%   \section{Datasets}
+%     \input{chapters/datasets}
+%     \input{experiments/0.datasets/synth/synth}
+%     \input{experiments/0.datasets/romer/romer}
+%     \input{experiments/0.datasets/leaves/leaves}
 
 
 

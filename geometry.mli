@@ -16,6 +16,8 @@ val scale : cpt -> float -> cpt
 
 val dot : cpt -> cpt -> float
 
+val cross : cpt -> cpt -> float
+
 val dist2 : cpt -> cpt -> float
 
 (** {2 Conversion functions} *)

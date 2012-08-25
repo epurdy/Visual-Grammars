@@ -33,6 +33,9 @@ let scale x s =
 let dot x y = 
   x.C.re *. y.C.re +. x.C.im *. y.C.im
 
+let cross x y = 
+  x.C.re *. y.C.im -. x.C.im *. y.C.re
+
 let dist2 p q = 
   C.norm2 (p -& q)
 

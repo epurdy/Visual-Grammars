@@ -14,8 +14,8 @@ which we know the structure, but not the parameters. We would like to
 set the parameters of $\GGG$ such that the posterior $P(\GGG\mid
 C_1,\dots,C_n)$ is maximized. We can write the posterior as
 \begin{align*}
-  P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \prod_i P(C_i\mid \GGG)\\
-  &= P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
+  P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \frac{\prod_i P(C_i\mid \GGG)}{\prod_i P(C_i)}\\
+  &\propto P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
   &= P(\GGG) \cdot \sum_{\{T_i\}}\prod_i P(C_i, T_i \mid \GGG)\\
 \end{align*}
 Unfortunately, it is not known how to maximize this posterior, or even
@@ -222,70 +222,5 @@ Count_a(\langle X_{ij} \to \lambda \rangle) &=
 }
 }
 \end{centering}
-
-\subsection{The M Step}
-
-We want to find the probabilities $p_{X,\lambda}$ for $\rho_X([X\to
-\lambda])$ so that $Q^{(t)}$ is maximized.
-
-We wish to optimize $Q^{(t)}$ with respect to the multinomial
-distributions $\rho_X$ for each $X$. Let us fix $X$, and denote
-$\rho_X([X\to \lambda])$ by $p_\lambda$. Then
-
-\begin{align*}
-\frac{\partial Q^{(t)}(\GGG)}{\partial p_{YZ}} &=
-\sum_{a,i,j,k} \frac{\partial Q^{(t)}_{a,i,j,k,[X\to
-    YZ]}(\GGG)}{\partial p_{YZ}} + \frac{\partial \log P(\GGG)}{\partial p_{YZ}} \\
-&= 
-\sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
-\frac{\partial \log P_{sub}(\langle X_{ik} \to
-  Y_{ij}Z_{jk}\rangle)}{\partial p_{YZ}} + \frac{\partial
-  \log P(\GGG)}{\partial p_{YZ}} \\
-\intertext{Since $ \log P_{sub}(\langle X_{ik} \to
-  Y_{ij}Z_{jk}\rangle) = \log \rho_X([X\to YZ]) + \log \mu_{X\to
-    YZ}(C[i],C[j],C[k]),$ }
-&= 
-\sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
-\frac{1}{p_{YZ}} + \frac{\partial
-  \log P(\GGG)}{\partial p_{YZ}}. \\
-\intertext{Similarly,}
-\frac{\partial Q^{(t)}(\GGG)}{\partial p_{\ell}} &=
-\sum_{a,i} Count^{(t)}_a(\langle X_{i i+1} \to \ell_{i i+1} \rangle)
-\frac{1}{p_{\ell}} + \frac{\partial
-  \log P(\GGG)}{\partial p_{\ell}}. \\
-\end{align*}
-
-\marginnote{Show midpoint distributions here (in bookstein
-  coordinates): original midpoint distribution, perturbed midpoint
-  distribution, soft-count midpoint distribution, learned midpoint
-  distribution, sample midpoints}
-
-\marginnote{Show samples from retrained hand}
-
-If we use the Dirichlet prior with parameters $\alpha_\lambda$ (as described in Section
-\ref{sec-multinomial}), then $\frac{\partial \log P(\GGG)}{\partial
-  p_{\lambda}} = \frac{\alpha_\lambda - 1}{p_\lambda}$. Combining this
-with the constraint that $\sum_\lambda {p_\lambda}=1$, we get the
-following solution\footnote{This is assuming that all $\alpha\ge 1$,
-  which is not required. When some $\alpha < 1$, we have to be more
-  careful, because the constraint $p_\lambda \ge 0$ becomes active
-  when the soft counts for $[X\to \lambda]$ are small.}:
-\begin{align*}
-  \rho_{X}([X\to YZ]) &\propto \sum_{a,i,j,k} Count^{(t)}_a(\langle
-  X_{ik} \to Y_{ij} Z_{jk} \rangle) + \alpha_{YZ} - 1\\
-  \rho_{X}([X\to \ell]) &\propto \sum_{a,i} Count^{(t)}_a(\langle
-  X_{i i+1} \to \ell_{i i+1} \rangle) + \alpha_{\ell} - 1\\
-\end{align*}
-
-Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
-distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
-midpoint distribution, so this question is ill-posed. We adapt the
-Parzen window density estimator by using the soft counts instead of
-multiplicities, as described in Section \ref{sec-learn-midpoint}. When
-estimating $\mu_{X\to YZ}$, we have, for each $C_a$, and for all valid
-indices $i,j,k$, an observation with weight $Count_a^{(t)}(\langle
-X_{ik} \to Y_{ij} Z_{jk}\rangle)$ that the midpoint was $C_a[j]$ when
-the endpoints were $C_a[i]$ and $C_a[k]$.
-
 
 \marginnote{End of learning/doing\_em.tex}

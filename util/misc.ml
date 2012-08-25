@@ -7,6 +7,22 @@ module Cops = Cops
 
 exception Not_Implemented of string
 
+let pi = acos (-. 1.)
+
+let foi = float_of_int
+
+let logistic x =      
+  let ex = exp x in
+  let enx = exp (-. x) in
+  let prob = ex /. (ex +. enx) in
+(*     if ex = infinity then 1.0  *)
+(*     else begin *)
+(*       if enx = infinity then 0.0 *)
+(*       else prob *)
+(*     end *)
+    prob
+
+
 let dist2 (x1,y1) (x2,y2) = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)
 
 (* unpack an option *)

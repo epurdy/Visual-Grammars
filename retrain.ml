@@ -69,7 +69,7 @@ let get_soft_counts_parallel_worker gram family strat =
     sparse_inside_outside gram family soft strat;
     soft
 
-let get_soft_counts_num_workers = 8
+let get_soft_counts_num_workers = 4
 
 let get_soft_counts_parallel gram families =
   let families = Array.of_list families in

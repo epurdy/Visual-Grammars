@@ -5,13 +5,16 @@
 To motivate our discussion of curve grammars, we will first give an
 amusing example of such a grammar, which is inspired by L-systems. A
 Lindenmayer system, or L-system, is a parallel string rewriting
-system. 
-\marginnote{They are intended to be pictures! Cite Lindenmayer's famous book.}
-Although they are defined on strings, it is popular to render
-their output as a picture using a ``turtle language'' akin to
-Logo. They are a simple and intuitive way to generate fractal
-images. Since our formalisms do not match up perfectly with the usual
-definition of L-systems, we will not discuss them.
+system.  L-systems were formulated to model the shape of plants and
+other organisms.
+They are defined on strings, which are then transformed into pictures
+using a ``turtle language'' akin to Logo. They are a simple and
+intuitive way to generate fractal images. Since our formalisms do not
+match up perfectly with the usual definition of L-systems, we will not
+discuss their details, which can be found in \cite{lindenmayer}.
+\marginnote{Prusinkiewicz, Przemyslaw; Lindenmayer, Aristid
+  (1990). The Algorithmic Beauty of Plants. Springer-Verlag. ISBN
+  978-0-387-97297-8.} 
 
 We will informally discuss curve rewriting systems, where we
 iteratively replace straight lines with curves composed of straight

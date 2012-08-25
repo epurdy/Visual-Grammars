@@ -295,7 +295,6 @@ let sparse_parse_cost gram family strat =
     table.qual
 
 
-
 let viterbi gram family strat =
   let qual = ref infinity in
     (* chart maps (X,I) -> q, X=nonterminal, I=SDF interval *)
@@ -370,8 +369,12 @@ let viterbi gram family strat =
 	    Frozen.get_composition family dcompid in
 
 	    pairs := (symbolid, scurveid, Some prodid, Some dcompid) :: !pairs;
-	    visit (prod.leftsid, dcomp.leftsid);
-	    visit (prod.rightsid, dcomp.rightsid);
+
+	    (* suppress L->LL pairs, screws up labeling *)
+	    if prod.leftsid <> symbolid then
+	      visit (prod.leftsid, dcomp.leftsid);
+	    if prod.rightsid <> symbolid then
+	      visit (prod.rightsid, dcomp.rightsid);
 	end
 	else begin 
 	  pairs := (symbolid, scurveid, None, None) :: !pairs;

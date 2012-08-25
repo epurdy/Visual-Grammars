@@ -1,0 +1,17 @@
+
+% Unintended reuse can be seen in the motivating example. It will be
+% better to find $X$ by double-counting the longer of the two
+% legs. Similarly, we will be tempted to have a doubled $X$.
+
+This is a serious problem without a good answer. Dynamic programming
+is fundamentally unable to deal with this issue.  \marginnote{Pedro
+  has a proof somewhere that bag-parsing is NP-complete in some
+  setting.}
+
+We are currently coping with this problem by alternating parsing with
+a local inference procedure based on Gibbs sampling that tries to
+label edge pixels with an orientation, and tries to label non-edge
+pixels as interior or exterior to the object. We then reparse, using
+only line segments that do not contradict the local interpretation too
+much.
+

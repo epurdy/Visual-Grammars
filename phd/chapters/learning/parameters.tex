@@ -2,6 +2,8 @@
 
 \marginnote{beginning of learning/parameters.tex}
 
+\marginnote{
+Move this somewhere else: 
 In order to learn a shape grammar $\GGG =
 (\NNN,\RRR,\SSS,\ell,\MMM,\XXX)$, we must learn (1) the structural
 elements of the grammar ($\NNN, \RRR, \SSS$); (2) the continuous
@@ -10,107 +12,123 @@ elements of the grammar (the multinomial distributions $\XXX$), and
 $\MMM$). Learning the structural elements of the grammar is a very
 difficult unsolved problem, and we defer the topic to Section
 \ref{sec-learn-struct}.
+}
 
-For the multinomial distributions and the midpoint distributions, we
-use the Expectation-Maximization algorithm \cite{em}.  
+% For the multinomial distributions and the midpoint distributions, we
+% use the Expectation-Maximization algorithm \cite{em}.  
 
-\subsection{EM for Parameter Estimation}
+% \subsection{EM for Parameter Estimation}
 
-Let $C_1,\dots, C_n$ be independent samples from a grammar $\GGG$, for
-which we know the structure, but not the parameters. We would like to
-set the parameters of $\GGG$ such that the posterior $P(\GGG\mid
-C_1,\dots,C_n)$ is maximized. We can write the posterior as
-\begin{align*}
-  P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \prod_i P(C_i\mid \GGG)\\
-  &= P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
-  &= P(\GGG) \cdot \sum_{\{T_i\}}\prod_i P(C_i, T_i \mid \GGG)\\
-\end{align*}
-Unfortunately, it is not known how to maximize this posterior, or even
-the likelihood. The likelihood is known to have many local maxima in
-the case of context-free grammars for natural languages
-\cite{charniak}. Therefore, we are forced to use approximation
-techniques. We use the Expectation-Maximization algorithm \cite{em},
-which is a standard approach to finding maximum likelihood or maximum
-a posteriori estimates in the case where important variables are
-unobserved. In our case, the unobserved variables are the parse trees
-$\{T_i\}$.
+% Let $C_1,\dots, C_n$ be independent samples from a grammar $\GGG$, for
+% which we know the structure, but not the parameters. We would like to
+% set the parameters of $\GGG$ such that the posterior $P(\GGG\mid
+% C_1,\dots,C_n)$ is maximized. We can write the posterior as
+% \begin{align*}
+%   P(\GGG\mid C_1,\dots, C_n) &= P(\GGG) \cdot \prod_i P(C_i\mid \GGG)\\
+%   &= P(\GGG) \cdot \prod_i \sum_{T\in Parse_\GGG(C_i)}P(C_i, T \mid \GGG)\\
+%   &= P(\GGG) \cdot \sum_{\{T_i\}}\prod_i P(C_i, T_i \mid \GGG)\\
+% \end{align*}
+% Unfortunately, it is not known how to maximize this posterior, or even
+% the likelihood. The likelihood is known to have many local maxima in
+% the case of context-free grammars for natural languages
+% \cite{charniak}. Therefore, we are forced to use approximation
+% techniques. We use the Expectation-Maximization algorithm \cite{em},
+% which is a standard approach to finding maximum likelihood or maximum
+% a posteriori estimates in the case where important variables are
+% unobserved. In our case, the unobserved variables are the parse trees
+% $\{T_i\}$.
 
-Let $\mathbf{C} = (C_1,\dots,C_n)$, and let $\mathbf{T}$ be the latent
-variable $(T_1,\dots,T_n)$. We then iteratively find better and better
-grammars $\GGG^{(t)}$:
-\begin{enumerate}
-\item \textbf{E step:} Let 
-  \begin{align*}
-Q^{(t)}(\GGG) &= \sum_{\mathbf{T}} \big[P(\mathbf{T}\mid \mathbf{C},
-\GGG^{(t)}) \log P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log
-P(\GGG)\\
-&= E_{\mathbf{T} \sim \mathbf{T} | \mathbf{C}, \GGG^{(t)}}\big[\log
-P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log P(\GGG)
-  \end{align*}
-\item \textbf{M step:} Let
-$$ \GGG^{(t+1)} = \argmax_{\GGG} Q^{(t)}(\GGG)$$
-\end{enumerate}
+% Let $\mathbf{C} = (C_1,\dots,C_n)$, and let $\mathbf{T}$ be the latent
+% variable $(T_1,\dots,T_n)$. We then iteratively find better and better
+% grammars $\GGG^{(t)}$:
+% \begin{enumerate}
+% \item \textbf{E step:} Let 
+%   \begin{align*}
+% Q^{(t)}(\GGG) &= \sum_{\mathbf{T}} \big[P(\mathbf{T}\mid \mathbf{C},
+% \GGG^{(t)}) \log P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log
+% P(\GGG)\\
+% &= E_{\mathbf{T} \sim \mathbf{T} | \mathbf{C}, \GGG^{(t)}}\big[\log
+% P(\mathbf{C},\mathbf{T}\mid \GGG) \big] + \log P(\GGG)
+%   \end{align*}
+% \item \textbf{M step:} Let
+% $$ \GGG^{(t+1)} = \argmax_{\GGG} Q^{(t)}(\GGG)$$
+% \end{enumerate}
 
-We compute only what is necessary to optimize $Q^{(t)}(\GGG)$. The
-joint log-likelihood can be calculated as follows:
-\begin{align*}
-  P(\mathbf{C},\mathbf{T}\mid \GGG) = &\prod_a \prod_{(X,[X\to YZ],i,j,k)\in T_a} \rho_X([X\to YZ]) \cdot \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k]) \\
-  \cdot &\prod_a \prod_{(X,[X\to \ell],i,\bot,j)\in T_a} \rho_X([X\to \ell]) \\
-  \log P(C,T\mid \GGG) = &\sum_a \sum_{[X\to \lambda] \in \RRR}
-  \#\{\mbox{uses of }[X\to \lambda]\mbox{ in } T_a \} \log \rho_X([X\to \lambda]) +\\
-  &\sum_a \sum_{[X\to YZ] \in \RRR} \sum_{(X, [X\to YZ], i, j,k)\in T_a} \log
-  \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])\\
-\end{align*}
+% We compute only what is necessary to optimize $Q^{(t)}(\GGG)$. The
+% joint log-likelihood can be calculated as follows:
+% \begin{align*}
+%   P(\mathbf{C},\mathbf{T}\mid \GGG) = &\prod_a \prod_{(X,[X\to YZ],i,j,k)\in T_a} \rho_X([X\to YZ]) \cdot \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k]) \\
+%   \cdot &\prod_a \prod_{(X,[X\to \ell],i,\bot,j)\in T_a} \rho_X([X\to \ell]) \\
+%   \log P(C,T\mid \GGG) = &\sum_a \sum_{[X\to \lambda] \in \RRR}
+%   \#\{\mbox{uses of }[X\to \lambda]\mbox{ in } T_a \} \log \rho_X([X\to \lambda]) +\\
+%   &\sum_a \sum_{[X\to YZ] \in \RRR} \sum_{(X, [X\to YZ], i, j,k)\in T_a} \log
+%   \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])\\
+% \end{align*}
 
-We wish to optimize $Q^{(t)}$ with respect to the multinomial
-distributions $\rho_X$ for each $X$. The joint likelihood given in
-Equation \ref{joint-likelihood} depends on the $\rho_X$ only as $\prod
-\rho_X()$. Taking logs, and by the linearity of expectation, the
-relevant part of $Q^{(t)}$ is
-$$\sum_a \sum_\lambda E_{T_a}\left[ \#\left\{\mbox{uses of }[X\to
-    \lambda] \mbox{ in }T_a \right\}\right]\cdot \log \rho_{X}([X\to \lambda]) +
-\log P(\rho_X).$$
+% We wish to optimize $Q^{(t)}$ with respect to the multinomial
+% distributions $\rho_X$ for each $X$. The joint likelihood given in
+% Equation \ref{joint-likelihood} depends on the $\rho_X$ only as $\prod
+% \rho_X()$. Taking logs, and by the linearity of expectation, the
+% relevant part of $Q^{(t)}$ is
+% $$\sum_a \sum_\lambda E_{T_a}\left[ \#\left\{\mbox{uses of }[X\to
+%     \lambda] \mbox{ in }T_a \right\}\right]\cdot \log \rho_{X}([X\to \lambda]) +
+% \log P(\rho_X).$$
 
-This has the same form as the log-posterior of a multinomial
-distribution under the Dirichlet prior, as we will see in Section
-\ref{sec-multinomial}. The observed multinomial counts are a
-sufficient statistic, so we need only compute $\sum_a E_{T_a}\left[
-  \#\left\{\mbox{uses of }[X\to \lambda] \mbox{ in } T_a
-  \right\}\right]$ for each $\lambda$. We call this quantity a
-\emph{soft count}.
+% This has the same form as the log-posterior of a multinomial
+% distribution under the Dirichlet prior, as we will see in Section
+% \ref{sec-multinomial}. The observed multinomial counts are a
+% sufficient statistic, so we need only compute $\sum_a E_{T_a}\left[
+%   \#\left\{\mbox{uses of }[X\to \lambda] \mbox{ in } T_a
+%   \right\}\right]$ for each $\lambda$. We call this quantity a
+% \emph{soft count}.
 
-Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
-distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
-midpoint distribution, so this question is ill-posed. We adapt the
-Parzen window density estimator by using the soft counts instead of
-multiplicities. The formula for this is given in Section
-\ref{sec-learn-midpoint}.  The formula for the soft counts is:
-$$\sum_a \sum_{0\le i < j < k\le n} \log \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])
- E_{T_a}\left[ \xi_{a, X\to YZ, i,j,k} \right],$$
-where we define
-$$\xi_{a, X\to YZ,i,j,k}$$
-to be one if the parse tree $T_a$ uses $X\to YZ$ to parse the curve
-$C_a[i:k]$, divided into $C_a[i:j]$ and $C_a[j:k]$, and zero otherwise.
+% Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
+% distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
+% midpoint distribution, so this question is ill-posed. We adapt the
+% Parzen window density estimator by using the soft counts instead of
+% multiplicities. The formula for this is given in Section
+% \ref{sec-learn-midpoint}.  The formula for the soft counts is:
+% $$\sum_a \sum_{0\le i < j < k\le n} \log \mu_{X\to YZ}(C_a[i], C_a[j], C_a[k])
+%  E_{T_a}\left[ \xi_{a, X\to YZ, i,j,k} \right],$$
+% where we define
+% $$\xi_{a, X\to YZ,i,j,k}$$
+% to be one if the parse tree $T_a$ uses $X\to YZ$ to parse the curve
+% $C_a[i:k]$, divided into $C_a[i:j]$ and $C_a[j:k]$, and zero otherwise.
 
-We have thus reduced the problem of learning parameters to the problem
-of finding the soft counts. How do we find the soft counts?  We need
-to compute $E_{T_a} \xi_{a,X\to YZ,i,j,k}$ for every $a$, $[X\to YZ],
-i,j,k$. Since $\xi_{a, X\to YZ,i,j,k}$ is an indicator variable, this
-is the same as computing the total probability that the rule $[X\to
-YZ]$ appears in the specified location, which can be obtained by
-summing Equation \eqref{joint-likelihood} over all parse trees that
-use $[X\to YZ]$ in the specified location.
+% We have thus reduced the problem of learning parameters to the problem
+% of finding the soft counts. How do we find the soft counts?  We need
+% to compute $E_{T_a} \xi_{a,X\to YZ,i,j,k}$ for every $a$, $[X\to YZ],
+% i,j,k$. Since $\xi_{a, X\to YZ,i,j,k}$ is an indicator variable, this
+% is the same as computing the total probability that the rule $[X\to
+% YZ]$ appears in the specified location, which can be obtained by
+% summing Equation \eqref{joint-likelihood} over all parse trees that
+% use $[X\to YZ]$ in the specified location.
 
-This probability can be calculated efficiently using the
-Inside-Outside algorithm, which can be derived from the equations in
-Section \ref{sec-parsing}. The inside probability is given in the
-second-to-last equation of Section \ref{sec-parsing}. We do not give
-the equations for the outside probability, but they are derived in a
-similar way.
+% This probability can be calculated efficiently using the
+% Inside-Outside algorithm, which can be derived from the equations in
+% Section \ref{sec-parsing}. The inside probability is given in the
+% second-to-last equation of Section \ref{sec-parsing}. We do not give
+% the equations for the outside probability, but they are derived in a
+% similar way.
 
-The soft counts $E_{T_a}\left[ \#\left\{\mbox{uses of
-    }[X\to \lambda] \mbox{ in } T_a\right\}\right]$ can be found by summing the
-relevant $\xi$.
+% The soft counts $E_{T_a}\left[ \#\left\{\mbox{uses of
+%     }[X\to \lambda] \mbox{ in } T_a\right\}\right]$ can be found by summing the
+% relevant $\xi$.
+
+
+\subsection{The M Step}
+
+We want to find the grammar parameters that maximize
+$Q^{(t)}(\GGG)$. We have two classes of parameters: the multinomial
+distributions $\rho_X$, and the midpoint distributions $\mu_{X\to
+  YZ}$. We will consider each in turn.
+
+\marginnote{Show midpoint distributions here (in bookstein
+  coordinates): original midpoint distribution, perturbed midpoint
+  distribution, soft-count midpoint distribution, learned midpoint
+  distribution, sample midpoints}
+
+\marginnote{Show samples from retrained hand}
 
 \subsection{Learning Multinomial Distributions}
 \label{sec-multinomial}
@@ -125,7 +143,9 @@ P(\vec{p} \mid x_1,\dots,x_n )\\
 &= \argmax_{\vec{p}} P(x_1,\dots,x_n; \vec{p}) \cdot P(\vec{p}),
 \end{align*}
 where $P(\vec{p})$ is a prior distribution over the space of possible
-$(p_1,\dots,p_k)$. The most common choice of prior is the Dirichlet
+$(p_1,\dots,p_k)$. 
+\marginnote{Define the $\Gamma$ function}
+The most common choice of prior is the Dirichlet
 distribution, parameterized by $\alpha_1,\dots, \alpha_k > 0$:
 $$\mathrm{Dir}(p_1,\dots, p_k; \alpha_1,\dots, \alpha_k) = \frac{\Gamma\bigl(\sum \alpha_i\bigr)}{\prod \Gamma(\alpha_i)} \prod_{i=1}^k p_i^{\alpha_i - 1},$$
 because, when all $\alpha_i \ge 1$, the maximum a posteriori estimate of the $\{p_i\}$ has the simple form
@@ -140,6 +160,12 @@ $$\widehat{p_i} = \begin{cases}
 \end{cases},$$ 
 where
 $$I = \{i : c_i + \alpha_i \ge 1\}.$$
+\marginnote{Cite Bishop. }
+
+Note that results still hold when the counts $c_i$ are real rather
+than integer. This is because the proofs rely solely on the
+log-likelihood having the form $\sum c_i \log p_i$. In this case, the
+$c_i$ are referred to as ``soft counts''.
 
 When the $\alpha_i$ are greater than one, this prior smooths the
 estimated distribution $\vec{p}$ towards the uniform
@@ -157,52 +183,206 @@ well for training context-free grammars for natural languages,
 although $\alpha_i$ between $\frac{1}{100}$ and $\frac{1}{10,000}$
 were found to work about as well.
 
-\subsection{Scale-dependent Dirichlet Prior}
-\label{sec-scale}
+In our case, $\rho_X([X\to \lambda])$ is a multinomial distribution,
+and we have soft counts $c_\lambda = \sum_{a,i,j} Count_a(\langle
+X_{ij} \to \lambda \rangle)$.
 
-When there is no prior reason to believe that any $p_i$ is larger than
-the others, it is natural to use a Dirichlet prior with each
-$\alpha_i$ the same. For shape grammars, this is not entirely the
-case; since rules of the form $[X\to YZ]$ and $[X\to \ell]$ serve
-different roles in the grammar, we expect their probabilities to take
-on different values. 
 
-In particular, if the nonterminal $X$ is meant to model long curves,
-it is unlikely that a long curve will have only two sample points,
-especially if we are parsing a curve that has many sample
-points. Therefore, we would expect the probability of $[X\to \ell]$ to
-be low.
 
-Let $C$ be a curve. We define the \emph{scale} of a subcurve $C'$ to
-be $s(C') = |C'| / |C|$. We can then specify an ideal scale $s_X$ for
-the nonterminal $X$. Our prior distribution on $\rho_X$ is then
-$Dir(\alpha_1,\dots,\alpha_k)$, where
+\subsection{Learning Watson distributions}
+  \label{ssec-learning-watson}
+
+\marginnote{Again explain concept of soft counts - when log-likelihood
+  has form $\sum c_i \log p_i$, the $c_i$ act like counts even when
+  they are not integers.}
+
+First, we choose priors.  Let $X\to YZ$ be a rule of $G$. Let $s$ be
+our scale parameter.  We set $\mu_{X\to YZ}$ equal to a Watson
+distribution with random mode $\mu$ and random concentration $\kappa$,
+where
+$$\kappa \sim Gamma(\sigma, \theta=\bar{\kappa}/\sigma)$$
+$$\mu \sim Watson(\mu_0, \alpha_{mp} \kappa)$$
+where $\sigma$ is the shape parameter of the Gamma distribution, and
+$\bar{\kappa} = \alpha_{\kappa} s$. 
+
+Currently $\sigma=5$, $\alpha_\kappa = 4000.0$. $\alpha_{mp}$ is a
+parameter dictating the balance between prior and observation.  We
+choose $\mu_0$ to correspond with the mean of the two endpoints.
+
+
+We wish to update our estimate of the distribution $\mu_{X\to
+  YZ}$. Since we are using a Watson distribution, this means
+estimating the parameters $\mu$ and $\kappa$. Let $z_{a,ijk}$ be
+the midpoint observed in curve $a$, when we put $C_a[j]$ in
+coordinates relative to $C_a[i]$ and $C_a[k]$. The function we are
+trying to maximize, $Q^{(t)}$, depends on $\mu_{X\to YZ}$ as a sum of
+log probabilities:
+$$\sum_{a,i,j,k} Count_a^{(t)}(\langle X_{ik} \to Y_{ij} Z_{jk}\rangle) \log \mu_{X\to YZ}(z_{a,ijk}).$$
+Thus, the $Count$ values are the soft counts we use to weight the
+$z_{a,ijk}$. For simplicity, we will simply say that we have
+observations $z_1, \dots, z_n$ with corresponding weights $c_1, \dots,
+c_n$.
+
+\marginnote{Define Gamma distribution} Let
+$\gamma(\kappa;\sigma,\theta) = \log Gamma(\kappa; \sigma,\theta)$.
+Let $c(\kappa)$ be the normalizing constant of the Watson
+distribution.
+
 \begin{align*}
-\alpha_1 &= k \cdot \alpha_{dir} \cdot e^{-\omega s_X^2}k &\\
-\alpha_i &= k \cdot \alpha_{dir} \cdot \frac{1 - e^{-\omega s_X^2}}{k-1} & 2 \le i \le k.\\
+P(\mu, \kappa \mid z_1,\dots,z_m) &\propto
+P(\mu, \kappa) P(z_1,\dots,z_m\mid \mu, \kappa) \\
+&= \exp[ \alpha_{mp}\kappa \mu^* \mu_0 \mu_0^* \mu
+- \log c(\alpha_{mp} \kappa) + \gamma(\kappa; \sigma,\theta)
++ \kappa \sum_i \mu^* z_i z_i^* \mu - m \log c(\kappa)
+\\
+&= \exp[
+\kappa \mu^* (\alpha_{mp} \mu_0 \mu_0^* + \sum z_i z_i^*)\mu
+- \log c(\alpha_{mp} \kappa) - m \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta) ]\\
+\log P(\mu, \kappa \mid z_1,\dots,z_m) &= 
+c_{norm} + 
+\kappa \mu^* (\alpha_{mp} \mu_0 \mu_0^* + \sum z_i z_i^*)\mu
+- \log c(\alpha_{mp} \kappa) - m \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta) \\
+&= c_{norm} + 
+\kappa \mu^* A \mu
+- \log c(\alpha_{mp} \kappa) - m \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta),
 \end{align*}
-Here $\alpha_1$ corresponds to the rule $[X\to \ell]$. Suitable values
-of $\alpha_{dir}$ are probably significantly less than one, in light
-of \cite{johnson-naacl}. A suitable value for $\omega$ is more
-complicated, and depends on the value of other model parameters.
 
-This prior is suitable, because it produces grammars biased towards
-balanced parses. To see this, consider a grammar $\GGG$ whose
-parameters are set according to this prior. (This will be true of our
-initial grammar, as we describe in Section \ref{sec-single}.)  Let $C$ be a
-curve of length $n$, and $T$ be a $\GGG$-parse of $C$. $T$ will then
-specify nonterminals $X_1,\dots,X_n$ to parse each line segment of
-$C$. Thus, the likelihood $P(C,T\mid \GGG)$ will contain factors
-$\rho_{X_i}([X_i\to \ell])$ for $i=1,\dots,n$. If $\rho_{X_i}([X_i\to
-\ell])$ is $e^{-\omega s_X^2}$, then these factors contribute
-$$e^{-\omega \sum_i s_{X_i}^2}$$
-in total. Since the $X_i$ combine to parse $C$, the scales $s_{X_i}$
-will hopefully sum to approximately one. In this case the probability
-will be highest when $\sum_i s_{X_i}^2$ is lowest, which occurs when
-all the $s_{X_i}$ are equal. The stated Dirichlet prior thus pushes
-$\GGG$ to favor balanced parse trees, as desired.
+Let $Q$ be the terms in $Q^{(t)}$ which depend on $\mu_{X\to YZ}$.
 
-\marginnote{Would it make sense to do experiments trying to learn
-  $P(X\to \ell)$?}
+\begin{align*}
+Q(\mu, \kappa) &=
+\log P_{prior}(\mu, \kappa) + \sum_i c_i \log P(z_i\mid \mu, \kappa) \\
+&= \alpha_{mp}\kappa \mu^* \mu_0 \mu_0^* \mu
+- \log c(\alpha_{mp} \kappa) + \gamma(\kappa; \sigma,\theta)
++ \kappa \sum_i c_i \mu^* z_i z_i^* \mu - (\sum_i c_i) \log c(\kappa)
+\\
+&= 
+\kappa \mu^* (\alpha_{mp} \mu_0 \mu_0^* + \sum_i c_i z_i z_i^*)\mu
+- \log c(\alpha_{mp} \kappa) - (\sum_i c_i) \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta) ]\\
+&=
+c_{norm} + 
+\kappa \mu^* (\alpha_{mp} \mu_0 \mu_0^* + \sum_i c_i z_i z_i^*)\mu
+- \log c(\alpha_{mp} \kappa) - (\sum_i c_i) \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta) \\
+&= c_{norm} + 
+\kappa \mu^* A \mu
+- \log c(\alpha_{mp} \kappa) - m \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta),
+\end{align*}
+
+where $A = \alpha_{mp} \mu_0 \mu_0^* + \sum c_i z_i z_i^*$ and $m =
+\sum_i c_i$.  Since $\mu$ only appears in the term $\kappa \mu^* A
+\mu$, and $A$ has non-negative eigenvalues, it is clear that we
+maximize the posterior by choosing $\mu$ to be the dominant
+eigenvector of $A$.  Let $\lambda_{\max}$ be the associated
+eigenvalue. Then
+
+\begin{align*}
+\log P(\mu, \kappa \mid z_1,\dots,z_m) &= 
+c_{norm} + \kappa \lambda_{\max}(A) - 
+\log c(\alpha_{mp} \kappa) - m \log c(\kappa) + 
+\gamma(\kappa; \sigma, \theta)\\
+\end{align*}
+
+Taking partial derivatives, and using the approximation
+$c(\kappa) = 2 \pi^2 \frac{1}{\kappa} e^\kappa$,
+we arrive at the approximate solution
+
+$$
+\frac{\partial \log P(\mu, \kappa \mid, z_1,\dots,z_m)}
+{\partial \kappa} = 
+\lambda_{max} - \alpha_{mp} -m + \frac{1+m}{\kappa} + 
+\frac{\sigma-1}{\kappa} - \frac{\sigma}{\bar{\kappa}} = 0
+$$
+$$
+\widehat{\kappa} = \frac{\sigma+m}{\frac{\sigma}{\bar{\kappa}}
++ m + \alpha_{mp} - \lambda_{max}}
+$$
+
+$$
+\widehat{\mu} = \mbox{ dominant eigenvector of }
+A\mbox{, where } A = \alpha_{mp} \mu_0 \mu_0^* + \sum z_i z_i^*
+$$
+
+Examining this solution, we see that our estimate of the
+midpoint is similar to the maximum likelihood estimate of
+a Watson distribution, but is adapted to contain
+$\alpha_{mp}$ artificial observations at the prior mode.
+
+The posterior estimate of the concentration will be at
+a maxmimum when all $z_i$ are identical and equal to 
+$\mu_0$. In this case, $\lambda_{max}$ will be
+$m + \alpha_{mp}$, and $\widehat{\kappa} = 
+\bar{\kappa} \frac{\sigma+n}{\sigma}$. Thus, our concentration will
+increase essentially linearly with the number of examples, but will never
+be infinite.
+
+In general, the $z_i$ and $\mu_0$ will be more spread out, causing $A$
+to have a lower dominant eigenvalue, and lowering the concentration.
+
+% \subsection{The M Step}
+
+% We want to find the probabilities $p_{X,\lambda}$ for $\rho_X([X\to
+% \lambda])$ so that $Q^{(t)}$ is maximized.
+
+% We wish to optimize $Q^{(t)}$ with respect to the multinomial
+% distributions $\rho_X$ for each $X$. Let us fix $X$, and denote
+% $\rho_X([X\to \lambda])$ by $p_\lambda$. Then
+
+% \begin{align*}
+% \frac{\partial Q^{(t)}(\GGG)}{\partial p_{YZ}} &=
+% \sum_{a,i,j,k} \frac{\partial Q^{(t)}_{a,i,j,k,[X\to
+%     YZ]}(\GGG)}{\partial p_{YZ}} + \frac{\partial \log P(\GGG)}{\partial p_{YZ}} \\
+% &= 
+% \sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
+% \frac{\partial \log P_{sub}(\langle X_{ik} \to
+%   Y_{ij}Z_{jk}\rangle)}{\partial p_{YZ}} + \frac{\partial
+%   \log P(\GGG)}{\partial p_{YZ}} \\
+% \intertext{Since $ \log P_{sub}(\langle X_{ik} \to
+%   Y_{ij}Z_{jk}\rangle) = \log \rho_X([X\to YZ]) + \log \mu_{X\to
+%     YZ}(C[i],C[j],C[k]),$ }
+% &= 
+% \sum_{a,i,j,k} Count^{(t)}_a(\langle X_{ik} \to Y_{ij} Z_{jk} \rangle)
+% \frac{1}{p_{YZ}} + \frac{\partial
+%   \log P(\GGG)}{\partial p_{YZ}}. \\
+% \intertext{Similarly,}
+% \frac{\partial Q^{(t)}(\GGG)}{\partial p_{\ell}} &=
+% \sum_{a,i} Count^{(t)}_a(\langle X_{i i+1} \to \ell_{i i+1} \rangle)
+% \frac{1}{p_{\ell}} + \frac{\partial
+%   \log P(\GGG)}{\partial p_{\ell}}. \\
+% \end{align*}
+
+
+% If we use the Dirichlet prior with parameters $\alpha_\lambda$ (as described in Section
+% \ref{sec-multinomial}), then $\frac{\partial \log P(\GGG)}{\partial
+%   p_{\lambda}} = \frac{\alpha_\lambda - 1}{p_\lambda}$. Combining this
+% with the constraint that $\sum_\lambda {p_\lambda}=1$, we get the
+% following solution\footnote{This is assuming that all $\alpha\ge 1$,
+%   which is not required. When some $\alpha < 1$, we have to be more
+%   careful, because the constraint $p_\lambda \ge 0$ becomes active
+%   when the soft counts for $[X\to \lambda]$ are small.}:
+% \begin{align*}
+%   \rho_{X}([X\to YZ]) &\propto \sum_{a,i,j,k} Count^{(t)}_a(\langle
+%   X_{ik} \to Y_{ij} Z_{jk} \rangle) + \alpha_{YZ} - 1\\
+%   \rho_{X}([X\to \ell]) &\propto \sum_{a,i} Count^{(t)}_a(\langle
+%   X_{i i+1} \to \ell_{i i+1} \rangle) + \alpha_{\ell} - 1\\
+% \end{align*}
+
+% Similarly, we wish to optimize $Q^{(t)}$ with respect to the midpoint
+% distributions $\mu_{X\to YZ}$; however, we are using a nonparametric
+% midpoint distribution, so this question is ill-posed. We adapt the
+% Parzen window density estimator by using the soft counts instead of
+% multiplicities, as described in Section \ref{sec-learn-midpoint}. When
+% estimating $\mu_{X\to YZ}$, we have, for each $C_a$, and for all valid
+% indices $i,j,k$, an observation with weight $Count_a^{(t)}(\langle
+% X_{ik} \to Y_{ij} Z_{jk}\rangle)$ that the midpoint was $C_a[j]$ when
+% the endpoints were $C_a[i]$ and $C_a[k]$.
+
+
+
 
 \marginnote{end of learning/parameters.tex}

@@ -1,0 +1,60 @@
+\documentclass{tufte-book}
+\usepackage{leonine,cancel,amsmath,amssymb,amsthm,graphicx, setspace, subfig, algorithm, algorithmic}%%xy, setspace, amscd (commutative diagram)
+\usepackage{grffile}
+\newcommand{\bow}[1]{\colorbox{black}{\color{white} #1}}
+\newcommand{\experiment}[1]{\bow{This section's results can be recreated by running #1}}
+\newcommand\spk[2]{\includegraphics[width=#1mm]{images/#2.png}}
+\usepackage{booktabs}% For nicely typeset tabular material
+
+\def\tne{=\joinrel\mathrel|}
+\newcommand{\algorithmicinput}{\textbf{Input:}}
+\newcommand{\INPUT}{\item[\algorithmicinput]}
+
+\newcommand{\tree}[3]{\frac{#1}{#2 \qquad \mid \qquad #3}}
+\newcommand{\treee}[4]{\frac{#1}{#2 \qquad \mid \qquad #3 \qquad \mid \qquad #4}}
+
+\newcommand\infrul[1]{\ensuremath{\frac{\qquad \qquad}{\qquad\qquad}\quad #1}}
+
+\begin{document}
+
+
+\frontmatter
+\mainmatter
+
+\chapter{outline}
+
+\section{Unintended reuse}
+  \subsection{What is it?}
+  \subsection{Why is it hard to prevent?}
+  \subsection{what have other people done?}
+  \subsection{sketch of solution}
+
+\section{Local interpretation}
+  \subsection{What is it?}
+  \subsection{doing inference}
+  \subsection{initializing inference}
+  \subsection{what does it mean?}
+
+  \subsection{Model}
+    \subsubsection{Edges}
+      cite canny
+    \subsubsection{Segmentation}
+      list of properties, sum that enforces them
+    \subsubsection{Orientation}
+      list of properties, sum that enforces them
+
+      what is an orientation assignment
+
+  \subsection{Using local constraints}
+    list of motivations and rules
+
+\section{Experimental Results}
+  \subsection{Pictures}
+  \subsection{Conclusions}
+
+\chapter{Actual stuff}
+
+
+
+\end{document}
+

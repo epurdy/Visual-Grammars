@@ -46,6 +46,11 @@ val bottom_out_family : family -> family
 
 val make_sparse_family : int ->  int -> family
 
+val make_balanced_family : int -> family
+
+val make_balanced_flexible_family : int -> int -> family
+val make_balanced_flexible_family2 : int -> int -> family
+
 type live_family = {
   gram: (sdata,cdata,gdata) live_grammar;
   sclookup: (index*index,sdata symbol) Hashtbl.t;

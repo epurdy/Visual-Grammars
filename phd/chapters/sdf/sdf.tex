@@ -1,11 +1,12 @@
-This section is joint work with Pedro Felzenszwalb. Some parts of the
-text may be written by him?
+\marginnote{beginning of sdf/sdf.tex}
 
 \section{Introduction}
 We are interested in modeling time series data. We will consider
 sequences of data $C=c_0, \dots, c_n$. We would like to create a
 meaningful similarity measure, so that we can do nearest neighbor
-classification of sequences. 
+classification of sequences. This will be defined in terms of a
+similarity measure $d(\cdot,\cdot)$ on the domain containing the data
+points.
 
 \section{Dynamic Time Warping}
 
@@ -16,24 +17,36 @@ similar, and such that the correspondence is relatively smooth.
 
 Dynamic time warping is defined in terms of a distance function $d$
 between data points. Let $X$ and $Y$ be two sequences, of length $m$
-and $n$ respectively. Then we let the DTW match cost be
-$M[m,n]$, where $M$ is defined via the following dynamic program:
+and $n$ respectively. We are searching over sets $S$ of pairs $(i,j)$
+such that:
+\begin{itemize}
+\item For all $0\le i \le m$, there is some $(i,j)\in S$
+\item For all $0\le j \le n$, there is some $(i,j)\in S$
+\item If $(i_1,j_1), (i_2,j_2)\in S$, then either
+\begin{itemize}
+\item $i_1\le i_2$ and  $j_1 \le j_2$, or
+\item $i_2\le i_1$ and  $j_2 \le j_1$.
+\end{itemize}
+\end{itemize}
+The DTW cost function is then simply $\sum_{(i,j)\in S} d(x_i,y_j)$.
+
+We can compute this efficiently via the following dynamic program: 
 \begin{align*}
 M[0,0] &= d(x_0, y_0) \\
-M[i,j] &= d(x_i,y_j) + \min \{ M[i-1,j], M[i,j-1], M[i-1,j-1]\}.
+M[i,j] &= d(x_i, y_j) + \min \{ M[i-1,j], M[i,j-1], M[i-1,j-1]\}.
 \end{align*}
-
 It should be noted that this penalizes stretching, since choosing
 $M[i-1,j]$ or $M[i,j-1]$ instead of $M[i,j]$ increases the number of
-  $d(\cdot,\cdot)$ terms in the final sum.
+pairs $(i,j)\in S$, and thus the number of $d(\cdot,\cdot)$ terms in
+the final sum.
 
 One weakness of DTW is that it does not model long-range
 properties. 
 
 \begin{ex}
 \label{stretch-problem}
-For example, DTW will charge similar amounts for skipping
-$k$ points in a row, and for skipping $k$ points that are spaced far
+For example, DTW will charge similar amounts for combining $2k$ points
+in a row, and for combining $k$ pairs of points that are spaced far
 apart. The latter case is less likely to indicate error, since it can
 arise from small variations in the sampling rate. If we consider three
 times series $X,Y,Z$:
@@ -42,10 +55,68 @@ x_i &= i, &i=0, \dots, 2n\\
 y_i &= 2i, &i=0, \dots, n\\
 z_i &= \begin{cases} 0 & i=0,\dots, n\\ i-n & i=n+1, \dots, 3n\end{cases}\\
 \end{align*}
-Arguably, $X$ and $Y$ are the same time series at different
+Arguably, $X$ and $Y$ are the same time series at different sampling
 resolutions, but they are distance $n$ apart, while $X$ and $Z$ have
 different shapes, but are distance $0$ apart.
+
+The optimal warp between $X$ and $Y$ will be $\{(2i+a,i) \mid 0\le i
+\le n, a=0,1\}$. The optimal warp between $X$ and $Z$ will be $\{(0,i)
+\mid 0\le i \le n\} \cup \{(i,i+n) \mid 0\le i \le 2n \}$. These are
+shown in Table \ref{dtw-table}.
 \end{ex}
+
+\begin{table}
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
+\hline
+& $x_0=0$ & $x_1=1$ & $x_2=2$ & $x_3=3$ & $x_4=4$ & $x_5=5$ & $x_6=6$ & $x_7=7$ & $x_8 = 8$\\
+\hline
+$y_0 = 0$ & 0 & 1 & & & & & & & \\
+\hline
+$y_1 = 2$ & & & 0 & 1 & & & & & \\
+\hline
+$y_2 = 4$ & & & & & 0 & 1 & & & \\
+\hline
+$y_3 = 6$ & & & & & & & 0 & 1 & \\
+\hline
+$y_4 = 8$ & & & & & & & & & 0 \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
+\hline
+& $x_0=0$ & $x_1=1$ & $x_2=2$ & $x_3=3$ & $x_4=4$ & $x_5=5$ & $x_6=6$ & $x_7=7$ & $x_8 = 8$\\
+\hline
+$z_0 = 0$ & 0 & & & & & & & & \\
+\hline
+$z_1 = 0$ & 0 & & & & & & & & \\
+\hline
+$z_2 = 0$ & 0 & & & & & & & & \\
+\hline
+$z_3 = 0$ & 0 & & & & & & & & \\
+\hline
+$z_4 = 0$ & 0 & & & & & & & & \\
+\hline
+$z_5 = 1$ & & 0 & & & & & & & \\
+\hline
+$z_6 = 2$ & & & 0 & & & & & & \\
+\hline
+$z_7 = 3$ & & & & 0 & & & & & \\
+\hline
+$z_8 = 4$ & & & & & 0 & & & & \\
+\hline
+$z_9 = 5$ & & & & & & 0 & & & \\
+\hline
+$z_{10} = 6$ & & & & & & & 0 & & \\
+\hline
+$z_{11} = 7$ & & & & & & & & 0 & \\
+\hline
+$z_{12} = 8$ & & & & & & & & & 0 \\
+\hline
+\end{tabular}
+\caption{The lowest cost DTW matching between $X$ and $Y$, and between $X$ and $Z$. DTW is often visualized as finding the lowest cost path from the top left corner to the bottom right corner of such a table. }
+\label{dtw-table}
+\end{table}
+
 
 \section{Parsing Sequences to Measure Distance}
 
@@ -53,8 +124,9 @@ Instead of growing our sequences by one each time, as in DTW, we want
 to consider hierarchical decompositions of the sequences. Let $X$ be a
 sequence of length $n$. We consider intervals $[i,j]$ for all $0\le i
 \le j \le n$, and decompositions of the form $[i,k] \to [i,j] +
-    [j,k]$.  Recall that we have some similarity measure
-    $d(\cdot,\cdot)$ on the domain of $X$ and $Y$.
+[j,k]$.  We denote the length of an interval $I$ by $|I|$, so that
+$|[i,j]| = j-i$. Recall that we have some similarity measure
+$d(\cdot,\cdot)$ on the domain of $X$ and $Y$.
 
 Suppose we have two sequences, $X$ and $Y$, of length $m$ and $n$
 respectively, and we wish to measure their similarity. A {\em
@@ -78,28 +150,47 @@ M[I_1, J_1] + M[I_2, J_2] + W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) + W_{pair}
 
 We have many choices for these cost functions.
 
-\subsection{subsub Emulating DTW}
+For every hierarchical matching $\MMM$, there is a corresponding warp
+$S$ given by $\{(i,j) \mid (I,J)\in \MMM, I=(i,k), J=(j,\ell)\} \cup
+\{(m,n)\}$. It is not the case that every warp can be thus derived
+from some matching.
+
+\subsubsection{Emulating DTW}
+% \begin{align*}
+% W_{pair}([i,i+1], [j_1,j_2]) &= \frac{1}{2}\left(d(x_i,y_{j_1}) +
+% d(x_{i+1}, y_{j_2})\right) + \min_{j_1 \le k < j_2} \sum_{j=j_1 + 1}^k
+% d(x_i, y_j) + \sum_{j=k+1}^{j_2 - 1} d(x_{i+1}, y_j)\\
+% W_{pair}([i_1,i_2], [j,j+1]) &= \frac{1}{2}\left(d(x_{i_1},y_j) +
+% d(x_{i_2}, y_{j+1})\right) + \min_{i_1 \le k < i_2} \sum_{i=i_1 + 1}^k
+% d(x_i, y_j) + \sum_{i=k+1}^{i_2 - 1} d(x_{i}, y_{j+1})\\
+% W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+% W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0
+% \end{align*}
+
 \begin{align*}
-W_{pair}([i,i+1], [j_1,j_2]) &= \frac{1}{2}\left(d(x_i,y_{j_1}) +
-d(x_{i+1}, y_{j_2})\right) + \min_{j_1 \le k < j_2} \sum_{j=j_1 + 1}^k
-d(x_i, y_j) + \sum_{j=k+1}^{j_2 - 1} d(x_{i+1}, y_j)\\
-W_{pair}([i_1,i_2], [j,j+1]) &= \frac{1}{2}\left(d(x_{i_1},y_j) +
-d(x_{i_2}, y_{j+1})\right) + \min_{i_1 \le k < i_2} \sum_{i=i_1 + 1}^k
-d(x_i, y_j) + \sum_{i=k+1}^{i_2 - 1} d(x_{i}, y_{j+1})\\
-W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+W_{pair}([i,i+1], [j_1,j_2]) &= \min_{j_1 \le k < j_2} \sum_{j=j_1}^k d(x_i,y_j) + \sum_{j=k+1}^{j_2-1} d(x_{i+1},y_j)\\
+W_{pair}([i_1,i_2], [j,j+1]) &= \min_{i_1 \le k < i_2} \sum_{i=i_1}^k d(x_i,y_j) + \sum_{i=k+1}^{i_2-1} d(x_i,y_{j+1})\\
+W_{pair}([0,m], [0,n]) &= d(x_m,y_n)\\
+W_{pair}(I, J) &= 0 \mbox{\quad otherwise}\\
 W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0
 \end{align*}
+
 This corresponds almost exactly to dynamic time warping - the cost is
-the same as the corresponding warp in DTW, but not every warp can be
-represented by a matching. For example, matching all but the last
-point in $X$ to the first point of $Y$, and matching all but the first
-point of $Y$ to the last point of $X$. Reasonable warpings will be
-very close to a warping that is representable by a matching.
+the same as the corresponding warp in DTW. (Note that we omit the cost
+of matching the rightmost pair of points in every interval, since they
+will be the leftmost pair of points in the next interval, and that we
+treat the very rightmost pair $(x_m,y_n)$ specially.)
 
-Note that, like DTW, this penalizes stretching and contracting, because we end up
-adding more distance terms together when we stretch.
+However, not every warp can be represented by a matching. For example,
+matching all but the last point in $X$ to the first point of $Y$, and
+matching all but the first point of $Y$ to the last point of
+$X$. Reasonable warpings will be very close to a warping that is
+representable by a matching.
 
-\subsection{subsub Explicit stretching penalty}
+Note that, like DTW, this penalizes stretching and contracting,
+because we end up adding more distance terms together when we stretch.
+
+\subsubsection{Explicit stretching penalty}
 We can use
 \begin{align*}
 W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= w(I,J) \times \left[\left( \frac{|I_1|}{|I|} - \frac{|J_1|}{|J|}\right)^2 +
@@ -117,25 +208,46 @@ artifacts would make this very noisy. For example, matching an
 interval of length two to an interval of length three would have a
 minimum penalty of $\frac{1}{18}$.
 
-\subsection{subsub DTW without implicit stretching penalty}
-The formula isn't quite right, but it's close.
+% \subsubsection{DTW without implicit stretching penalty}
+% We can consider a modification of DTW that does not implicitly
+% penalize stretching. Let $X$ and $Y$ be two time series of length $m$
+% and $n$ respectively. We wish to find two functions $f:[0,m]\to [0,n]$
+% and $g:[0,n]\to [0,m]$ such that:
+% \begin{itemize}
+% \item If $i_1 < i_2$, then $f(i_1) \le f(i_2)$
+% \item If $j_1 < j_2$, then $g(j_1) \le g(j_2)$
+% \item If $i < g(j)$, then $f(i) \le j$
+% \item If $j < f(i)$, then $g(j) \le i$
+% \end{itemize}
+% Our modified cost function is $\sum_i d(x_i, y_{f(i)}) + \sum_j
+% d(x_{g(j)}, y_j)$. We can compute this efficiently using the following
+% dynamic program:
+% \marginnote{base case?}
+% \begin{align*}
+% M[-1,-1] &= 0\\
+% M[0,0] &= 2 d(x_0, y_0) \\
+% M[i,j] &= \min \{ d(x_i, y_j) + M[i-1,j], d(x_i, y_j) + M[i,j-1]\}.
+% \end{align*}
 
-If we don't want to implicitly penalize stretching, we can use
-\begin{align*}
-W_{pair}([i,i+1], J) &= \min_{J = J_1 + J_2} \left(1+ \frac{1}{|J_1|}\right) \sum_{j\in J_1} d(x_i,
-y_j) + \left(1+ \frac{1}{|J_2|}\right) \sum_{j\in J_2} d(x_{i+1}, y_j)\\
-W_{pair}(\{i\}, J) &= \left(1 + \frac{1}{|J|}\right) \sum_{j\in J} d(x_i, y_j) \\
-W_{pair}(I, \{j\}) &= \left(1 + \frac{1}{|I|}\right) \sum_{i\in I} d(x_i, y_j) \\
-W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
-W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0.
-\end{align*}
-It can be verified that each $i$ and $j$ then contributes a weighted
-average of one data term, for $m+n$ total data terms.
 
-Since stretching is a bad thing, this seems silly. However, we can
-combine this with the explicit stretching penalty.
+% The formula isn't quite right, but it's close.
 
-\subsection{subsub Comparing subsequences by approximation}
+% If we don't want to implicitly penalize stretching, we can use
+% \begin{align*}
+% W_{pair}([i,i+1], J) &= \min_{J = J_1 + J_2} \left(1+ \frac{1}{|J_1|}\right) \sum_{j\in J_1} d(x_i,
+% y_j) + \left(1+ \frac{1}{|J_2|}\right) \sum_{j\in J_2} d(x_{i+1}, y_j)\\
+% W_{pair}(\{i\}, J) &= \left(1 + \frac{1}{|J|}\right) \sum_{j\in J} d(x_i, y_j) \\
+% W_{pair}(I, \{j\}) &= \left(1 + \frac{1}{|I|}\right) \sum_{i\in I} d(x_i, y_j) \\
+% W_{pair}(I, J) &= 0 \mbox{\quad if } |I|,|J| > 1 \\
+% W_{split}(I\to I_1 + I_2, J\to J_1 + J_2) &= 0.
+% \end{align*}
+% It can be verified that each $i$ and $j$ then contributes a weighted
+% average of one data term, for $m+n$ total data terms.
+
+% Since stretching is a bad thing, this seems silly. However, we can
+% combine this with the explicit stretching penalty.
+
+\subsubsection{Comparing subsequences by approximation}
 
 We can define the cost $W_{pair}(I,J)$ in terms of how similar the
 sequences $X$ and $Y$ appear on the respective intervals $I$ and $J$,
@@ -147,7 +259,17 @@ efficient way.
 Wavelets might provide a cool way to do this, since we could probably
 compare the wavelet coefficients in a semi-principled way.
 
-\subsection{subsub Bias and Gain Invariance}
+\subsubsection{Bias and Gain Invariance}
+
+Let $x_i$ be a real time series, and consider the time series $y_i = a x_i
++ b$. While the values of $x_i$ and $y_i$ can be significantly
+different, it is desirable in many cases to consider the two time
+series to be very similar. Transforming a time series by adding a
+constant $b$ to every term is known as adding bias. Transforming a
+time series by multiplying every term by a constant $a$ is known as
+adding gain. In many contexts, it is desirable to be invariant to gain
+and bias, which would mean that $x_i$ and $y_i$ would be considered
+identical.
 
 What is base case?
 
@@ -161,7 +283,7 @@ We can be invariant to bias and gain by charging some function of
 $$\frac{C[i_2] - C[i_1]}{C[i_3] - C[i_1]} - \frac{D[i_2] - D[i_1]}{D[i_3] - D[i_1]}.$$
 This makes the cost invariant to local bias and gain, which might be a little bit strong.
 
-\subsection{subsub Detrending data cost}
+\subsubsection{Detrending data cost}
 We can also formulate a detrending data term, so that if $C'$ is
 defined in terms of $C$ as $c'_i = c_i + a + bi$, the cost for
 matching $C'$ and $C$ is zero.
@@ -188,6 +310,10 @@ straight line in the given interval.
 
 
 \section{Decomposition Families}
+
+In order to speed up parsing, we consider an approximate version of
+parsing that searches over a restricted set of parses. We describe
+these sets of parses using decomposition families.
 
 \begin{defn}
 Let $C=c_0,\dots,c_n$ be a sequence. We will say that $C$ has length
@@ -359,3 +485,5 @@ $$|d(x_i, y_j) - d(x_k, y_\ell) \le C |i-k| + |j-\ell|.$$ It seems
 that we can then figure out how much cost is incurred by applying
 Green's theorem in the DTW square, and the cost is too high. That is,
 it can be larger in magnitude than ...
+
+\marginnote{end of sdf/sdf.tex}

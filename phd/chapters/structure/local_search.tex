@@ -41,16 +41,34 @@ first pass of the Inside-Outside Algorithm, as explained in Section
 
 \subsection{Principled Reason for using the KL Divergence}
 
-If we think of $X$ as stealing the data $d_Y$ that $Y$ was explaining,
-then we'll be paying $\log \frac{P_Y(d_Y)}{P_X(d_Y)}$. If we don't
-know $d_Y$, then we'll just have to guess, so we'll be paying $E_Y
-\left[ \log \frac{P_Y(d_Y)}{P_X(d_Y)} \right]$, which is exactly the
-KL divergence.
+Suppose that we have two nonterminals $X$ and $Y$, and we want to
+decide whether we should replace $Y$ with $X$, given that we want a
+simple model which still explains our data, which is formalized by
+trying to maximize the posterior probability of the chosen
+grammar. Performing the replacement will simplify the grammar, which
+will be reflected in the MDL prior over structure. In order to make
+sure that we are still explaining the data, we need to consider the
+ratio of the likelihood under the current grammar to the likelihood
+under the grammar after performing the replacement.
 
-If the formula were correct, this would be weighted by the actual
-amount of data that $Y$ is explaining, but we can maybe assume that
-this is uniform pre-training. Or weight the KL divergence term by how
-much data we think $Y$ should explaining.
+Just as with EM, if we knew the true parses of our example curves,
+this would simply be $$\prod_d \frac{P_X(d)}{P_Y(d)},$$ where $d$ runs
+over parts of the training data that used to be explained by $Y$ and
+must now be explained by $X$. Since we don't know the true parses, it
+seems reasonable to use (in the log domain)
+$$E_T \left[ \sum_d \log \frac{P_Y(d)}{P_X(d)} \right],$$
+which is the KL divergence between the inside distributions of $X$ and $Y$.
+ 
+% If we think of $X$ as stealing the data $d_Y$ that $Y$ was explaining,
+% then we'll be paying $\log \frac{P_Y(d_Y)}{P_X(d_Y)}$. If we don't
+% know $d_Y$, then we'll just have to guess, so we'll be paying $E_Y
+% \left[ \log \frac{P_Y(d_Y)}{P_X(d_Y)} \right]$, which is exactly the
+% KL divergence.
+
+% If the formula were correct, this would be weighted by the actual
+% amount of data that $Y$ is explaining, but we can maybe assume that
+% this is uniform pre-training. Or weight the KL divergence term by how
+% much data we think $Y$ should explaining.
 
 \subsection{Creating Choice with Merging}
 \label{sec-merge}

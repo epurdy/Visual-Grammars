@@ -1,1 +1,488 @@
-FILTRATIONS!!!
+\marginnote{beginning of filtrations.tex}
+
+\section{Lightest Derivation Problems}
+
+We now discuss filtration parsing, which is a technique to speed up
+parsing by eliminating unlikely parses from consideration. It is
+similar in nature to \cite{astar}, but it can be applied in a more
+general context. We first require some preliminaries.
+
+\marginnote{Think about approximation guarantees for inadmissible
+  homomorphisms. If the maximum size of a derivation is $N$, and
+  $w(X\tne_v Y, Z) \ge w(\Phi(X) \tne \Phi(Y), \Phi(Z)) - \epsilon$,
+  then we will find a derivation with cost at most $OPT +
+  N\epsilon$. Similarly, if we stop when $\ell > u - \delta$, then we
+  will find a derivation with cost at most $OPT + N\epsilon +
+  \delta$.}
+
+\marginnote{Discuss min-Bloom filters somewhere?}
+
+We will write a binary tree with root node $v$, left subtree $T_1$,
+and right subtree $T_2$ as $\tree{v}{T_1}{T_2}.$ We
+will also have non-binary trees, which we will write as
+$\treee{v}{T_1}{\dots}{T_k}$.
+
+\begin{defn}
+  Let $T_1, T_2$ be labeled binary trees, where $u$ is a leaf node of
+  $T_1$ and $v$ is the root node of $T_2$. We define a new tree $T_1
+  \triangle^{\cancel{u}}_v T_2$ to be the tree resulting from deleting
+  $u$ and attaching $T_2$ in its place.
+\end{defn}
+
+A lightest derivation problem \cite{kld} is a tuple $(\SSS,\RRR)$, where $\SSS$
+is a set of statements and $\RRR$ is a set of weighted inference
+rules. We require that $\SSS$ contain $\perp$, a special
+goal-statement. We will denote the weight of a rule $R\in \RRR$ by
+$w(R)$.
+
+The goal is to find the lightest (i.e., lowest cost) derivation of the
+goal statement using the rules in $\RRR$. Our inference rules are of
+the following form:
+\begin{align*}
+&A_1 : w_1\\
+&\; \vdots \\
+&A_k : w_k\\
+&\infrul{v}\\
+&C : v + w_1 + \dots + w_k.
+\end{align*}
+Here the antecedents $A_i$ and the conclusion $C$ are statements in
+$\SSS$, $v$ is the cost of using the rule in a derivation, and $w_i$
+is the cost of deriving $A_i$. We will also denote such a rule by
+$\langle C \tne_v A_1, \dots, A_k \rangle$. We write the conclusion on
+the left to maintain consistency with the conventional notation for
+context-free grammars. Note that the antecedents $A_i$ are unordered,
+so that $\langle C\tne_v A_1, A_2 \rangle$ and $\langle C_\tne_v A_2,
+A_1 \rangle$ would be considered equivalent.
+
+A derivation of $C$ is a finite tree whose root is labelled with a
+rule $ \langle C\tne_v A_1, \dots, A_k \rangle$, where the subtree
+rooted at the $i$-th child is a derivation of $A_i$. The leaves of
+this tree are rules with no antecedents. The cost of a tree is the sum
+of the costs of the rules at its nodes. We will denote the cost of a
+tree $T$ by $wt(T)$.
+
+Usually, we will work with lightest derivation problems that are in
+Chomsky Normal Form, i.e., inference rules will either have two
+antecedents,
+\begin{align*}
+  &A : w_A\\
+  &B : w_B\\
+  &\infrul{v}\\
+  &C : v + w_A + w_B \\
+  \intertext{in which case they will be called {\em binary rules}, or
+    they will have no antecedents,}
+  &\infrul{v}\\
+  &A : v,
+\end{align*}
+in which case they will be called {\em lexical rules}.
+
+We will be interested only in lightest derivation problems that are
+acyclic. A lightest derivation problem $(\SSS,\RRR)$ is {\em acyclic}
+if there is an ordering $\le$ of the statements in $\SSS$ such that,
+for each rule $\langle C\tne_v A_1,\dots, A_k \rangle \in \RRR$, $A_i
+\le C$ for $i=1,\dots, k$.
+
+In most cases, the lightest derivation problem will be specified
+implicitly by listing abstracts statements and rules which contain
+free variables. The lightest derivation problem is then obtained by
+substituting all possible values for each free variable in the
+abstract statements and rules to create concrete statements and
+rules. In such cases, listing all the inference rules may be
+prohibitively slow.
+
+As an example, we can consider CKY parsing with PCFG's as a lightest
+derivation problem. Suppose our a grammar is in Chomsky Normal Form,
+and we are parsing a string $s_1, \dots, s_n$. The lightest derivation
+problem will have statements $X(i,j)$ for every nonterminal $X$ and
+every pair of integers $i,j$ with $1\le i \le j \le n$. $X(i,j)$ will
+represent the statement that nonterminal $X$ has the yield $s_i,\dots,
+s_j$. The rules will be, for every binary rule $X\to YZ$ in the
+grammar, and all $i,j,k$ with $1\le i \le j \le k \le n$,
+\begin{align*}
+&Y(i,j) : w_1\\
+&Z(j+1,k) : w_2\\
+&\infrul{w(X \to YZ)}\\
+&X(i,k) : w_1 + w_2 + w(X \to YZ) \\
+\intertext{and, for every nonterminal $X$, and for every $i$ such that the lexical rule $X\to s_i$ exists,}
+&\infrul{w(X\to s_i)}\\
+&X(i,i) : w(X\to s_i),
+\end{align*}
+The cost $w(X \to \lambda)$ will be the negative log of the transition
+probability specified by the PCFG. The goal statement $\perp$ is in
+this case $S(1,n)$, where $S$ is the start symbol of the grammar.
+
+In this case, listing all the concrete inference rules requires
+$O(mn^3)$ time, where $m$ is the number of productions in the
+PCFG. This is the running time of the CKY algorithm, which is too slow
+to use in many contexts.
+
+\section{Solving Lightest Derivation Problems via Dynamic Programming}
+
+Let $\Delta_{\SSS,\RRR}(C)$ be the set of derivations of $C$. We
+define the {\em cost} of $C$ to be
+$$cost_{\SSS,\RRR}(C) = \min_{T\in \Delta_{\SSS,\RRR}(C)} wt(T).$$
+
+\begin{obs}
+\label{prop-induct-inside}
+Let $(\SSS,\RRR)$ be an acyclic\footnote{In the case of a cyclic
+  lightest derivation problem, this definition would also allow
+  infinite trees.}  lightest derivation problem. We can construct the
+set $\Delta_{\SSS,\RRR}(C)$ recursively as follows:
+$$
+  \Delta_{\SSS,\RRR}(C) = \left\{
+    \treee{\langle C\tne_v A_1, \dots, A_k\rangle}{T_1}{\dots}{T_k} \mid
+    \langle C\tne_v A_1, \dots, A_k\rangle \in \RRR, T_i \in
+    \Delta_{\SSS,\RRR}(A_i)  \right\}
+$$
+\end{obs}
+
+\begin{obs}
+  \label{obs-rec-inside}
+  Let $(\SSS,\RRR)$ be an acylic lightest derivation problem.  We can
+  recursively compute $cost_{\SSS,\RRR}(C)$ as
+$$cost(C) = \min_{C\tne_v A_1,\dots, A_k} v + \sum_i cost(A_i).$$
+\end{obs}
+
+We can use Observation \ref{obs-rec-inside} in Algorithm
+\ref{alg-inside}. We assume that $(\SSS,\RRR)$ is an acylic lightest
+derivation problem in Chomsky Normal Form. Note that this is a
+standard use of dynamic programming.
+
+\begin{algorithm}
+\caption{$lightest\_derivation(\SSS,\RRR)$}
+\begin{algorithmic}
+  \INPUT $\SSS, \RRR$
+  \STATE{$COST \from \emptyset$}
+  \STATE{$BEST \from \emptyset$}
+  \FOR{$X\in \SSS$ (in $\le$ order)}
+  \STATE $COST[X] \from \infty$
+  \FOR{$\langle X\tne_v\rangle \in \RRR$}
+  \IF{$COST[X] > v$}
+  \STATE $COST[X] \from v$
+  \STATE $BEST[X] \from \langle X\tne_v \rangle$
+  \ENDIF
+  \ENDFOR
+  \FOR{$\langle X\tne_v YZ \rangle \in \RRR$}
+  \STATE $new \from COST[Y] + COST[Z] + v$
+  \IF{$new < COST[X]$}
+  \STATE $COST[Z] \from new$
+  \STATE $BEST[Z] \from \langle X\tne_v YZ \rangle$
+  \ENDIF
+  \ENDFOR
+  \ENDFOR
+  \RETURN $COST, BEST$
+\end{algorithmic}
+\label{alg-inside}
+\end{algorithm}
+
+\subsection{Contexts}
+
+In this section, we define ``contexts'', which are a sort of dual
+concept to derivations. See also \cite{astar}.
+
+\marginnote{How do you represent a single-node tree? If not in CNF,
+  don't necessarily know how many children a node ``should'' have.}
+\begin{defn}
+  A $B$-context for $C$ is either the single-node tree
+  $\frac{hole(C)}{\cdot}$ if $B=C$, or a finite tree whose root is
+  labelled with a rule $ \langle B \tne_v A_1,\dots, A_k \rangle$,
+  where the subtree rooted at the $i$-th child is either a derivation
+  of $A_i$ or an $A_i$-context for $C$, and exactly one of the
+  subtrees is an $A_i$-context rather than a derivation. The cost of a
+  context $T$ (denoted $wt(T)$) is the sum of the cost of the rules at
+  all of its nodes. Note that the node labelled $hole(C)$ has cost
+  $0$.
+\end{defn}
+
+Let $\Gamma_{\SSS,\RRR}(C)$ be the set of $\perp$-contexts of $C$. Define
+$$ocost_{\SSS,\RRR}(C) = \min_{T\in \Gamma_{\SSS,\RRR}(C)} wt(T).$$
+$ocost$ is analogous to the outside cost in the Inside-Outside
+Algorithm for PCFG's, but here we are trying to find a lightest
+derivation rather than sum over all derivations.
+
+\marginnote{Figure to illustrate this prop?}
+\marginnote{Assuming CNF here}
+\begin{obs}
+\label{prop-outer-set}
+Let $(\SSS,\RRR)$ be an acylic lightest derivation problem.
+We can construct the set $\Gamma_{\SSS,\RRR}(C)$ recursively as follows:
+\begin{itemize}
+\item $\Gamma_{\SSS,\RRR}(\perp) = \left\{ \frac{hole(\perp)}{\cdot}
+  \right\}$. (Note that, since the lightest derivation problem is
+  assumed to be acyclic, this is the only $\perp$-context for $\perp$.
+\item $\Gamma_{\SSS,\RRR}(X) = \left\{ \treee{\langle X \tne_v
+      A_1,\dots, A_k \rangle}{T_1}{\dots}{T_k} \mid \mbox{exactly one
+    }T_i \in \Gamma_{\SSS,\RRR}(C,A_i), \mbox{ other } T_i \in
+    \Delta_{\SSS,\RRR}(A_i) \right\}$
+\end{itemize}
+\end{obs}
+
+\begin{obs}
+\label{obs-outside}
+Given $cost(X)$ for all $X$, we can recursively compute $ocost(X)$:
+
+\begin{align*}
+ocost(\perp) &= 0\\
+ocost(C) &= \min_{A\tne_v C,B_1,\dots,B_{k-1}\in \RRR} ocost(A) + v + \sum_i cost(B_i)\\
+\end{align*}
+
+This is implemented by Algorithm \ref{alg-outside}.
+\end{obs}
+
+\begin{algorithm}
+\caption{$outside(\SSS,\RRR,COST)$}
+\begin{algorithmic}
+  \INPUT{$\SSS, \RRR, COST$}
+  \STATE $OCOST \from \emptyset$
+  \STATE $OCOST[\perp] \from 0$
+  \FOR{$X\in \SSS$ (in reverse $\le$ order)}
+  \FOR{$X\tne_v YZ \in \RRR$}
+  \STATE $OCOST[Y] \from \min \{ OCOST[Y], v + OCOST[X] + COST[Z]\}$
+  \STATE $OCOST[Z] \from \min \{ OCOST[Z], v + OCOST[X] + COST[Y]\}$
+  \ENDFOR
+  \ENDFOR
+  \RETURN $OCOST$
+\end{algorithmic}
+\label{alg-outside}
+\end{algorithm}
+
+
+\section{Homomorphisms}
+
+\begin{defn}[Homomorphism]
+\marginnote{Should we change the name? ``minimorphism''?}
+\marginnote{Do we require that $\Phi(\perp) = \perp$?}
+  A {\em homomorphism} of lightest derivation problems is a function
+  $\Phi : \SSS \to \SSS'$ such that, for every $\langle C \tne_v A_1,
+  \dots, A_k \rangle \in \RRR$, there exists a rule $\langle \Phi(C)
+  \tne_w \Phi(A_1), \dots, \Phi(A_k)\rangle\in \RRR'$, with $w\le v$.
+\end{defn}
+Homomorphisms are called ``abstractions'' in \cite{astar}.
+
+\begin{lem}
+  Let $\Phi$ be a homomorphism of lightest derivation problems. Then
+  $cost_{\SSS,\RRR}(X) \ge cost_{\SSS',\RRR'}(\Phi(X))$. Also, 
+  $ocost_{\SSS,\RRR}(X) \ge ocost_{\SSS',\RRR'}(\Phi(X))$.
+\end{lem}
+\begin{proof}
+  Let $T$ be the derivation achieving $cost(\SSS,\RRR)(X)$. We can
+  replace each rule $\langle C\tne_v A_1, \dots, A_k \rangle$ used in
+  the derivation with a rule $\langle \Phi(X) \tne_w \Phi(A_1), \dots
+  \Phi(A_k) \rangle$, thereby creating a valid derivation of $\Phi(X)$
+  whose total cost is lower than that of $T$. Thus the lightest
+  derivation of $\Phi(X)$ also has cost lower than that of $T$.
+\end{proof}
+
+\begin{defn}
+Let $(\SSS,\RRR)$ be a lightest derivation problem. A table $C$
+mapping statements to weights is a {\em valid lower bound} for
+$(\SSS,\RRR)$ if, for every $X\in \SSS$, $cost_{(\SSS,\RRR)} \ge
+C[X]$.
+\marginnote{Also define valid lower bound on contexts}
+\end{defn}
+
+\begin{lem}
+  If $\Phi:\SSS \to \SSS'$ is a homomorphism, and $C'$ is a valid
+  lower bound for $(\SSS',\RRR')$, and we define $C[X] :=
+  C'[\Phi(X)]$, then $C$ is a valid lower bound for $(\SSS,\RRR)$. $C$
+  is called the {\em pullback} of $C'$ under $\Phi$.
+\end{lem}
+\begin{proof}
+  Let $X\tne A_1,\dots, A_k$ be the rule that achieves $X$'s lightest
+  derivation. Then
+\begin{align*}
+ cost_{\SSS,\RRR}(X) &\ge cost_{\SSS',\RRR'}(\Phi(X))\\
+\intertext{by some proposition}
+ &\ge C'[\Phi(X)] \\
+\intertext{because $C'$ is a valid lower bound for $\SSS',\RRR'$}
+ &= C[X]
+\end{align*}
+\end{proof}
+
+\begin{obs}
+  Every derivation of $\perp$ in which $X$ appears can be realized as
+  $T_1 \triangle^{\cancel{hole(X)}} T_2$, where $T_1\in \Gamma_X$ and
+  $T_2\in \Delta_X$. Therefore, if $cost(X) = \min_{T\in \Delta_X}
+  wt(T)$ and $ocost(X) = \min_{T\in \Gamma_X}$, then the lightest
+  derivation of $\perp$ using $X$ has cost $cost(X) + ocost(X)$.
+\end{obs}
+
+\begin{lem}
+  If $T$ is a lightest derivation of $\perp$, and $X$ does not appear
+  in $T$, then the value of $\SSS,\RRR$ is the same as the value of
+  $\SSS\sm \{X\}, \RRR'$, where $\RRR'$ has no rules involving $X$.
+\end{lem}
+
+
+\marginnote{Use COST, OCOST in pseudocode to make them look more like
+  data structures. Maybe somehow also emphasize that they are lower
+  bounds. $\underline{COST}$?}
+
+\section{Filtration Parsing}
+
+
+\begin{thm}
+\label{thm-filt-test}
+  Let $(\SSS,\RRR)$ be a lightest derivation problem, and let $X$ be a
+  statement. Suppose that $\underline{COST}$ is a valid lower bound
+  for $(\SSS,\RRR)$, and $\underline{OCOST}$ is a valid lower bound on
+  contexts for $(\SSS,\RRR)$. Then the lightest derivation that uses
+  $X$ has cost at least $\underline{COST}[X] + \underline{OCOST}[X]$.
+
+  Consequently, if there is a derivation $T$ with cost $u <
+  \underline{COST}[X] + \underline{OCOST}[X]$, then no lightest
+  derivation of $\perp$ uses $X$.
+\end{thm}
+
+We can use this theorem to perform an admissible coarse-to-fine search
+strategy. This is implemented by Algorithms \ref{alg-filt-inside},
+\ref{alg-filt-outside}, and \ref{alg-filt}. Algorithms
+\ref{alg-filt-inside} and \ref{alg-filt-outside} are very similar to
+Algorithms \ref{alg-inside} and \ref{alg-outside}, but they do not
+consider solutions that violate the lower bound of Theorem
+\ref{thm-filt-test}.
+
+Algorithm \ref{alg-filt} shows how to use the inside pass and the
+outside pass to organize our search. The lifting procedure $lift$ and
+the modification of $\Phi$ must be customized to the problem
+domain. The lifting procedure will generally be a standard
+coarse-to-fine strategy, where we search at higher and higher levels
+of detail, always limiting ourselves to parses consistent with the
+solution found at the previous, coarser level.
+
+Our modification of $\Phi$ is chosen to increase the level of detail
+at statements similar to those used in the last candidate parse. This
+allows us to focus in on regions that could plausibly contain an
+object of interest without spending extra time in other regions. Thus,
+filtration parsing can be considered an attention-based method. This
+technique is similar to Coarse-to-Fine Dynamic Programming (CFDP)
+\cite{cfdp}, but is applicable to a broader class of problems than
+CFDP, which is limited to finding the shortest path through a trellis
+graph.
+
+\begin{algorithm}
+\caption{$inside(\SSS,\RRR,\underline{OCOST},u)$}
+\begin{algorithmic}
+  \INPUT $\SSS, \RRR, \underline{OCOST}$, $u$
+  \STATE{$\underline{COST} \from \emptyset$}
+  \STATE{$BEST \from \emptyset$}
+  \FOR{$X\in \SSS$}
+  \STATE $\underline{COST}[X] \from \infty$
+  \FOR{$\langle X\tne_v \rangle \in \RRR$}
+  \IF{$\underline{COST}[X] > v$}
+  \STATE $\underline{COST}[X] \from v$
+  \STATE $BEST[X] \from X\tne_v$
+  \ENDIF
+  \ENDFOR
+  \ENDFOR
+  \FOR{$X\in \SSS$ (in $\le$ order)}
+  \IF{$\underline{COST}[X] + \underline{OCOST}[X] > u$}
+  \STATE continue
+  \ENDIF
+  \FOR{$Z\tne_v XY \in \RRR$}
+  \IF{$\underline{COST}[Y] + \underline{OCOST}[Y] > u$ or $\underline{COST}[Z] + \underline{OCOST}[Z] > u$}
+  \STATE continue
+  \ENDIF
+  \STATE $new \from \underline{COST}[X] + \underline{COST}[Y] + v$
+  \IF{$new < \underline{COST}[Z]$}
+  \STATE $\underline{COST}[Z] \from new$
+  \STATE $BEST[Z] \from Z\tne_v XY$
+  \ENDIF
+  \ENDFOR
+  \ENDFOR
+  \RETURN $\underline{COST}, BEST$
+\end{algorithmic}
+\label{alg-filt-inside}
+\end{algorithm}
+
+
+\marginnote{Are we forgetting something here? }
+\begin{algorithm}
+\caption{$outside(\SSS,\RRR,\underline{COST},u)$}
+\begin{algorithmic}
+  \INPUT{$\SSS, \RRR, \underline{COST}$, $u$}
+  \STATE $\underline{OCOST} \from \emptyset$
+  \STATE $\underline{OCOST}[\perp] \from 0$
+  \FOR{$X\in \SSS$ (in reverse $\le$ order)}
+  \IF{$\underline{COST}[X] + \underline{OCOST}[X] > u$}
+  \STATE continue
+  \ENDIF
+  \FOR{$X\tne_v YZ \in \RRR$}
+  \STATE $\underline{OCOST}[Y] \from \min \{ \underline{OCOST}[Y], v + \underline{OCOST}[X] + \underline{COST}[Z]\}$
+  \STATE $\underline{OCOST}[Z] \from \min \{ \underline{OCOST}[Z], v + \underline{OCOST}[X] + \underline{COST}[Y]\}$
+  \ENDFOR
+  \ENDFOR
+  \RETURN $\underline{OCOST}$
+\end{algorithmic}
+\label{alg-filt-outside}
+\end{algorithm}
+
+\marginnote{lift is getting incorrect parameters}
+\marginnote{refer to definition of pullback}
+\begin{algorithm}
+\caption{Overall algorithm}
+\begin{algorithmic}
+  \STATE $l \from \infty$
+  \STATE $u \from \infty$
+  \STATE $\underline{OCOST}[*] = - \infty$
+  \WHILE{$l < u$}
+  \STATE $\underline{COST},BEST \from inside(u, \SSS, \RRR, \underline{OCOST})$
+  \STATE $ctfcost, ctfsoln \from lift(\underline{COST},BEST)$
+  \STATE $u \from \min(u, ctfcost)$
+  \STATE Choose $\Phi_1, \Phi_{new}$ such that $\Phi = \Phi_1 \circ \Phi_{new}$.
+  \STATE $\underline{COST} \from pullback(\Phi_1,\underline{COST})$
+  \STATE $\underline{OCOST} \from outside(\SSS,\RRR,u, \underline{COST})$
+  \ENDWHILE
+\end{algorithmic}
+\label{alg-filt}
+\end{algorithm}
+
+\section{Plane Parsing}
+
+For the problem of detecting an object with a grammar in a cluttered
+image, we have the following lightest derivation problem: for every
+pair of points $p,q$, and every nonterminal $X$, we have the statement
+$X(p,q)$. 
+
+For every rule $X\to YZ$ in our grammar, and every triple of points
+$p,q,r$, we have
+\begin{align*}
+&Y(p,q) : w_1\\
+&Z(q,r) : w_2\\
+&\infrul{v=-\log \left(\mu_{X\to YZ}(p,q,r) \cdot \rho(X \to YZ)\right)}\\
+&X(p,r) : w_1 + w_2 + v \\
+\intertext{and, for every rule $X \to \ell$, and every pair $p,q$}
+&\infrul{v = data(p,q) -\log \rho(X\to \ell)}\\
+&X(p,q) : v
+\end{align*}
+where $data(p,q)$ is a data cost modeling the log-likelihood of a line
+segment existing between $p$ and $q$. Specifically, $data(p,q)$ is
+chosen so that the sum over all terms will be $\log \frac{P(I\mid
+  \mbox{parse})}{P(I\mid \mbox{no object})}$, where $I$ is the image
+data and the probabilities refer to a probabilistic model of image
+formation. Our image formation model is described in the next section.
+
+Note that this lightest derivation problem is only acyclic if the
+grammar used is acyclic. If the grammar used has cycles, we can
+require that some rules $X(p,r)\tne_v Y(p,q), Z(q,r)$ are restricted
+to $p,q,r$ such that the distance between $p$ and $r$ is at least as
+big as that between $p$ and $q$, and $q$ and $r$.
+
+We construct homomorphisms for filtration parsing by coarsening the
+image grid, which we represent by pairs of integer indices.  Let
+$\varphi((i,j)) = \left(\left\lfloor \frac{i}{2} \right\rfloor,
+  \left\lfloor \frac{j}{2} \right\rfloor \right)$, and let
+$\Phi(X(p,q)) = X(\varphi(p),\varphi(q))$. By repeatedly applying
+$\Phi$, we construct a hierarchy of lightest derivation problems, in
+which each level has 16 times fewer statements and (roughly) 64 times
+fewer rules than the previous level.
+
+To make the $\Phi_i$ be legitimate homomorphisms, for each rule
+$X(p,r) \tne_v Y(p,q), Z(q,r)$ in $\RRR_i$, we need a lower bound on
+the cost of rules mapping to it.
+
+
+\marginnote{Talk about inadmissible methods too.}
+\marginnote{Mention that this can be considered an attention-based method.}
+
+\marginnote{end of filtrations.tex}

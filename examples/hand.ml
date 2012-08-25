@@ -8,6 +8,7 @@ module N = Parzen
 module Geo = Geometry
 open Sdf
 open Grammar
+open Abstract
 
 let granularity = 100
 let smallsigma = (* 1.0 *) 0.01
@@ -55,25 +56,50 @@ let gram =
       rv + 1
   in
 
-  let gram = Grammar.make_live_shape_grammar  
-    {dscale=1.; curve=curve;} 
-    {dscale=0.; curve=[||];} 
-    {dshape=Shape.default_shape; lcurve=[||]; rcurve=[||]; ocurve=[||];} 
+  let gram = Abstract.new_live_grammar ()
+    (*     {dscale=1.; curve=curve;}  *)
+    (*     {dscale=0.; curve=[||];}  *)
+    (*     {dshape=Shape.default_shape; lcurve=[||]; rcurve=[||]; ocurve=[||];}  *)
   in
+
+  let sdata = {
+    closed = true;
+    straightprob = 0.;
+    straightcost = infinity;
+    curve = curve
+  }
+  in
+  let _ =
+    Abstract.make_new_symbol gram sdata true
+  in
+
+  (*   let gram = Grammar.make_live_shape_grammar   *)
+  (*     {dscale=1.; curve=curve;}  *)
+  (*     {dscale=0.; curve=[||];}  *)
+  (*     {dshape=Shape.default_shape; lcurve=[||]; rcurve=[||]; ocurve=[||];}  *)
+  (*   in *)
     
   let make_state sprob (i,j) = 
     let	curve = Array.sub doubled i ((d i j) + 1) in
-      gram.make_new_state false (-. log sprob) {dscale=0.; curve=curve;}
+    let sdata = {
+      closed = false;
+      straightprob = sprob;
+      straightcost = -. log sprob;
+      curve = curve;
+    }
+    in
+      (*       gram.make_new_state false (-. log sprob) {dscale=0.; curve=curve;} *)
+      Abstract.make_new_symbol gram sdata false
   in
 
   let make_cprod (i,j,k) p x (y,z) =
     let	lcurve = Array.sub doubled i ((d i j) + 1) in
     let rcurve = Array.sub doubled j ((d j k) + 1) in
     let ocurve = Array.sub doubled k ((d k i) + 1) in 
-      gram.imake_new_prod x.sid (y.sid,z.sid) (-.log p)
-	Improper
-	{
-	  dshape = Shape.default_shape;
+      Abstract.imake_new_composition gram x.sid (y.sid,z.sid)
+	{ prob = p;
+	  cost = -. log p;
+	  geom = Improper;
 	  lcurve = lcurve;
 	  rcurve = rcurve;
 	  ocurve = ocurve;
@@ -84,12 +110,15 @@ let gram =
     let	lcurve = Array.sub doubled i ((d i j) + 1) in
     let rcurve = Array.sub doubled j ((d j k) + 1) in
     let ocurve = Array.sub doubled k ((d k i) + 1) in 
-      gram.imake_new_prod x.sid (y.sid,z.sid) (-.log p)
-	(Parzen (N.make_model shapes smallsigma granularity 
-		   (shapes.(0), smallsigma) 
-		   Con.default_baseline_weight false))
+    let geom = Parzen (N.make_model shapes smallsigma granularity 
+			 (shapes.(0), smallsigma) 
+			 Con.default_baseline_weight false)
+    in
+      Abstract.imake_new_composition gram x.sid (y.sid,z.sid)
 	{
-	  dshape = shapes.(0); 
+	  prob = p;
+	  cost = -.log p;
+	  geom = geom;
 	  lcurve = lcurve;
 	  rcurve = rcurve;
 	  ocurve = ocurve;
@@ -124,7 +153,7 @@ let gram =
 			 rot_shape finger_shape2 (C.polar 1.0 theta);
 			 rot_shape finger_shape2 (C.polar 1.0 (-. theta)); |] in
 
-    make_cprod (0,7,0) 1.0 gram.start_ (top,bottom);
+    make_cprod (0,7,0) 1.0 (Live.start gram) (top,bottom);
     make_prod [| make_shape (0,3,7) |] (0,3,7) 1.0 top (finger,top2);
     make_prod [| make_shape (3,4,7) |] (3,4,7) 1.0 top2 (ell, finger);
     make_prod [| make_shape (1,2,3); make_shape (5,6,7) |] (1,2,3) 1.0 finger2 (ell, ell);
@@ -134,5 +163,5 @@ let gram =
     make_prod [| make_shape (8,9,10) |] (8,9,10) 1.0 thumb2 (ell, ell);
     make_prod finger_shapes (0,1,3) 1.0 finger (ell, finger2);
     make_prod thumb_shapes (7,8,10) 1.0 thumb (ell, thumb2);
-      
-      Grammar.finalize gram
+    
+    Abstract.finalize gram

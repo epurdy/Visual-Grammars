@@ -9,9 +9,10 @@ over a class of curves.
 
 Analogously to nonterminals in a traditional context-free grammar, we
 introduce {\em placed symbols}. A placed symbol is of the form
-$X_{p,q}$, where $X$ is a member of a finite alphabet $\NNN$, and
-$p,q$ are points. $X_{p,q}$ represents an oriented curve going from
-$p$ to $q$. The path between the endpoints is unspecified.
+$X_{p,q}$, where $X$ is a member of a finite alphabet $\NNN$ or the
+special symbol $\ell$, and $p,q$ are points. $X_{p,q}$ represents an
+oriented curve going from $p$ to $q$. The path between the endpoints
+is unspecified.
 
 \marginnote{Recall \spk{10}{gdash} and \spk{10}{gline} from the
   section on L-systems, which represented different kinds of curves
@@ -22,18 +23,17 @@ particular class of paths between any two endpoints. By itself, $X$ is
 an {\em abstract symbol} that can be instantiated as a placed symbol
 between any $p$ and $q$.
 
-There is a special symbol $\ell\in \NNN$ that denotes a line
-segment. This takes the place of terminals in traditional context-free
-grammars.
+The special symbol $\ell$ denotes a line segment. This takes the place
+of terminals in traditional context-free grammars.
 
 \begin{defn}
 A {\em placed curvilinear form} (by analogy with a sentential form) is
 a sequence of placed symbols
 $$ \alpha^{(0)}_{p_0,p_1} \alpha^{(1)}_{p_1,p_2} \cdots
-\alpha^{(n-1)}_{p_{n-1},{p_n}}.$$ As with curves, $p_0$ will be equal
-to $p_n$ iff the curvilinear form is closed, and two closed curvilinear
-forms will be considered equivalent if they differ by a cyclic
-permutation.
+\alpha^{(n-1)}_{p_{n-1},{p_n}},$$ where $\alpha \in \NNN \cup \{\ell
+\}$.  As with curves, $p_0$ will be equal to $p_n$ iff the curvilinear
+form is closed, and two closed curvilinear forms will be considered
+equivalent if they differ by a cyclic permutation.
 
 An {\em abstract curvilinear forms} is a sequence of abstract symbols
 (with no associated geometric information)
@@ -79,8 +79,8 @@ $\GGG = (\NNN, \RRR, \SSS, \ell, \MMM, \XXX)$, where
 \item $\RRR$ is a set of abstract substitution rules, with $\RRR(X)$
   being the set of rules in $\RRR$ with $X$ on the left-hand side
 \item $\SSS$ is the {\em starting set} of abstract curvilinear forms
-\item $\ell \in \NNN$ is a curve type representing a line segment
-\item $\XXX = \{ \rho_X \mid X\in \NNN, X\ne \ell \} \cup
+\item $\ell$ is a special curve type representing a line segment
+\item $\XXX = \{ \rho_X \mid X\in \NNN \} \cup
   \{\rho_\SSS\}$, where $\rho_X$ is a probability distribution over
   $\RRR(X)$, and $\rho_\SSS$ is a distribution over $\SSS$
 \item $\MMM = \{ \mu_{X\to Y^{(1)}\cdots Y^{(k)}} \mid (X\to
@@ -104,7 +104,10 @@ random substitution rule $X \to Y^{(1)} \dots Y^{(k)}$ according to
 $\rho_X$, and pick random control points $p_1,\dots, p_{k-1}$
 according to $\mu_{X\to Y^{(1)}\dots Y^{(k)}}(p_1, \dots, p_{k-1}; p',
 q')$. We then replace the placed symbol $X_{p',q'}$ with the
-curvilinear form $Y_{p',p_1}^{(1)} \dots Y_{p_{k-1},q'}^{(k)}$.
+curvilinear form $Y_{p',p_1}^{(1)} \dots Y_{p_{k-1},q'}^{(k)}$. We
+will disallow substitutions in which any two control points $p_i, p_j$
+are equal, or in which any control point $p_i$ is equal to either of
+the endpoints $p'$ or $q'$.
 
 \marginnote{Explain this better}
 There is a slight difficulty here in that we usually cannot define the
@@ -130,7 +133,20 @@ rules can only be of two forms:
 \item Lexical rules of the form $X \to \ell$.
 \eitem 
 
-From now on, we will assume that PCFSG's are in Chomsky normal form.
-Accordingly, we will speak of midpoints, rather than control points.
+From now on, we will assume that PCFSG's are in Chomsky Normal Form.
+Accordingly, we will speak of midpoints, rather than control
+points. It is important to note that PCFSG's differ from standard
+PCFG's in that not all PCFSG's are equivalent to a PCFSG in Chomsky
+Normal Form. This is because not all control point distributions can
+be realized as a product of midpoint distributions. For instance,
+suppose we have a rule $A\to BCD$, which in the PCFG setting could be
+replaced with rules $A\to BX, X\to CD$. We could have a control point
+distribution $\mu_{A\to BCD}(p_1,p_2;p,q)$ in which $p_1,p_2$ were on
+a random circle going through $p$ and $q$. If we try to replicate such
+a control point distribution with midpoint distributions $\mu_{A\to
+  BX}(p_1; p,q), \mu_{X\to CD}(p_2; p_1, q)$, we cannot, because the
+distribution $\mu_{X\to CD}(p_2; p_1,q)$ can only depend on the two
+points $p_1$ and $q$, and that is not sufficient to specify a unique
+circle.
 
 \marginnote{end of models/curvegrammars.tex}

@@ -10,14 +10,67 @@ In the following experiments, we select a random triangle (by using a
 Gaussian in Bookstein coordinates). We then draw 20 samples from the
 Watson distribution centered at this triangle (using 30 for the
 concentration parameter of the Watson). We then reestimate the Watson
-distribution from the samples.
+distribution from the samples. We describe the procedure for maximum
+likelihood estimation in Section \ref{ssec-learning-watson}.
 
 This is a less noisy version of the learning task that EM faces when
 refitting the midpoint distributions of a grammar from 20 samples.
 
-\input{experiments/1.grammars/test_watson/output.d/watson}
+\input{output/1.models/test_watson/watson}
+
+We also show the results of fitting a Watson distribution with
+differing numbers of samples.
+
+\input{output/1.models/samples_watson/watson}
+
+\FloatBarrier
 
 \subsection{Non-parametric models}
+
+\begin{figure}
+\includegraphics[width=0.6in]{output/1.models/test_parzen/parzen_true.png}\\ 
+\includegraphics[width=4in]{output/1.models/test_parzen/parzen_0.01_samples.png}\\ 
+\caption{Parzen distribution. The top row is the set of triangles
+  defining the distribution, and subsequent rows are samples from the
+  distribution. Using bandwidth $0.01$. }
+\label{fig-parzen-1}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.6in]{output/1.models/test_parzen/parzen_true.png}\\ 
+\includegraphics[width=4in]{output/1.models/test_parzen/parzen_0.03_samples.png}\\ 
+\caption{Parzen distribution. The top row is the set of triangles
+  defining the distribution, and subsequent rows are samples from the
+  distribution. Using bandwidth $0.03$. }
+\label{fig-parzen-2}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.6in]{output/1.models/test_parzen/parzen_true.png}\\ 
+\includegraphics[width=4in]{output/1.models/test_parzen/parzen_0.10_samples.png}\\ 
+\caption{Parzen distribution. The top row is the set of triangles
+  defining the distribution, and subsequent rows are samples from the
+  distribution. Using bandwidth $0.10$. }
+\label{fig-parzen-3}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.6in]{output/1.models/test_parzen/parzen_true.png}\\ 
+\includegraphics[width=4in]{output/1.models/test_parzen/parzen_0.30_samples.png}\\ 
+\caption{Parzen distribution. The top row is the set of triangles
+  defining the distribution, and subsequent rows are samples from the
+  distribution. Using bandwidth $0.30$. }
+\label{fig-parzen-4}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.6in]{output/1.models/test_parzen/parzen_true.png}\\ 
+\includegraphics[width=4in]{output/1.models/test_parzen/parzen_1.00_samples.png}\\ 
+\caption{Parzen distribution. The top row is the set of triangles
+  defining the distribution, and subsequent rows are samples from the
+  distribution. Using bandwidth $1.00$. }
+\label{fig-parzen-5}
+\end{figure}
 
 
 Since we are modeling the midpoint distributions as non-parametric

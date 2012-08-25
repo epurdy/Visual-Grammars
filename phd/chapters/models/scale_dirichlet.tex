@@ -1,0 +1,61 @@
+\marginnote{Beginning of scale\_dirichlet.tex}
+
+\subsection{Scale-dependent Dirichlet Prior}
+\label{sec-scale}
+
+As mentioned before, our grammar models longer curves with rules of
+the form $X\to XX$, and shorter curves with rules of the form $X\to
+\ell$. When building our initial models, it is very important to
+assign reasonable probabilities to these rules, because we want to use
+these rules in parsing, but prevent pathological parses. For example,
+we don't want to parse an input curve in such a way that many
+high-level nonterminals $X$ use the rule $X\to \ell$ and some
+low-level nonterminal $Y$ uses the rule $Y\to YY$ many times. Since
+the balance between different rules is governed by a multinomial
+distribution, we need a reasonable prior on multinomial distributions
+that prevents pathological parses.
+
+When there is no prior reason to believe that any $p_i$ is larger than
+the others, it is natural to use a Dirichlet prior with each
+$\alpha_i$ the same. For shape grammars, this is not entirely the
+case; since rules of the form $[X\to YZ]$ and $[X\to \ell]$ serve
+different roles in the grammar, we expect their probabilities to take
+on different values. 
+
+In particular, if the nonterminal $X$ is meant to model long curves,
+it is unlikely that a long curve will have only two sample points,
+especially if we are parsing a curve that has many sample
+points. Therefore, we would expect the probability of $[X\to \ell]$ to
+be low.
+
+Let $C$ be a curve. We define the \emph{scale} of a subcurve $C'$ to
+be $s(C') = |C'| / |C|$. We can then specify an ideal scale $s_X$ for
+the nonterminal $X$. Our prior distribution on $\rho_X$ is then
+$Dir(\alpha_1,\dots,\alpha_k)$, where
+\begin{align*}
+\alpha_1 &= k \cdot \alpha_{dir} \cdot e^{-\omega s_X^2}k &\\
+\alpha_i &= k \cdot \alpha_{dir} \cdot \frac{1 - e^{-\omega s_X^2}}{k-1} & 2 \le i \le k.\\
+\end{align*}
+Here $\alpha_1$ corresponds to the rule $[X\to \ell]$. Suitable values
+of $\alpha_{dir}$ are probably significantly less than one, in light
+of \cite{johnson-naacl}. A suitable value for $\omega$ is more
+complicated, and depends on the value of other model parameters.
+
+This prior is suitable, because it produces grammars biased towards
+balanced parses. To see this, consider a grammar $\GGG$ whose
+parameters are set according to this prior. (This will be true of our
+initial grammar, as we describe in Section \ref{sec-single}.)  Let $C$ be a
+curve of length $n$, and $T$ be a $\GGG$-parse of $C$. $T$ will then
+specify nonterminals $X_1,\dots,X_n$ to parse each line segment of
+$C$. Thus, the likelihood $P(C,T\mid \GGG)$ will contain factors
+$\rho_{X_i}([X_i\to \ell])$ for $i=1,\dots,n$. If $\rho_{X_i}([X_i\to
+\ell])$ is $e^{-\omega s_X^2}$, then these factors contribute
+$$e^{-\omega \sum_i s_{X_i}^2}$$
+in total. Since the $X_i$ combine to parse $C$, the scales $s_{X_i}$
+will hopefully sum to approximately one. In this case the probability
+will be highest when $\sum_i s_{X_i}^2$ is lowest, which occurs when
+all the $s_{X_i}$ are equal. The stated Dirichlet prior thus pushes
+$\GGG$ to favor balanced parse trees, as desired.
+
+
+\marginnote{End of scale\_dirichlet.tex}

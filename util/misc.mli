@@ -4,6 +4,12 @@ exception Not_Implemented of string
 
 type ('a,'b) hash = ('a,'b) Hashtbl.t
 
+val pi : float
+
+val foi : int -> float 
+
+val logistic : float -> float
+
 val dist2 : int * int -> int * int -> int
 
 val find : 'a -> 'a array -> int

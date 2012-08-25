@@ -34,49 +34,8 @@ A grammar $\GGG$ is {\em almost single-use} if $\NNN = \NNN_{NT} \cup
 \eitem
 \end{defn}
 
-\subsection{Geometric Deformation Model, Watson}
-\marginnote{$p r q$ vs $p q r$ is confusing and probably at least one is
-  wrong. Also, $p,q,r$ should have same values throughout, and it
-  doesn't look like they do.} We will model the midpoint distribution
-using the complex Watson distribution, defined as follows: consider
-our points in $\RR^2$ as complex numbers, and let $\tilde{z} =
-\left(\begin{array}{c c c} p& r& q\end{array}\right)$.  Let
-  $\tilde{\mu} = \left(\begin{array}{c c c} p& \widehat{r} &
-    q\end{array}\right)$, where $\widehat{r}$ is the most likely value
-    of $r$. For various reasons, we will multiply $\tilde{z}$ by the
-    $2\times 3$ Helmert matrix
-$$H = \left(\begin{array}{c c c} 1/\sqrt{2} & -1/\sqrt{2} & 0
-  \\ 1/\sqrt{6} & 1/\sqrt{6} & -2/\sqrt{6}\end{array}\right), $$ and
-then normalize the result to get our coordinates:
-\begin{align*}
-\langle p, q, r\rangle = z &= H\tilde{z} / \|H\tilde{z}\| \\
-\mu &= H\tilde{\mu} / \|H\tilde{\mu}\|
-\end{align*}
-
-Then
-$$\mu_{A\to BC}(r) = Watson(\mu,\kappa) =
-\frac{1}{Z(\kappa)}e^{-\kappa |z^*\mu|^2},$$ where $\kappa$ is a
-concentration parameter. More details on the Watson distribution can
-be found in Mardia and Dryden.
-
 \subsection{Prior over Grammar Parameters}
 \label{sec-prior-param}
-
-\marginnote{?? Why is this good?}
-
-We must specify a prior for the $\mu_{X\to YZ}$ and $\rho_X$.  For
-optimal results, we tailor the specific prior to the scale $s$ of the
-subcurve we are modeling, where $s(C') = \frac{|C'|}{|C|}$.
-
-Let $X\in \NNN$. Let $s$ be our scale parameter. We let
-$$\rho_X \sim Dir(\alpha_1, \dots, \alpha_k),$$
-where
-\begin{align*}
-\alpha_1 &= \alpha_{dir} e^{- \alpha_{\rho} s^2} \\
-\alpha_i &= \alpha_{dir} \frac{1 - e^{- \alpha_{\rho}s^2}}{k-1}, 2\le i\le k
-\end{align*}
-where $\alpha_1$ corresponds to the rule $X\to \ell$.
-Currently $\alpha_{dir} = 10.0$, $\alpha_\rho = 1000.0$.
 
 Let $X\to YZ$ be a rule of $G$. Let $s$ be our scale parameter.  We
 set $\mu_{X\to YZ}$ equal to a Watson distribution with random mode $\mu$ and

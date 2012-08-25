@@ -69,12 +69,14 @@ let calc_bounds gram filt =
   let fpoints = Array.mapi (fun i (x,y) -> (x+.sidelens.(i)/.2., y+.sidelens.(i)/.2.)) fpoints in
   let fpoints = Array.map (fun (x,y) -> {C.re=x;C.im=y}) fpoints in
 
-(*   let best_tri_cost = mkhash *)
-(*     (min ((Frozen.num_compositions gram)*ntopids*ntopids*ntopids)  *)
-(*        100000) *)
-(*   in *)
-  let best_tri_cost = Bloom.new_bloom 1000 6 
-    (fun (cid,pid,qid,rid) -> (cid+1,pid,qid,rid)) in
+  (* let best_tri_cost = mkhash *)
+  (*   (min ((Frozen.num_compositions gram)*ntopids*ntopids*ntopids) *)
+  (*      100000) *)
+  (* in *)
+  let best_tri_cost = Bloom.new_bloom 1000 6
+    (fun (cid,pid,qid,rid) -> (cid+1,pid,qid,rid)) 
+  in
+
     iter_all_compositions gram
       begin fun prod ->
 	printf "i=%d/%d\n%!" prod.cid (Frozen.num_compositions gram);
@@ -84,7 +86,7 @@ let calc_bounds gram filt =
 		for j = 0 to ntopids-1 do 
 		  for k = 0 to ntopids-1 do 
 		    let pid,qid,rid = topids.(i), topids.(j), topids.(k) in
-(* 		      best_tri_cost << ((prod.cid,pid,qid,rid), 0.); *)
+		      (* best_tri_cost << ((prod.cid,pid,qid,rid), 0.); *)
 		      B.insert best_tri_cost (prod.cid,pid,qid,rid) 0.;
 		  done
 		done
@@ -148,13 +150,13 @@ let calc_bounds gram filt =
 			let finshape = Shape.shape_of_complex_bme !p !q !r in
 			let cost = Models.Simple.prod_cost prod finshape in
 
-(* 			  best_tri_cost << ((prod.cid,pid,qid,rid), cost); *)
+			  (* best_tri_cost << ((prod.cid,pid,qid,rid), cost); *)
 			  B.insert best_tri_cost (prod.cid,pid,qid,rid) cost;
 		    done
 		  done
 		done
       end;
-    best_tri_cost
+    (Some best_tri_cost)
 
 (*  
 let _ = 

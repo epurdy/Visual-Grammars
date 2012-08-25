@@ -1,4 +1,4 @@
-* Working notes - new front burner (limit 5, each should fit on one emacs page)
+* Working notes - front burner
 ** Shock graphs and adaptive SDF's to get good constituents
   - getting somewhat OK constituents, but getting far too many very
     similar ones
@@ -15,20 +15,6 @@
     - some markov-style rules come from singleton branches. how do we
       detect those???
 
-** 2D parsing
-  - datacosts
-    - seemed to be workign somewhat OK, thresholding was not doing well though
-  - low-level curves available
-    - currently i believe we are just thresholding
-    - we were thinking about a thinning strategy, it seemed somewhat reasonable?
-  - search strategy
-    - standard CKY is on the edge of acceptability, depending on how
-      sparse the set of curves is
-    - we had fuzzy_cky, which worked sort of ok but was probably too messy
-    - we came up with an elaborate multipass strategy that should
-      optimize the same thing as standard cky, except that it had
-      trouble with d(p,r) < d(p,q), d(q,r)
-
 ** Discriminative EM
   - subsample the leaves to be smallish
   - make a niceish sdf with bottom_out function
@@ -39,8 +25,38 @@
   - write an svm
     - use stochastic gradient descent, pedro thinks it should work
     - give it some reasonably separable dataset from bishop or something to test
-* Working notes - front burner (limit 5)
-** Adaptive SDF's
+
+Think about doing discriminative training a la LSVM. Once we have the
+soft counts of a parse, we can use that as an x-vector in a
+discriminative setting. This should work to retrain rule costs.
+
+Imagine that we have two classes of curves.
+
+We want to make sure that the relative values of $P(C|G_1)$ and
+$P(C|G_2)$ are consistent with the labels.
+
+For every curve $C$, we wish to compute vectors $X_{C, G_1}$, $X_{C,
+G_2}$ such that $\log P(C|G_1) = \langle X_{C, G_1} | \theta_1 \rangle$ and
+$\log P(C|G_2) = \langle X_{C, G_2} | \theta_2 \rangle$, where $\theta_1,
+\theta_2$ are vectors derivable from the grammar parameters.
+
+If we consider the midpoint distributions to have fixed means, but not
+fixed concentrations, then $X_{C, G_1}$ can just be a vector of rule
+counts, and a sum of $|z^* \mu|^2$ values, while the $\theta$ vectors
+can have the corresponding rule costs and concentrations.
+
+Might make sense not to train the rule costs, though? They seem to be
+less important than the geometry, unless we overpopulate the rule set
+
+We might be able to learn the midpoint discriminatively by actually
+writing out $\kappa |z^* \mu|^2$ in terms of products of $\kappa$ and
+the $\mu_i$. Would worry about $\mu$ not being centered or normalized,
+but we can probably force it to be centered with some algebra, and we
+can force it to be normalized by just making $\kappa$ swallow any
+extra weight. Do we want this??? We might, it would be pretty cool to
+actually get discriminative mean setting
+
+** Adaptive SDF's from subsampling
   - Next step: unfuck the subsampling code to the point where it will
     give us an intelligent subsampling that has like 8-10 points.
 
@@ -101,486 +117,6 @@
     will it be tied to the current approximation? More important for
     length balance terms than data terms, probably
 
-** 2D approximate parsing
-  - thoughts on the curve network
-    - we want a curve network that contains some representative of
-      every reasonable segment, but that doesn't have many
-      representatives of each (i.e., nms). We also want to make sure
-      that every pair of reasonable curves C_pq, C_qr has a
-      representative pair C_p'q', C_q'r', so that we do not lose any
-      compositions. If we have both of those things, we should be OK
-      during parsing.
-
-    - Make a list of all line segments which have some evidence under
-      them.
-
-    - Remove C_pq if there is a nearby segment C_pq' which has more
-      evidence, and such that, for every C_qr, there is a C_q'r which
-      has more evidence than C_qr, with q~q'. Might be sufficient if
-      there is a C_q'r for which C_pq', C_q'r together have more
-      evidence than C_pq, C_qr together, with q~q'.
-
-      Question: Do we have to fix p? Imagine taking our favorite curve
-      and trying to prove that it was not thrown out. We can move any
-      one point q by considering p,r on either side of it, and finding
-      the relevant q' such that C_pq', C_q'r were preserved. 
-
-      But then we want to fix both p and q...
-
-      i thought of a way out of this, just have to remember. involved
-      thinking of the curve evolving over time as we remove things, as
-      long as we can always move the curve to something that still
-      exists, is close, and has better qual, then we're OK
-
-      could think of just queuing everything up and somehow counting
-      references or otherwise making sure we have what we want
-
-  - How do we make a better curve network for an image? This sounds promising:
-    - take gradients, calculate costs as now
-    - look at (avg_gradient*length + A)/length as a way to reward
-      longness, and pick the single best curve
-    - using the current data functions, make that curve and a few
-      longer and shorter versions of it
-    - remove the gradient near that curve. Should probably leave it
-      near the endpoints. HOW do we remove gradient? We want to be
-      fairly agressive about it, but we also want to avoid deleting
-      data necessary for compositions. We could mask the gradient
-      images, so that we don't see used data while choosing the next
-      curve, but do still see it when we actually compute the cost of
-      the segment.
-    - How do we mask based on C_pq? First, chop off 10-20% on each
-      side. Then, round each remaining point to the grid. Then, return
-      0 on future gradient queries at (x,y) if (x,y) rounds to the
-      same grid point.
-    - need large while loop.
-    - consider relaxing the angle requirement
-
-  - We need to break the link between the network and the parsing
-    paradigm. This means separate executables, one that makes the
-    network and one that reads it in. That will make the code much
-    easier to maintain and adapt. It should be easy:
-    - construct the net, save network image, save edge file
-    - load the net
-    - could even have a separate noise-adding function
-
-  - Going from easier versions to hard versions:
-    - how much geometric variation is there?
-
-      Can add a ton of geometric variation by simply iterating over
-      Romer curves.
-
-    - how many extra fake edges are there?
-
-      We can add 10? random edges. We should pick edges that are
-      relatively short, that is most realistic and most confusing
-
-      To be most brutal, we can independently set the cost of each
-      default edge from a distribution that has a tiny bit of weight
-      at cost 1.0, and set the cost of each true edge from a
-      distribution that has some weight at costs higher than 1.0, and
-      include default edges at scales that include the scales of the
-      true edges, the longest of which has length 9. (But we can
-      probably say that the larger scales have a lower false positive
-      rate for edge detectors?)
-
-      OK, now it takes 40 minutes and the results are
-      garbage. Probably not that bad a sign, since the input looks
-      super bad.
-
-      If we can do reasonably on this, we are ready to run on images.
-
-      how do we run on images? We need a cost for each line
-      segment. we could just get a canny pyramid and round the line
-      segment. Or we could just run canny on it, and then count the
-      number of edge pixels with the right one of 8 (4?) orientations
-
-      we could do canny, round orientations, spread slightly, and then
-      simply take the average value under the segment. that seems
-      cleanest. Scale shouldn't matter because it's an average, the
-      spreading should make it relatively robust.
-
-      we want cheapness to be good, so what should we do with
-      gradient? Could do 1/(1+gradmag), that has an upper bound on the
-      cost and dies off relatively slowly as gradient builds up. Need
-      to think about weighting of data vs. geometry, obviously.	
-
-      the grid is trimming the image a bit too much. Should round the
-      image size up to the next multiple of granularity by copying
-      border pixels
-
-      not working at all. try taking absolute value after summing.
-
-      big problem - a segment has high gradient/low cost if it is 45
-      degrees off of the correct direction, which is no good at
-      all. We only actually want it to have low gradient if it is very
-      close to the correct angle. We can get the sine of the angle
-      between gradient and segment for each pixel. We should just give
-      no gradient if the angle is off by more than a bit
-
-      Before we do that, we should start running in parallel, because
-      this will slow it way the fuck down.
-
-      OK, it's failing utterly, but it's obvious why. Since we don't
-      allow any structural variation, not even L->LL, and since we
-      only include default edges of length <= 3, the long missing
-      segments are simply impossible to create. Think about it, should
-      be easy to fix...
-
-    - how many true edges are missing?
-
-      We can fail to add the true curve edges in with some probability.
-
-  - Speed: takes 181 minutes / 3 hours to run on 16 images with 32x32
-    grid and maxlen=8. This is about 11-12 minutes per image.
-
-    That's relatively slow. Running 16x16 standard takes 3 minutes,
-    for comparison. Running 32x32 would presumably take 24 minutes.
-
-    Could start running these in parallel. Can do in python? 
-
-  - We have a hierarchy of grids, similar to an image pyramid.
-
-    We have curves between each pair of points. (Really they specify
-    only the beginning and end of the curve, not the behavior in
-    between.)
-
-    We can compose two curves C_pq, C_qr to get another curve, C_pr.
-
-    Unfortunately, the number of curves and compositions is
-    prohibitively high (N^2=n^4 and N^3=n^6, respectively, where we
-    have a grid of size nxn with N points), and we would like to use a
-    restricted subset of them as a proxy for the full set.
-
-    We would like it to be the case that any parse tree over the full
-    set can be modified very slightly to be over the restricted
-    subset.
-
-    There are many issues with this.
-
-  - Our current strategy is as follows: we allow only curves of length
-    <= maxlen * (current side length of grid square). Currently we are
-    using maxlen=8.
-
-    We parse by starting at the finest grid, looking for compositions
-    in the current grid, and then lifting P(X\to C_pq) up to the next
-    coarser grid by rounding p and q to the next coarser
-    grid. Terminal line segments are inserted at the beginning of
-    parsing without regard to their length, so they will be lifted up
-    along with everything else until the grid is coarse enough for them.
-
-    We only lift C_pq when d(p,q) is at least the step size of the new
-    grid. Unsure if that is the right idea.
-
-  - How much can the segment pq be deformed by the lifting process,
-    especially given that we lift the same thing repeatedly? We can
-    say the following: let pq be a segment, and G be any rectangular
-    subset of the grid that is aligned to coarse grid points at level
-    i. If p lies inside of G initially, then even after rounding it
-    will always lie inside of G. If p lies outside of G initially,
-    then rounding it can push it to lie on the boundary of G, but can
-    never push it to lie in the interior of G.
-
-    This gives us some lower bound on the length distortion. If d(p,q)
-    is larger than 1.414*gridlength_i, then p and q must lie in
-    different grid squares, and they will not be collapsed together by
-    rounding to level i.
-
-  - We should almost certainly use the trick of making the maxlen
-    longer as we go up. Think about that, it's probably not so bad. It
-    means we can terminate safely sooner, which we should think about.
-
-    Q: when can we stop?
-
-  - If we switched to a more direct for-loop over the grid, we could
-    potentially save a lot of computation by restricting to the maxlen
-    linf-neighborhood.
-
-  - Notes on visualizing parses:
-    - It might be good to color the segments by their grid level,
-      rather than their depth in the parse tree (although we can
-      always look up either)
-
-    - drawing is imperfect, because a segment can be covered up by its
-      cousin in a righter subtree. Only way to ensure that
-      highest-level color is used is to make a list sorted by rank and
-      then do it. Since we know the depth, we could be inserting into
-      lists, so it wouldn't be hard at all. Might also be good to
-      label each segment as belonging to whichever levels it belongs
-      to, and then commingling the colors, so that we know *all* the
-      levels.
-
-  - A much riskier optimization is to drop parse table entries that
-    are high relative to other comparable entries. this could save a
-    *huge* amount of time, but it would be easy to get rid of
-    necessary pieces. 
-
-    One interesting idea: suppose we throw out X\to C_pq when its cost
-    is above a threshold T, say 100 times the cheapest cost of X\to
-    C_xy, or 100 more than the cheapest cost. Then, suppose that
-    future queries to cost(X\to C_pq) have maximum cost T, rather than
-    infinity. This would not actually get rid of any parses, since we
-    would essentially assume the existence of any parse that could
-    have been dropped. The one issue is that we can then no longer
-    skip X\to YZ, Y\to C_pq if cost(Y\to C_pq) is infinity. But, we
-    might get some amount of the same effect if we check whether
-    cost(Y\to C_pq) > T_X. If the factor 100 was instead set somewhat
-    adaptively, so that it got lower as we went up, then we would be
-    OK, because when cost(Y\to C_pq) is infinity in the current model,
-    it would instead be T_Y, and if T_Y > T_X, we would be good. We
-    would need to work out some sort of threshold schedule such that
-    we would usually get that savings.
-
-    Suppose that the factor is an additive A_X (in the log domain)
-    rather than multiplicative. Then we would like it to usually be
-    the case that
-
-      T_X < T_Y
-
-    which means we need
-
-      bestcost(X) + A_X < bestcost(Y) + A_Y, 
-
-    even though cost(X) = cost(Y) + cost(Z) + geometry. So in
-    particular, we would need that bestcost(Z) + geometry + A_X < A_Y
-    most of the time.
-
-    What if we did multiple passes with different A_X, but used
-    infinity as the default value instead of T_Y? The advantage of
-    this is that we are finding true parses, so we are building up
-    legitimate values of bestcost, which gives us a much better idea
-    of how strict to be.
-    
-    Alternatively, we can ask for the bestcost in a restricted
-    region. Clearly we can discard something if it is not the best in
-    a trivial region including only itself. Clearly doing this
-    globally could prevent something useful from being found. What if
-    we do it with a k x k breakdown of the points? We are probably
-    just replicating the fuzzy algorithm at that point.
-
-    What if we change the algorithm to be coarse to fine somehow? We
-    run parsing from fine to coarse as we do now, but we start at a
-    relatively coarse level the first time, and then repeat it with
-    finer and finer levels.
-
-    The point is that we can potentially skip looking at X\to C_pr if
-    we have a lower bound on the cost, which the previous iteration
-    should give us (modulo the shape costs being slightly inaccurate)
-
-    One problem with this idea is that we iterate over p,q first
-    instead of p,r.
-
-    We could say that when looking at X\to YZ, we skip Y\to C_pq if
-    its cost at the current pass is more than the maximum cost of X\to
-    C_pr (over reachable r) at the previous pass. So it could not
-    improve on any parse that we know about, and in the coarse-to-fine
-    world we would (hopefully?) know about every parse. (We would have
-    to be sure to lift *all* the segments when doing coarser
-    passes. It seems like it might be important to get stuff that
-    would have have length 0, because it would allow us to actually
-    always see the true curve.)
-
-    As a slight modification of the above, we could use, instead of
-    max_r cost(X\to C_pr), min_r cost(X\to C_pr) + buffer. This on the
-    theory that good parses are very sparse, so max_r cost(X\to C_pr)
-    will always be extremely high and basically meaningless. We would
-    be assuming that the true parse would pass this test, but it
-    doesn't seem that bad. Since p is fixed, we're not considering
-    everything, so we will only be tricked if this subset of the true
-    parse is close to a place where this subset fits *much*
-    better. (Depending on buffer, obviously.)
-
-    This sounds pretty cool but is slightly too complicated for
-    now. It can be one of the next things we try, though, since
-    speeding it up is important.
-
-    More thoughts on ctf fuzzy: when we are searching over the first
-    two points p,q, arguably the most relevant quantity is how good of
-    a *context* exists for X\to C_pq. Thus if we have a lower bound on
-    the "outside cost" of a parse tree containing X\to C_pq, we know
-    whether we are interested in X\to C_pq. If cost(X\to C_pq) +
-    lboutside(X\to C_pq) > bestparsequality, then we can safely ignore
-    X\to C_pq.
-
-    How do we define/calculate the "outside cost"? The regular
-    "inside" cost of X\to C_pr is defined to be the minimum cost of a
-    tree rooted at X\to C_pr which has no unexpanded nodes, and is
-    calculated as 
-
-      min_{q, X\to YZ} geom(X\to YZ, p,q,r) + cost(Y\to C_pq) +
-      cost(Z\to C_qr).
-
-    So the outside cost should be defined as the minimum cost of a
-    tree rooted at S\to C_xy for some x,y, which has a single
-    unexpanded node X\to C_pq. We can calculate it as the minimum of:
-
-      min_{r, Z\to XY} geom(Z\to XY, p,q,r) + cost(Y\to C_qr) + 
-      outside(Z\to C_pr)
-
-    and
-
-      min_{r, Z\to YX} geom(Z\to YX, r,p,q) + cost(Y\to C_rp) + 
-      outside(Z\to C_rq)
-
-    So, the best plan would be to use the outside tables of the
-    previous detail. This will be fine, because we will be seeing all
-    true trees and some false trees, just as in the current model.
-
-    We should start writing up notes for this, it's very complicated
-    and a lower bound is needed.
-
-    Also, might think of increasing maxlen every round instead of
-    increasing the fineness of the bottom grid.
-
-  - Fuzzy cky: we have a hierarchy of curve networks. Each point in a
-    given curve network gets mapped to a particular point in the curve
-    network above it. We have a maximum distance that is allowed
-    between p,q, and r at each level.
-
-    We do parsing as usual at each level (with the constraint that
-    p,q,r must be close), and then map the parse table up a level by
-    coarsening points.
-
-  - every curve lives at a particular scale. We can think of there
-    being k grids, where points are connected in grid i if their
-    distance is at most maxlen * gridstep, and greater than maxlen *
-    (gridstep/2)
-
-    We want there to be compositions that turn two curves into one, of
-    the form C_{pq} + C_{qr} -> C_{pr}.
-
-    We would like it to be the case that any composition tree in the
-    finest grid, paying no attention to the maximum length, can be
-    approximated well in this system. It would be sufficient if every
-    C_pq + C_qr -> C_pr in the full system could be rounded
-    simultaneously without destroying the parse. That is, we round
-    C_pq, C_qr, C_pr, but require that the composition continue to
-    exist. (There is a small and manageable issue, which is that the
-    shape of the triangle will be changed slightly. For the watson
-    distro, this should not be a problem.)
-
-    How can we generate this set without actually iterating over all
-    triples, which is after all the thing we are trying to avoid. We
-    can easily generate the set of curves by simply iterating over
-    each grid, including only short enough curves. But how can we say
-    what compositions should exist between C_pq and other curves? We
-    can say that we will only search over curves that are of length
-    between d(p,q)/zeta and zeta * d(p,q). (Actually, can search only
-    over curves that are longer, since one curve must be longer.)
-
-    If we need only search over longer curves C_qr, then we are good,
-    since they will be on the current grid or a coarser one, so we can
-    simply iterate over nearby points in the current grid and round
-    them if necessary.
-
-    The only issue here is that d(p,r) can be smaller than either
-    d(p,q) or d(q,r). Then we will have correctly identified C_pq +
-    C_qr as a composition, but we may only know a too-coarse version
-    of C_pr. We could, in the case that d(p,r) < min(d(p,q), d(q,r)),
-    impose a minimum value on d(p,r)/min(d(p,q),d(q,r)) (say d(p,r) >=
-    d(p,q) / 2, or over 3?) 
-
-    Then, in the case that d(p,r) is smallest, we can project it to
-    all its finer copies, hopefully not gaining too many productions
-    in the process. We will just test it out and see. In order to do
-    this, we need to know, given a coarse curve, what fine curves get
-    mapped to it (even more than one level below)
-
-    There is a minor issue that we may not know that d(p,r) is
-    smallest, because we see only coarse copies of p and r. But
-    hopefully we can deduce a lower bound on d(p,r), and do the right
-    thing.
-
-    This all seems like it should work pretty well, we are only making
-    two assumptions about the parse tree.
-
-    We can visualize this. The center point should be kosher in every
-    scale, so we can look at all edges leaving it at each level, and
-    for each of these all the associated compositions.
-
-    It would also be good to show what happens to some random parse
-    trees. If we generate a random curve somehow and then decompose it
-    arbitrarily, this gives us a parse tree to look at.
-
-  - The correct thing probably is to stop passing up once we are sure
-    it has gotten to everyone that needs it. The problem is that if
-    p,q,r is unbalanced, say d(p,q) = 1 and d(q,r) = 10, then we need
-    to have pq and qr available during the same scan. 
-
-    If we assume that when we combine things, the ratio between the
-    two lengths is at most zeta, then we are good as long as 2 *
-    minlen * zeta >= maxlen. We can prove this as follows:
-
-    For the two to be present at the level with granularity STEP, we
-    would have to have:
-
-      minlen*STEP <= d(p,q), d(q,r) <= maxlen * STEP 
-
-    Therefore, for pq and qr to be unable to combine, we would need
-    that there is no STEP such that that holds. Assume wlog that
-    d(p,q) < d(q,r). If we let STEP_pq be the largest used STEP such
-    that minlen*STEP <= d(p,q), then pq and qr unable to combine would
-    imply (assuming that steps are chosen as powers of 2)
-
-      minlen*STEP_pq <= d(p,q) < minlen*2*STEP_pq
-      maxlen*STEP_pq < d(q,r)
-
-    and then we would have d(p,q)/d(q,r) < 2*minlen/maxlen. Assuming
-    that d(q,r)/d(p,q) <= \zeta, then
-
-    maxlen / (2*minlen) < d(q,r) / d(p,q) <= \zeta
-
-    maxlen < 2 * \zeta * minlen,
-
-    contrary to assumption.
-
-  - What zeta do we want? 3-5 sounds reasonable. Whatever we pick, we
-    can check that it is appropriate for a hand-built grammar by
-    calculating the ratio of d(C_i,C_j) to d(C_j,C_k) for [i,k] ->
-    [i,j][j,k]. We can even use a different ratio for each rule.
-    Alternatively, we could have different lifting rules for each
-    symbol.
-
-
-  - We would like it to be the case that the children of a node have
-    similar colors to their parent, but are distinguishable from each
-    other. So we essentially want a binary tree over color space? If
-    we imagine colors
-
-0 1 2 3 4 5 6 7 8
-
-then we could assign colors
-. 0
-.. 1
-.. 2
-. 4
-.. 5
-.. 6
-
-Then cousins will not be confused, because the parent will lie between
-them and the other.
-
-. 0
-.. 1/6
-... 4/18
-... 5/18
-.. 2/6
-... 7/18
-... 8/18
-. 1/2 = 3/6
-.. 4/6
-.. 5/6
-
-  - So the children of x will be x + a/3, x + 2a/3, where a = spacing
-    on x's level. a = 1/2, 1/6, 1/18.
-
-  - We can then use that to index into some heat range or what have
-    you. Could also map the first half into blue-red, second half into
-    red-green. Then first two colors are (br,0,1) (rg,0,1), and we
-    always map (br,a,b) to (br, (2a+b)/3, (a+2b)/3), (sim for rg) and
-    use the left endpoint for coloring. 
-  
-  - If we had such a rule, then would it be important to only add in
-    segments once they were long enough?
 
 ** Incremental incorporation
   - can think of adding one additional midpoint each round. we can
@@ -798,25 +334,6 @@ them and the other.
     really much more about constituency than about adaptive SDF's now,
     though.
 
-** EM: discriminative training
-Think about doing discriminative training a la LSVM. Once we have the
-soft counts of a parse, we can use that as an x-vector in a
-discriminative setting. This should work to retrain rule costs.
-
-Imagine that we have two classes of curves.
-
-We want to make sure that the relative values of $P(C|G_1)$ and
-$P(C|G_2)$ are consistent with the labels.
-
-For every curve $C$, we wish to compute vectors $X_{C, G_1}$, $X_{C,
-G_2}$ such that $\log P(C|G_1) = \langle X_{C, G_1} | \theta_1 \rangle$ and
-$\log P(C|G_2) = \langle X_{C, G_2} | \theta_2 \rangle$, where $\theta_1,
-\theta_2$ are vectors derivable from the grammar parameters.
-
-If we consider the midpoint distributions to have fixed means, but not
-fixed concentrations, then $X_{C, G_1}$ can just be a vector of rule
-counts, and a sum of $|z^* \mu|^2$ values, while the $\theta$ vectors
-can have the corresponding rule costs and concentrations.
 
 * Working notes - back burner
 ** Structure: Merge and Replace
@@ -893,39 +410,6 @@ can have the corresponding rule costs and concentrations.
     pretty respectable
 
   - might also want to use fewer copies, or somehow delete more rules?
-** General thoughts on 2D parsing
-|-------------------------+---------------------------------------|
-| Grammar source          | Data cost                             |
-|-------------------------+---------------------------------------|
-| hand-built              | take fixed curve, make cost very low  |
-|                         | for segment close to a curve segment, |
-|                         | very high o/w                         |
-|-------------------------+---------------------------------------|
-| automatically generated | draw filled curve in black, run canny |
-|                         | to get edge quality, charge cost      |
-|                         | accordingly                           |
-|-------------------------+---------------------------------------|
-|                         | Take image, run canny or PB           |
-|-------------------------+---------------------------------------|
-
-  - think about how to only look at midpoints close to the Watson mode
-
-  - can speed up parsing by only considering X\to C_{p,q} when p and q
-    are "about the right distance apart" given that we know the global
-    scale approximately, and that we know how far apart they tend to
-    be relative to that (can answer that by sampling, or learn it)
-
-  - work only with a fixed parse tree for now, since L\to LL was the
-    source of more than half our woes. as long as we have $P(X\to
-    \ell_{p,q})$ for all $p,q$, and we think that our segments are
-    straight, it's fine to do this.
-** Structure: Constituency
-  - Next step: draw the grammar we selected, show samples
-
-  - Load the hand-built sdf, highlight agreements
-
-  - run on articulator, run on n-armed shape 
-
 ** Datasts: mpeg7
 ** Datasets: horses
 ** Datasets: labelme polygons
@@ -1312,8 +796,6 @@ We could hand-annotate some MNIST digits to play with these
 structures. This would also give us an extremely fruitful testbed for
 attaching part filters to shape models, since Yali knows how to make
 really good part filters for mnist.
-
-** Parsing scenes in real images
 
 
 ** javascript annotation tool, 

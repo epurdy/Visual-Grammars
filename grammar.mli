@@ -39,6 +39,14 @@ val grammar_of_family :
   ('a symbol -> 'b composition -> cdata) ->
   grammar
 
+val grow_grammar_with_family :
+  grammar ->
+  ('a, 'b, 'c) frozen_grammar ->
+  sid -> ('a symbol) ->
+  ('a symbol -> sdata option) ->
+  ('a symbol -> 'b composition -> cdata) ->
+  grammar
+
 (** {2 Manipulating grammars} *)
 
 val renormalize : grammar -> sdata Abstract.symbol -> unit

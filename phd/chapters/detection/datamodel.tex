@@ -1,0 +1,37 @@
+
+We use a very straightforward data model, that of a Bernoulli model
+over Canny edges.
+
+We set $P(E_p=1 \mid p\in O) = p_{fg}$, $P(E_p=1 \mid p\notin O) = p_{bg}$.
+
+We use ratio of foreground to background, so that we only have to
+multiply over pixels in the object.
+
+\begin{align*}
+P(E\mid O) &= \prod_{p\in O} p_{fg}^{E_p} (1-p_{fg})^{1-E_p} \cdot
+\prod_{p\notin O} p_{bg}^{E_p} (1-p_{bg})^{1-E_p}\\
+&= \prod_{p\in O} \left(\frac{p_{fg}}{p_{bg}}\right)^{E_p}
+\left(\frac{1-p_{fg}}{1-p_{bg}}\right)^{1-E_p} \cdot
+  \prod_{p} p_{bg}^{E_p} (1-p_{bg})^{1-E_p}\\
+&\propto \prod_{p\in O} \left(\frac{p_{fg}}{p_{bg}}\right)^{E_p}
+\left(\frac{1-p_{fg}}{1-p_{bg}}\right)^{1-E_p}\\
+\log P(E\mid O)&= \sum_{p\in O}\left[ E_p \log \left(\frac{p_{fg}}{p_{bg}}\right)
++ (1-E_p) \log\left(\frac{1-p_{fg}}{1-p_{bg}}\right)\right] + C\\
+&= \sum_{p\in O}\left[ E_p \log \left(\frac{p_{fg}(1-p_{bg})}{p_{bg}(1-p_{fg})}\right)
++ \log\left(\frac{1-p_{fg}}{1-p_{bg}}\right)\right] + C\\
+&= \sum_{p\in O}\left[ E_p \log \left(\frac{p_{fg}(1-p_{bg})}{p_{bg}(1-p_{fg})}\right)\right]
++ |O|\log\left(\frac{1-p_{fg}}{1-p_{bg}}\right) + C
+\end{align*}
+
+When doing scene parsing, we will modify this formula slightly. Pixels
+that are in already selected objects will be labelled foreground, and
+other pixels will initially be labelled background. Let $F$ be the set
+of pixels already marked foreground.
+
+\begin{align*}
+\log P(E\mid O) &= \sum_{p\in O\sm F}\left[ E_p \log \left(\frac{p_{fg}(1-p_{bg})}{p_{bg}(1-p_{fg})}\right)\right]
++ |O\sm F|\log\left(\frac{1-p_{fg}}{1-p_{bg}}\right) + C
+\end{align*}
+
+For pixels in $F\cap O$, the ratio is one, and thus its log is
+zero. For pixels not in $O$, the ratio becomes a constant as before.

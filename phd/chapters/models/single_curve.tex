@@ -1,6 +1,7 @@
+\marginnote{beginning of models/single\_curve.tex}
 
-\subsection{Building a Grammar for a Single Curve}
-\label{sec-single}
+% \subsection{Building a Grammar for a Single Curve}
+% \label{sec-single}
 
 The current work is based on \cite{hcm}, in which grammar-like
 structures were constructed from single training curves. We follow
@@ -13,11 +14,12 @@ yet, so the only variation that $\GGG_C$ needs to account for is:
 \item Slight geometric deformations of $C$
 \item Curves like $C$ that have more or fewer sample points.
 \end{itemize}
-We model geometric deformations with the nonparametric distribution
-described in Section \ref{sec-deform}. We model curves with fewer sample
-points by allowing every nonterminal $X$ to have the rule $[X\to
+Geometric deformation is modeled with a midpoint distribution that is
+defined in terms of $C$. We discuss our models in Section
+\ref{sec-models-triangle}. Curves with fewer sample points are modeled
+by including, for every nonterminal $X\in \NNN$, the rule $[X\to
 \ell]$. We initially set the probability of this rule based on the
-scale of $X$, as described in Section \ref{sec-scale}.
+scale of $X$, as described in Section \ref{sec-models-dirichlet}.
 
 The nonterminals of our grammar will correspond to subcurves of $C$.
 We model curves with more sample points than $C$ by allowing any
@@ -51,7 +53,7 @@ We can then specify a simple grammar for $C$ that produces the parse
 tree $T$. For every node $(i,j)$ in $T$, $\GGG$ has a nonterminal
 $X^{(i,j)}$. When $(i,j)$ has children $(i,k)$ and $(k,j)$, $\GGG$ has
 a rule $[X^{(i,j)} \to X^{(i,k)}X^{(k,j)}]$. The scale of the
-nonterminal $X^{(i,j)}$ is $\frac{j-i}{n}$ (see Section \ref{sec-scale}).
+nonterminal $X^{(i,j)}$ is $\frac{j-i}{n}$ (see Section \ref{sec-models-dirichlet}).
 
 Our choice of an initial grammar for $C$ is thus based on choosing a
 generic parse for $C$. Some choices:
@@ -61,7 +63,7 @@ generic parse for $C$. Some choices:
   \cite{hcm}.
 \item A parse that has been chosen to respect the structure of
   $C$. This approach would require us to identify natural constituents
-  of curves. There has been some work on this question.
+  of curves. There has been some work on this question, e.g. \cite{hoffman-richards}.
 \item We can choose multiple parses, and create a grammar that can
   parse $C$ in multiple ways. 
 \end{enumerate}
@@ -69,9 +71,9 @@ generic parse for $C$. Some choices:
 Our favored approach is number 3. We want to create a small grammar
 that can parse $C$ in as many ways as possible, so that the EM
 retraining can discover the ``correct'' sub-grammar. To this end, we
-use the sparse decomposition families of Section
-\ref{sec-fast-parsing}.
+use the sparse decomposition families of Chapter \ref{chap-sdf}.
 
 
 
 
+\marginnote{end of models/single\_curve.tex}

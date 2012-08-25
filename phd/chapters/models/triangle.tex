@@ -1,23 +1,62 @@
 
 \marginnote{beginning of models/triangle.tex}
 
+When sampling from our grammar, we place a midpoint $q$ according to
+the midpoint distribution $\mu_{X\to YZ}(q; p, r)$, where $X_{p,r}$ is
+the placed symbol we are currently replacing, and $X\to YZ$ is the
+substitution rule we are using.
+
+When building a grammatical model from a single curve $C$, we base the
+distribution $\mu_{X^{(i,k)}\to X^{(i,j)}X^{(j,k)}}$ on the triangle
+$C[i], C[j], C[k]$, with $C[i],C[j],C[k]$ playing the roles of $p,q,$
+and $r$ respectively.
+
+We have experimented with two different approaches to modeling the
+shape of triangles, the Watson distribution and a non-parametric
+distribution. Unless otherwise specified, midpoint distributions will
+always be modeled with the Watson distribution.
+
 \subsection{Procrustes Distance and The Watson Distribution}
-\marginnote{Write this!}
+
+One useful midpoint distribution is given by the complex Watson
+distribution, which is a probabilistic analogue of the Procrustes
+distance.
+
+Let us represent our points $(x,y)$ in $\RR^2$ as complex numbers
+$x+iy$, and ordered triples of points by vectors of length three. For
+every such vector $z=\left(\begin{array}{c c c} p& q&
+    r\end{array}\right)$, we define a canonical version $$\widehat{z}
+= \frac{z - w}{\| z - w \|},$$ where $w =
+\left(\begin{array}{c c c} \frac{p+q+r}{3}& \frac{p+q+r}{3}&
+    \frac{p+q+r}{3} \end{array}\right)$. We do this transformation to
+achieve invariance to scale and rotation, since, if $y = az + b$,
+$\widehat{y}=\widehat{z}$.
+
+The (complex) Watson distribution is then defined as follows: 
+$$Watson(z; \mu,\kappa) =
+\frac{1}{Z(\kappa)}e^{\kappa | \widehat{z}^*\widehat{\mu}|^2},$$ where
+$\mu$ is the mode of the distribution, and $\kappa>0$ is a
+concentration parameter. More details on the Watson distribution can
+be found in \cite{mardia-dryden}.
+
+The Watson distribution can be thought of as a probabilistic version
+of the Procrustes distance, which can be defined as
+$$d_P(y,z) = \sqrt{1- \frac{z^* y y^* z}{y^* y z^* z}},$$
+and thus 
+$$Watson(z; \mu, \kappa) \propto e^{-\kappa \cdot d_P(\widehat{z}, \widehat{\mu})^2},$$
+where we are using the fact that $\widehat{z}^*
+\widehat{z} = \| \widehat{z} \|^2 = 1$.
 
 \subsection{Non-Parametric Deformation Model}
 
-When sampling from our grammar, we place a midpoint $q$ according to
-the midpoint distribution $\mu_{X\to YZ}(q; p, r)$, where $X_{p,r}$ is
-the placed symbol we are currently replacing.
-
-We want our grammar to be invariant to translation, scale, and
-rotation. Therefore, we translate, scale, and rotate $\RR^2$ with a
-map $\phi$ such that $\phi(p) =(0,0)$ and $\phi(r) =(1,0)$, and
+We have also experimented with the nonparametric distribution given by
+the Parzen windows method \cite{parzen}. We want our grammar to be
+invariant to simultaneous translation, scale, and rotation of the
+points $p,q,r$. Therefore, we translate, scale, and rotate $\RR^2$
+with a map $\phi$ such that $\phi(p) =(0,0)$ and $\phi(r) =(1,0)$, and
 represent $q$ via the coordinates $\widehat{q} = \phi(q)$.
 
-In this coordinate system, we use the nonparametric distribution given
-by the Parzen windows method \cite{parzen}. If we have seen samples
-$q_1, \dots, q_k$, then
+If we have seen samples $q_1, \dots, q_k$, then
 $$\mu_{X\to YZ}(q ; p, r) = \frac{1}{n} \sum_{i=1}^{k}
 \frac{1}{2\pi h^2} e^{\frac{\| \widehat{q_i} - \widehat{q}\|^2}{2h^2}}.$$
 
@@ -31,7 +70,7 @@ mixture of Gaussians, and thus there is no solid distinction between a
 mixture of multiple copies of the rule $X\to YZ$ with Gaussian
 midpoint distributions, and a single copy with a mixture of Gaussians
 midpoint distribution. We will prefer the second, since the resulting
-grammar has a simpler structure, as discussed in Section \ref{sec-mdl}.
+grammar has a simpler structure, as discussed in Chapter \ref{chap-structure}.
 
 
 \subsection{Open Questions}

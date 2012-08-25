@@ -5,7 +5,7 @@
 \subsection{Grammatical Learning Goals}
 
 To test whether we can learn grammars, we propose a series of tasks on
-real and synthetic data. The tests will have to be fairly qualitative,
+real and synthetic data. Many of the tests will be fairly qualitative,
 although we hope that the models generated will give better results in
 some quantitative task.
 
@@ -16,16 +16,24 @@ a more accurate model of geometric deformation. Since we have a
 complete probabilistic model and a learning algorithm, this should be
 possible.
 
-The easiest version of this task is to generate good-looking samples
-from the Articulator (Figure \ref{fig-articulator}). To make this task
-even easier, we can start by training on bracketed samples, where we
-specify that certain subcurves are constituents.
+The easiest version of this task is to build a good model of the
+Articulator (Figure \ref{fig-articulator}). We will evaluate the model
+by comparing samples from the model to the original shapes. To make
+this task even easier, we can start by training on bracketed samples,
+where we specify that certain subcurves are constituents.
 
-A harder version of this task is trying to generate good-looking
-samples from the Romer dataset (Figure \ref{fig-romer}) and the
-Weizmann Horse dataset (Figure \ref{fig-horse}). Here too we could
-start with bracketed samples, although this will be more arbitrary for
-silhouettes of people and horses.
+\begin{figure}
+\includegraphics[width=\linewidth]{figures/articulator/articulator_samples.png}
+\caption{A shape with an articulating arm.}
+\label{fig-articulator}
+\end{figure}
+
+
+A harder version of this task is trying to build a good model of the
+Romer dataset (Figure \ref{fig-romer}) and the Weizmann Horse dataset
+(Figure \ref{fig-horse}). Here too we could start with bracketed
+samples, although this will be more arbitrary for silhouettes of
+people and horses.
 
 \subsection{EM}
 Given a fixed grammar structure (the symbols and rules), we can
@@ -36,23 +44,25 @@ case, the "true" parses) is unobserved.
 
 We wish to demonstrate that EM works to tune the parameters of a shape
 grammar. We would like to do the following:
-  - Tune a simple hand-built grammar using several curves of fixed
-    length, and then show that it produces reasonable samples, and
-    that the cross-entropy estimated on unseen data is improved by EM.
+\begin{itemize}
+\item Tune a simple hand-built grammar with no choice, using several
+  curves of fixed length, and then show that it produces reasonable
+  samples, and that the cross-entropy estimated on unseen data is
+  improved by EM.
 
-  - Tune a simple hand-built grammar using several curves of fixed
-    length. Start with a grammar that has several choices of midpoint
-    for each of its rules, to allow for greater geometric
-    variation. Show that it produces reasonable samples, and that the
-    cross-entropy estimated on unseen data is improved by EM.
+\item Tune a simple hand-built grammar that exhibits limited choice
+  using several curves of fixed length. Start with a grammar that has
+  several choices of midpoint for each of its rules, to allow for
+  greater geometric variation. Show that it produces reasonable
+  samples, and that the cross-entropy estimated on unseen data is
+  improved by EM.
 
-    We would also like to do this for a slightly more complicated
-    grammar, in which the choice of midpoint at a high level can
-    influence the choice of midpoint at lower levels.
+  \item Tune a hand-built grammar that exhibits structural variation.
 
-  - Tune a hand-built grammar that exhibits structural variation.
-
-  - We would like to show that EM does badly when it starts with bad
-    parses.
-
+  \item We would like to show that EM does badly when it starts with bad
+  parses. The EM algorithm depends on its initialization, because it
+  finds only a local maximum of the likelihood, and the likelihood
+  function is generally far from convex. We would like to show that
+  this is a significant concern in our case.
+\end{itemize}
 \marginnote{end of learning/learning\_goals.tex}

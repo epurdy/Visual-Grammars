@@ -514,6 +514,50 @@ We show training data again for comparison with final samples
 #+ATTR_LaTeX: width=3in
 [[./3.em/correlated_tuning/output.d/training.eps]]
 
+
+*** Multi-level correlations, carefully-chosen sdf
+Output looks really nice. It seems like it's super-sensitive to the
+exact SDF we choose.
+
+random thought: can we modify em to express some constraint on the
+model? for instance, if we want to model convex curves, we could
+generate random curves, find the non-convex ones, and somehow use
+those as negative observations (a la contrastive divergence)
+
+could weight them negatively according to how much they violate our
+constraint
+
+in general, can have any sort of positive and negative observations...
+
+need to be able to use negative observations in our estimators. for
+us, we have multinomial counts and the procrustes mean, relatively
+clear how it should be done. need to watch out that the procrustes
+mean matrix remains psd, otherwise weird shit will happen with the
+eigenvalues
+
+is there any way to justify this mathematically? can look at CD
+justification
+
+generally speaking, we can say that we are trying to minimize an
+energy functional on our model. this particular energy functional
+penalizes the model for producing data that is unrealistic in some way
+
+we can also think of it like this: if we had lots and lots of data,
+then we would hope that our model estimation procedure would
+work. but, since we have relatively little data, we want to somehow
+use our intuition about the domain to suggest more data
+
+if we look at the CD notes we found, we CAN sample directly from the
+proposed distribution...
+
+can we think of it as supplementing the observed data with a POE,
+i.e., not in our model, but in the observations somehow...
+
+**** Round 10
+\input{./3.em/sdf_tuning/output.d/gram.10.d/foo}
+
+
+
 *** Adding in multiple midpoints as needed
 
 Here is the training data:

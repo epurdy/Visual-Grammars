@@ -6,7 +6,6 @@ open Grammar
 
 let nperpage = 6
 
-
 let prod_cost comp shape =
   match comp.cdata.geom with
       Improper ->
@@ -94,7 +93,7 @@ let draw_curves outfile title namer curves =
   let fnames = Array.fold_left (fun s fname -> s ^ " " ^ fname) "" fnames in
     doit (sprintf "./show_curves.native -fname %s -title '%s' %s" outfile title fnames)
 
-let draw_distorted_curves gram namer nsamples =
+let draw_distorted_curves gram dir namer nsamples =
   let fn prod = 
     let lcurve, rcurve =  prod.cdata.lcurve, prod.cdata.rcurve in
     let bg, md, en = lcurve.(0), rcurve.(0), rcurve.(Array.length rcurve - 1) in
@@ -127,8 +126,8 @@ let draw_distorted_curves gram namer nsamples =
 	done;
       end;
       let samples = Array.of_list !samples in
-	Curve.save_all  (sprintf "tmp/prod.%d.curve") samples;
-	draw_curves (namer prod.cid) "" (sprintf "tmp/prod.%d.curve") samples;
+	Curve.save_all  (sprintf "%s/prod.%d.curve" dir) samples;
+	draw_curves (namer prod.cid) "" (sprintf "%s/prod.%d.curve" dir) samples;
   in
     iter_all_compositions gram fn
 
@@ -143,7 +142,8 @@ let _ =
   let dir = ref "NODIR" in
   let latexdir = ref "NODIR" in
   let nsamples = ref 20 in
-  let title = ref "NO TITLE SELECTED" in
+  (* let title = ref "NO TITLE SELECTED" in *)
+  let title = ref "" in
   let show_rules = ref false in
   let draw_rules = ref false in
   let draw_midpoints = ref false in
@@ -166,7 +166,6 @@ let _ =
     if !latexdir = "NODIR" then
       latexdir := !dir;
   in
-
 
   let gram = (Marshal.from_channel (open_in !gramfile): Grammar.grammar) in
   let samples = get_samples gram !nsamples in
@@ -199,7 +198,7 @@ let _ =
 	  end;
 
 	  if !draw_rules then begin
-	    draw_distorted_curves gram comp_sample_namer 10;
+	    draw_distorted_curves gram !dir comp_sample_namer 10;
 	  end;
 
 	  fprintf tex "here are the rules\n\n";
@@ -216,7 +215,8 @@ let _ =
 	      fprintf tex " & ";
 
 	      if !draw_rules && (prod.cdata.geom != Improper) then begin
-		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_png prod.cid));
+		doit (sprintf "inkscape %s -D -e %s" (comp_sample_namer prod.cid) (comp_sample_namer_png prod.cid));
+(* 		doit (sprintf "inkscape %s -E %s" (comp_sample_namer prod.cid) (comp_sample_namer_png prod.cid)); *)
 		fprintf tex "\\includegraphics[height=1in]{%s} " (comp_sample_namer_png_latex prod.cid);
 	      end;
 	      fprintf tex "\\\\\n\\hline\n";

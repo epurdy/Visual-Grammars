@@ -1,6 +1,6 @@
 # Borrowing heavily from daemonize.py, which is Copyright 2007 Jerry Seutter
 # yello (*a*t*) thegeeks.net
-import fcntl, os, sys, time, random, string
+import fcntl, os, sys, time, random, string, daemon
 
 
 #throttles should be ints, for an annoying reason
@@ -11,6 +11,14 @@ create_throttle = 5 # minimum number of seconds that must have elapsed
 restart_throttle = 10
 ssh_throttle = 10 # minimum number of seconds between ssh commands
 max_cores_per_host = 3
+
+def hostcores_limit(hostcores):
+  return min(hostcores, max_cores_per_host)
+  return int((hostcores * 3) / 4)
+
+
+race_rest = 10
+fail_rest = 1
 
 user = 'epurdy'
 tmpdir = '/tmp/thrasher-epurdy'
@@ -76,6 +84,19 @@ def get_age(name):
     touch(agefile)
     return 0
 
+# def fork_daemon2(fun_to_start):
+#   process_id = os.fork()
+#   if process_id < 0:
+#     # Fork error.  Exit badly.
+#     sys.exit(1)
+#   elif process_id != 0:
+#     # This is the parent process.  Return.
+#     return None
+#   # This is the child process.  Continue.
+    
+#   with daemon.DaemonContext():
+#     fun_to_start()
+
 def fork_daemon(fun_to_start, uniqid, loglevel):
   # Fork, creating a new process for the child.
   process_id = os.fork()
@@ -109,8 +130,8 @@ def fork_daemon(fun_to_start, uniqid, loglevel):
     descriptor = null_descriptor
 
   closeit(sys.stdin)
-#  closeit(sys.stdout)
-#  closeit(sys.stderr)
+  closeit(sys.stdout)
+  closeit(sys.stderr)
 
   # Set umask to default to safe file permissions when running
   # as a root daemon. 027 is an octal number.
@@ -139,6 +160,7 @@ def cleanup(exclude):
 class Manager:
   def __init__(self, machinefile, payload, cmdline, k, runid, 
                files,
+               pgrep_pattern,
                #prime=197, 
                prime=383, 
                delay=None, loglevel=4, cleanup=False):
@@ -147,6 +169,7 @@ class Manager:
     self.runid = runid
     self.files = files
     self.id = '%s.%d' % (runid, k)
+    self.pgrep_pattern = pgrep_pattern
 
     mkdir(tmpdir)
 
@@ -170,17 +193,22 @@ class Manager:
       line = line.rstrip()
       line = line.split()
       hostname, hostcores = line[0], int(line[-1])
-      hostcores = min(hostcores, max_cores_per_host)
-      for i in xrange(hostcores):
-        host = Host(hostname, i)
-        self.hosts.append(host)
-        if i==0:
-          self.uniqhosts.append(host)
+      hostcores = hostcores_limit(hostcores)
+      if hostname[0] != '#':
+        for i in xrange(hostcores):
+          host = Host(hostname, i)
+          self.hosts.append(host)
+          if i==0:
+            self.uniqhosts.append(host)
     self.ncores = len(self.hosts)
 
     self.iamalive()
     if self.check_delay() and self.check_load() and self.check_mem():
       payload(self, self.runid, self.k, self.ncores)
+    else:
+      for i in xrange(fail_rest):
+        self.iamalive()
+        time.sleep(1)
     self.iamalive()
 
     if cleanup:
@@ -195,6 +223,8 @@ class Manager:
       self.iamalive()
       time.sleep(1)    
     fork_daemon(lambda: os.system(cmdline), self.id, loglevel=self.loglevel)
+#    fork_daemon2(lambda: os.system(cmdline))
+
 
   def iamalive(self):
     touch(self.flagname())
@@ -217,7 +247,8 @@ class Manager:
   def monitor(self):
     os.system('uptime > %s/load.`hostname`.%s' % (commdir, self.runid))
     os.system('free > %s/free.`hostname`.%s' % (commdir, self.runid))
-    os.system('ps `pgrep -u %s` > %s/ps.`hostname`.%s' % (user, commdir, self.runid))
+    os.system("ps -p `pgrep -u %s -f '%s'` | grep -v grep > %s/ps.`hostname`.%s" % (user, self.pgrep_pattern, commdir, self.runid))
+#     os.system('ps `pgrep -u %s` > %s/ps.`hostname`.%s' % (user, commdir, self.runid))
 
   def check_mem(self):
     freeoutput = [ x for x in os.popen('free') ]
@@ -270,7 +301,7 @@ class Manager:
     raceflag = self.raceflag()
     touch(raceflag)
     random.seed(os.urandom(2))
-    sleeptime = 3 * random.random()
+    sleeptime = 10 + 3 * random.random()
 #    os.system('echo %f > %s/sleep.%s.%d' % (sleeptime, commdir, self.id, os.getpid()))
     
     time.sleep(sleeptime) # break ties, hopefully
@@ -314,8 +345,17 @@ class Manager:
     def spread(i):
       cmdline = self.cmdline % (i, self.runid)
       nbrfile = '%s/thrash.nbr.%s.%d' % (tmpdir, self.id, i)
-      cmd = ("ssh -f %s 'mkdir -p %s && touch %s && %s'" % (
-          self.hosts[i].name, tmpdir, nbrfile, cmdline))
+#       cmd = ("ssh -f %s 'mkdir -p %s && touch %s && %s'" % (
+#           self.hosts[i].name, tmpdir, nbrfile, cmdline))
+#       os.system(cmd)
+      cmd = ("ssh -f %s 'mkdir -p %s >/dev/null 2>/dev/null &'" % (
+          self.hosts[i].name, tmpdir))
+      os.system(cmd)
+      cmd = ("ssh -f %s 'touch %s >/dev/null 2>/dev/null &'" % (
+          self.hosts[i].name, nbrfile))
+      os.system(cmd)
+      cmd = ("ssh -f %s '%s >/dev/null 2>/dev/null &'" % (
+          self.hosts[i].name, cmdline))
       os.system(cmd)
 
     for i in self.nbrs():
@@ -331,7 +371,7 @@ class Manager:
 
         if testfile(self.deadname(i)):
           fork_daemon(lambda: spread(i), self.id, loglevel=self.loglevel)
-
+#          fork_daemon2(lambda: spread(i))
 
 class NiceManager(Manager):
   def nbrs(self):

@@ -1,6 +1,9 @@
 #true: profile
 "examples": include
 "util": include
+"detection": include
+"visualization": include
+"structure": include
 "vlib-ocaml": include
 "ocaml-base": include
 <*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
@@ -9,8 +12,12 @@
 <*/*/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
 <*/*/*/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
 <util/*.cmx>: for-pack(Util)
+<detection/*.cmx>: for-pack(Detection)
+<visualization/*.cmx>: for-pack(Visualization)
+<structure/*.cmx>: for-pack(Structure)
 <examples/*.cmx>: for-pack(Examples)
-"cdt": not_hygienic
+"cruft": not_hygienic, -traverse
+"cdt": not_hygienic, -traverse
 "xstage": -traverse
 "DATA": -traverse
 "leaves": -traverse

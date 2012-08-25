@@ -1,3 +1,25 @@
+@article{cfdp,
+    abstract = {We introduce an extension of dynamic programming ({DP}) we call "{Coarse-to-Fine} Dynamic Programming" ({CFDP}), ideally suited to {DP} problems with large state space. {CFDP} uses dynamic programming to solve a sequence of coarse approximations which are lower bounds to the original {DP} problem. These approximations are developed by merging states in the original graph into "superstates" in a coarser graph which uses an optimistic arc cost between superstates. The approximations are designed so that when {CFDP} terminates the optimal path through the original state graph has been found. {CFDP} leads to significant decreases in the amount of computation necessary to solve many {DP} problems and can, in some instances, make otherwise infeasible computations possible. {CFDP} generalizes to {DP} problems with continuous state space and we offer a convergence result for this extension. The computation of the approximations requires that we bound the arc cost over all possible arcs associated with an adjacent pair of superstates; thus the feasibility of our proposed method requires the identification of such a lower bound. We demonstrate applications of this technique to optimization of functions and boundary estimation in mine recognition.},
+    address = {Los Alamitos, CA, USA},
+    author = {Raphael, C.},
+    citeulike-article-id = {5810927},
+    citeulike-linkout-0 = {http://doi.ieeecomputersociety.org/10.1109/34.977562},
+    citeulike-linkout-1 = {http://dx.doi.org/10.1109/34.977562},
+    doi = {10.1109/34.977562},
+    issn = {0162-8828},
+    journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+    keywords = {grammar},
+    number = {12},
+    pages = {1379--1390},
+    posted-at = {2012-06-25 21:49:34},
+    priority = {2},
+    publisher = {IEEE Computer Society},
+    title = {{Coarse-to-Fine} Dynamic Programming},
+    url = {http://dx.doi.org/10.1109/34.977562},
+    volume = {23},
+    year = {2001}
+}
+
 @techreport{grammar-tr,
     abstract = {We formulate a general grammar model motivated by the problem of object detection in computer vision. We focus on four aspects of modeling objects for the purpose of object detection. First, we are interested in modeling objects as having parts which are themselves (recursively) objects. For example a person can be represented as being composed of a face, a trunk, arms, and legs where a face is composed of eyes, a nose and a mouth. Second, we are interested modeling object (and part) categories as being composed of subcategories or subtypes. For example we might distinguish sitting people from standing people and smiling faces from frowning faces. Third, we are interested in modeling the relative positions of the parts that make up an object. For example, in a person, the position of the hand is related to the position of the lower arm which is related to the position of the upper arm which is related to the position of the torso. Fourth, we are interested in modeling the appearance of objects so that we can find them in images. For example, a pattern of edges in a particular location of an image might give evidence for, or against, the presence of a part at that location. These four aspects of models --- parts, subtypes, positions, and appearance --- can be represented in a single grammar formalism that we call an object detection grammar.},
     author = {Felzenszwalb, Pedro F. and McAllester, David},
@@ -726,7 +748,7 @@ visual information.},
     year = {1997}
 }
 
-@book{Dryden1998Statistical,
+@book{mardia-dryden,
     author = {Dryden, I. L. and Mardia, Kanti V.},
     citeulike-article-id = {5636224},
     citeulike-linkout-0 = {http://www.amazon.ca/exec/obidos/redirect?tag=citeulike09-20\&amp;path=ASIN/0471958166},
@@ -886,7 +908,7 @@ visual information.},
     year = {1992}
 }
 
-@inproceedings{Richards1985Codon,
+@inproceedings{hoffman-richards,
     abstract = {Codons are simple primitives for describing plane curves. They thus are primarily image-based descriptors. Yet they have the power to capture important information about the 3D world, such as making part boundaries explicit, The codon description is highly redundant (useful for error-correction). This redundancy can be viewed as a constraint on tile number of possible codon strings, For smooth closed strings that represent the bounding contour (silhouette) of many smooth 3D objects, tile constraints are so strong that sequences containing 6 elements yield only 33 generic shapes as compared with possible number of 15,625 combinations.},
     author = {Richards, Whitman and Hoffman, Donald D. and Richards, Codon C.},
     booktitle = {Computer Vision, Graphics, and Image Processing},
@@ -2066,70 +2088,4 @@ analyses, giving the best published results on the ATIS...},
     volume = {2350},
     year = {2002}
 }
-
-
-@Comment @BOOK{Tufte2006,
-@Comment 	author = {Edward R. Tufte},
-@Comment 	title = {Beautiful Evidence},
-@Comment 	year = {2006},
-@Comment 	publisher = {Graphics Press, {LLC}},
-@Comment 	month = {May},
-@Comment 	edition = {First},
-@Comment 	place = {Cheshire, Connecticut},
-@Comment 	isbn = {0-9613921-7-7}
-@Comment }
-
-@Comment @BOOK{Tufte2001,
-@Comment 	author = {Edward R. Tufte},
-@Comment 	title = {The Visual Display of Quantitative Information},
-@Comment 	publisher = {Graphics Press},
-@Comment 	year = {2001},
-@Comment 	address = {Cheshire, Connecticut},
-@Comment 	isbn = {0-9613921-4-2}
-@Comment }
-
-@Comment @BOOK{Tufte1990,
-@Comment 	author = {Edward R. Tufte},
-@Comment 	title = {Envisioning Information},
-@Comment 	publisher = {Graphics Press},
-@Comment 	year = {1990},
-@Comment 	address = {Cheshire, Connecticut},
-@Comment 	isbn = {0-9613921-1-8}
-@Comment }
-
-@Comment @BOOK{Tufte1997,
-@Comment 	author = {Edward R. Tufte},
-@Comment 	title = {Visual Explanations},
-@Comment 	publisher = {Graphics Press},
-@Comment 	year = {1997},
-@Comment 	address = {Cheshire, Connecticut},
-@Comment 	isbn = {0-9613921-2-6}
-@Comment }
-
-@Comment @BOOK{Bringhurst2005,
-@Comment 	author = {Robert Bringhurst},
-@Comment 	title = {The Elements of Typography},
-@Comment 	publisher = {Hartley \& Marks},
-@Comment 	year = {2005},
-@Comment 	edition = {3.1},
-@Comment 	isbn = {0-88179-205-5}
-@Comment }
-
-@Comment @BOOK{Mittelbach2004,
-@Comment 	author = {Frank Mittelbach and Michel Goossens},
-@Comment 	title = {The \LaTeX\ Companion},
-@Comment 	publisher = {Addison--Wesley},
-@Comment 	year = {2004},
-@Comment 	edition = {Second},
-@Comment 	isbn = {0-201-36299-6}
-@Comment }
-
-@Comment @MISC{pkg-geometry,
-@Comment     author = {Hideo Umeki},
-@Comment     title = {The \texttt{geometry} package},
-@Comment     year = {2008},
-@Comment     month = dec,
-@Comment     howpublished = {\url{http://ctan.org/pkg/geometry}}
-@Comment }
-
 

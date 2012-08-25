@@ -326,3 +326,96 @@ let make_sparse_family n k =
     let family = ensure_reachability family in
       family
 
+
+
+let make_balanced_family n =
+  let lfamily = make_live_family n n in
+  let rec split i k =
+    if k-i > 1 then begin
+      let j = (i+k)/2 in
+	lfamily.imake_new_scurve (i,j) (j-i);
+	lfamily.imake_new_scurve (j,k mod n) (k-j);
+	lfamily.imake_new_comp (i,j,k mod n);
+
+	split i j;
+	split j k;
+    end
+  in
+    lfamily.imake_new_scurve (0,0) n;
+    split 0 n;
+
+    let family = finalize lfamily.gram in
+    let family = ensure_reachability family in
+      family
+
+
+let make_balanced_flexible_family n s =
+  let scurve_seen = mkhash 100 in
+  let comp_seen = mkhash 100 in
+  let lfamily = make_live_family n n in
+  let rec split i k =
+    if k-i >= (3*s) then begin
+      let js = Array.init (s+1) (fun x -> ((s-x)*i + x*k) / s) in
+
+	for a = 0 to s do
+	  for b = a+1 to s do
+	    let bg, en = js.(a), js.(b) in
+	      if not (scurve_seen >>? (bg mod n, en mod n)) then begin
+		lfamily.imake_new_scurve (bg mod n,en mod n) (en-bg);
+		scurve_seen << ((bg mod n, en mod n), ());
+	      end
+	  done
+	done;
+
+	for a = 0 to s do
+	  for b = a+1 to s do
+	    for c = b+1 to s do 
+	      let bg, md, en = js.(a), js.(b), js.(c) in
+		if not (comp_seen >>? (bg mod n, md mod n, en mod n)) then begin
+		  lfamily.imake_new_comp (bg mod n, md mod n, en mod n);
+		  comp_seen << ((bg mod n, md mod n, en mod n), ());
+		end
+	    done
+	  done
+	done;
+
+	for a = 0 to s-1 do 
+	  split js.(a) js.(a+1);
+	done
+    end
+  in
+
+  let js = Array.init s (fun x -> (x*n)/s) in
+
+    for a = 0 to s-1 do 
+      lfamily.imake_new_scurve (js.(a), js.(a)) n;
+      scurve_seen << ((js.(a), js.(a)), ());
+      split js.(a) (js.(a)+n);
+    done;
+
+    let family = finalize lfamily.gram in
+    let family = ensure_reachability family in
+      family
+
+
+
+let make_balanced_flexible_family2 n s =
+  let lfamily = make_live_family n n in
+  let js = Array.init s (fun x -> (x*n)/s) in
+
+    for a = 0 to s-1 do 
+      let bg, md = js.(a), js.((a + (s/2)) mod s) in
+	lfamily.imake_new_scurve (bg, bg) n;
+	lfamily.imake_new_scurve (bg, md) ((md-bg+n) mod n);
+    done;
+
+    for a = 0 to s-1 do 
+      let bg, md = js.(a), js.((a + (s/2)) mod s) in
+	lfamily.imake_new_comp (bg, md, bg);
+    done;
+
+    let family = finalize lfamily.gram in
+    let family = ensure_reachability family in
+      family
+
+	

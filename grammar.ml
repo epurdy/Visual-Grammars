@@ -121,6 +121,41 @@ let grammar_of_family family start_sdata sdata_maker cdata_maker =
 	end;
       gram
 
+(* it is assumed that we do not want to attach to the start symbol?? *)
+let grow_grammar_with_family gram family ntid foldroot sdata_maker cdata_maker =
+  let nt = Frozen.get_symbol gram ntid in
+  let gram = enliven gram in
+  let lookup = mkhash 100 in
+    lookup << (foldroot.sid, nt);
+
+    Frozen.iter_symbols family
+      begin fun scurve ->
+	if scurve <> foldroot then begin 
+	  match (sdata_maker scurve) with 
+	      None ->
+		failwith "assuming that curve is open, not attaching to start";
+	    | Some sdata ->
+		lookup << (scurve.sid, make_new_symbol gram sdata false);
+	end
+      end;
+
+    iter_all_decompositions family
+      begin fun scurve dcomp ->
+	let cdata = cdata_maker scurve dcomp in
+	let sym = lookup >> scurve.sid in
+	let left = lookup >> dcomp.leftsid in
+	let right = lookup >> dcomp.rightsid in
+	  imake_new_composition gram
+	    sym.sid (left.sid,right.sid) cdata
+      end;
+
+    let gram = finalize gram in
+      Frozen.iter_symbols gram
+	begin fun sym ->
+	  renormalize_binary gram sym;
+	end;
+      gram
+
 (************************************************************)
 
 let merge_symbols_left gram s1 s2 ~renorm =

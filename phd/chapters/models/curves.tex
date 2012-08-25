@@ -45,12 +45,13 @@ term rewards relatively uniform sampling at the correct rate.
     p_{n_{i+1}} \right) \right\|^2 + \alpha \sum_i (\lambda_i -
 \widehat{\lambda})^2,\label{eq:subsample-obj}
 \end{equation}
-where $\lambda_i$ is the length of the $i$-th
-segment and $\widehat{\lambda} = N/L$ is the ``ideal'' segment
-length. If $C$ is closed, then $p_{n_i + j}$ wraps around: $p_{n_i +
-  j} = p_{n_i+j \mod N}$ . This minimization can be done with a
-straightforward dynamic program. The results of the algorithm can be
-seen in Figure \ref{fig-subsample}.
+where $\lambda_i$ is the length of the $i$-th segment and
+$\widehat{\lambda} = N/L$ is the ``ideal'' segment length. If $C$ is
+closed, then $p_{n_i + j}$ wraps around: $p_{n_i + j} = p_{n_i+j \mod
+  N}$ . This minimization can be done with a straightforward dynamic
+program. The results of the algorithm can be seen in Figure
+\ref{fig-subsample}. Note that, while we lose fine detail, the
+resulting curves closely approximate the original curves.
 \begin{figure}[h]
 \centering
 \includegraphics[width=120mm]{images/subsample.png} 

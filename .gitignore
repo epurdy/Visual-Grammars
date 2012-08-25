@@ -7,6 +7,11 @@ _build
 *.aux
 *.log
 *.toc
+*.blg
+*.bbl
+*.idx
+*.lof
+*.lot
 *.out
 *.eps
 *.pgm
@@ -18,3 +23,4 @@ output.d
 *.pyc
 *.curve
 *.gif
+.nfs*
