@@ -252,10 +252,28 @@
     \label{sec-models-parsing}
     \input{chapters/models/parsing}
 
-  \section{Sampling Experiments}
-  \section{Classification Experiments}
-  \section{Constellation Grammars}
-  \section{Product Grammars}
+  \section{Comparing to Independent Gaussians}
+  The following three images show samples from a model using an
+  independent Gaussian distribution for each point. They are trained
+  on the Romer dataset introduced in the learning chapter.
+
+  Respectively, they show samples from the maximum likelihood model,
+  samples from the maximum likelihood model with no variance, and
+  samples from the maximum likelihood model with its variance
+  artificially decreased. It is plain to see that these models are
+  unable to capture much interesting structure. Compared to the
+  samples at the end of the learning chapter, these are very bad.
+
+    \input{output/1.models/comparison_gaussians/out}
+
+  \section{Comparing to Independent Nonparametric Distributions}
+  The following images show samples from a model using independent
+  nonparametric distributions for each point. They are trained on the
+  Romer dataset introduced in the learning chapter. The independence
+  assumption is clearly not a good fit for modeling these curves.    
+
+    \input{output/1.models/comparison_parzen/out}
+
 
 \chapter{Detecting Objects in Cluttered Images}
   \label{chap-detection}

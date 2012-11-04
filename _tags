@@ -1,25 +1,40 @@
 #true: profile
+
+"experiments": include
 "examples": include
-"util": include
-"detection": include
-"visualization": include
-"structure": include
+"src": include
+"src/util": include
+"src/detection": include
+"src/visualization": include
+"src/structure": include
 "vlib-ocaml": include
 "ocaml-base": include
+
+
 <*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
-<util/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
+<src/util/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
 <*/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
 <*/*/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
 <*/*/*/*.{ml,mli,native}>: use_cairo, thread, use_threads, use_unix, use_vlib
-<util/*.cmx>: for-pack(Util)
-<detection/*.cmx>: for-pack(Detection)
-<visualization/*.cmx>: for-pack(Visualization)
-<structure/*.cmx>: for-pack(Structure)
+
+<src/util/*.cmx>: for-pack(Util)
+<src/detection/*.cmx>: for-pack(Detection)
+<src/visualization/*.cmx>: for-pack(Visualization)
+<src/structure/*.cmx>: for-pack(Structure)
 <examples/*.cmx>: for-pack(Examples)
+<ocaml-base/*.cmx>: for-pack(Ocamlbase)
+
 "cruft": not_hygienic, -traverse
+"cruftout": not_hygienic, -traverse
+"cruftex": not_hygienic, -traverse
+"cruftims": not_hygienic, -traverse
 "cdt": not_hygienic, -traverse
-"xstage": -traverse
-"DATA": -traverse
-"leaves": -traverse
-"romer": -traverse
-"synth": -traverse
+"xstage": not_hygienic, -traverse
+"DATA": not_hygienic, -traverse
+"detexout": not_hygienic, -traverse
+"output": not_hygienic, -traverse
+"phd": not_hygienic, -traverse
+"results": not_hygienic, -traverse
+"scripts": not_hygienic, -traverse
+"tmp": not_hygienic, -traverse
+"writing": not_hygienic, -traverse
