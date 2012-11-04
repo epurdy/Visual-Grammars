@@ -1,0 +1,151 @@
+\documentclass{book}
+\usepackage{leonine,amsmath,amssymb,amsthm,graphicx}%%xy, setspace, amscd (commutative diagram)
+\title{Notes}
+\author{Eric Purdy \footnote{Department of Computer Science, University of Chicago. Email: epurdy@uchicago.edu}}
+
+%%\doublespace
+
+\begin{document}
+
+\chapter{Models}
+
+\section{Independent Gaussians}
+Here we show the output of a model where each point of a curve is
+sampled from an independent Gaussian. The maximum likelihood model
+generates completely nonsensical curves. We also show models with
+decreased variance, which vary less but are still not satisfactory.
+
+\input{output/1.models/comparison_gaussians/out}
+
+\section{Independent Nonparametric Distributions}
+
+This model also generates completely nonsensical curves.
+
+\input{output/1.models/comparison_parzen/out}
+
+\chapter{Parameter Learning}
+
+\section{Setup for Learning Experiments}
+
+For each experiment in this section, we build a grammar from the
+example curve, train it on the training curves, and then evaluate it
+by computing the cross-entropy on the validation curves. 
+
+For all but one of the experiments, we repeat the experiment with
+three different starting structures, which are shown below as
+decompositions of the example curve.
+
+Unless otherwise noted, these experiments use Watson distributions and
+a $Gamma(\sigma=1000, \overline{\kappa}=100)$ prior on the
+concentration of the Watson distributions.
+
+\input{output/3.learning/learning_setup/out}
+
+\section{Simple Tuning of hand-built grammar with curves of constant length}
+
+First, we use EM to train an initial grammar that has no choices. Our
+grammar is produced from a hand-chosen decomposition. Samples from the
+grammar after various numbers of rounds of training are shown
+below. Since we are using unimodal midpoint distributions, and our
+grammar has no choice, all the samples are slight variations on one
+particular mean shape. The mean shape chosen is a very reasonable one,
+although the arms are longer than is ideal.
+
+We repeat this grammar three times with different initial grammatical
+structures, to show how the performance of the algorithm depends on
+our initial structure. We also show the log-likelihoods of the data
+after each round of training in the table below.
+
+\input{output/3.learning/simple_tuning/out}
+
+\section{Experimenting with different priors over concentration}
+
+\input{output/3.learning/concentration/out}
+
+\section{Tuning with multiple midpoints, and curves of constant length}
+
+In the next experiment, we enrich the grammar by adding in several
+copies (in this case, five) of each rule, with jittered midpoints. (If
+we used the same midpoint for each copy of the rule, parses could use
+the rules interchangeably, and EM would never break this symmetry.)
+Below, we show samples from the grammar after various numbers of
+rounds of training. The samples show significantly more variation than
+in the previous experiment, but they also include many ill-formed and
+unlikely shapes. This is because the grammar cannot model correlations
+between levels, so that e.g., it cannot pick the location of the elbow
+based on the location of the hand, which means that the arm is often
+ill-formed and self-intersecting.
+
+We repeat this grammar three times with different initial grammatical
+structures, to show how the performance of the algorithm depends on
+our initial structure. We also show the log-likelihoods of the data
+after each round of training in the table below.
+
+\input{output/3.learning/multi_tuning/out}
+
+\section{Tuning with multiple midpoints, learning multi-level correlations}
+
+In this experiment, we enrich the grammar by adding in several copies
+of each nonterminal, each of which has several copies of the original
+rule with jittered midpoints. If our original rule was $X\to YZ$, then
+we have five copies each of $X,Y,Z$, and each $X_i$ has five rules of
+the form $X_i \to Y_j Z_k$, where $j$ and $k$ are chosen independently
+at random.
+
+Below, we show samples from the grammar after various numbers of
+rounds of training. The silhouettes look much better than in the
+previous experiment. This is because we have learned correlations
+between levels, i.e., the choice of rule at a higher level influences
+the choice of rule at a lower level.
+
+We repeat this grammar three times with different initial grammatical
+structures, to show how the performance of the algorithm depends on
+our initial structure. We also show the log-likelihoods of the data
+after each round of training in the table below.
+
+\input{output/3.learning/correlated_tuning/out}
+
+\section{Full Tuning}
+
+In this experiment, we build a grammar from the example curve that
+allows all possible decompositions, and then train using EM. Below we
+show samples from the grammar after five and ten rounds of
+training. Note that there is no longer a choice of initial structure.
+
+\input{output/3.learning/full_tuning/out}
+
+% \section{Learning Texture}
+% \input{output/3.learning/scaled_nts/out}
+
+\section{Learning a model of texture}
+
+\subsection{Class 1}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_1.png}
+\subsection{Class 2}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_2.png}
+\subsection{Class 3}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_3.png}
+\subsection{Class 4}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_4.png}
+\subsection{Class 6}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_6.png}
+\subsection{Class 7}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_7.png}
+\subsection{Class 8}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_8.png}
+\subsection{Class 9}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_9.png}
+\subsection{Class 12}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_training_12.png}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_12.png}
+\subsection{Class 13}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_training_13.png}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_13.png}
+\subsection{Class 14}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_training_14.png}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_14.png}
+\subsection{Class 15}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_training_15.png}
+\includegraphics[width=6in]{output/3.learning/scaled_nts/scaled_nts_15.png}
+
+\end{document}
