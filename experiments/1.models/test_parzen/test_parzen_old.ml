@@ -15,6 +15,7 @@ let sigma = 1.0;;
 let newsigma = sigma *. 0.5;;
 let granularity = 100;;
 let fgranularity = float_of_int granularity;;
+let default_baseline_sigma = 0.05;;
 
 let draw_points pts =
   let im = Image.create granularity granularity 0 in
@@ -57,7 +58,7 @@ Pnm.save_pgm (draw_points rs)  (sprintf "%s/1.points.pgm" dir);;
 (* Make nonparametric model *)
 let rs = Array.map (fun z -> Shape.shape_of_complex_bme c0 z c1) rs;;
 let model = N.make_model rs sigma granularity 
-  (Shape.default_shape, Con.default_baseline_sigma)  0.00001 false;;
+  (Shape.default_shape, default_baseline_sigma)  0.00001 false;;
 N.force model;;
 let im = N.draw_model model;;
 Pnm.save_ppm im  (sprintf "%s/2.density.pgm" dir);;

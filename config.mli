@@ -1,1 +1,0 @@
-val basedir : string

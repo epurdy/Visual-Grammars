@@ -112,7 +112,7 @@ let gram =
     let ocurve = Array.sub doubled k ((d k i) + 1) in 
     let geom = Parzen (N.make_model shapes smallsigma granularity 
 			 (shapes.(0), smallsigma) 
-			 Con.default_baseline_weight false)
+			 baseline_weight false)
     in
       Abstract.imake_new_composition gram x.sid (y.sid,z.sid)
 	{
@@ -138,7 +138,7 @@ let gram =
   let thumb2 = make_state 0.0 (8,10) in
 
   let thumb_shape = make_shape (7,8,10) in
-  let theta = (Con.pi/. 8.0) in
+  let theta = (pi/. 8.0) in
   let thumb_shapes = [| thumb_shape; 
 			rot_shape thumb_shape (C.polar 1.0 (-. theta));
 			rot_shape thumb_shape (C.polar 1.0 (-. 2. *. theta));

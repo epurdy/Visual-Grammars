@@ -22,6 +22,8 @@ let optimal_constituents curves outname =
   let best = ref 0. in
   let besttop = ref (-1) in
 
+  let wdf = Watson.watson_distro_family in
+
     Frozen.iter_symbols family
       begin fun scurve ->
 	if strat.lexical_ok scurve then begin
@@ -37,8 +39,18 @@ let optimal_constituents curves outname =
 		(fun c -> (c.(bg), c.(md), c.(en)))
 		curves
 	      in
+	      let winput = Array.map (fun (p,q,r) -> (1.0, Shape.shape_of_complex_bme p q r)) 
+		triples 
+	      in 
+	      let winput = {
+		Watson.samples = winput;
+		Watson.gamma_shape_param = 1000.;
+		Watson.gamma_mean_param = 100.;
+	      }
+	      in
 
-	      let wdata = Watson.fit_watson triples in
+
+	      let woutput, wdata = wdf.Distro.infer winput in
 	      let cost = wdata.Watson.cost +.
 		(tab >> dcomp.leftsid) +. (tab >> dcomp.rightsid) in
 
@@ -75,8 +87,8 @@ let optimal_constituents curves outname =
     in 
       visit !besttop;
 
-    let newfam = finalize lfam.gram in
-      save_family newfam outname
+      let newfam = finalize lfam.gram in
+	save_family newfam outname
 
 let _ = 
   let curves = Array.init 16

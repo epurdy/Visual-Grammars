@@ -1,0 +1,423 @@
+#+LATEX_CLASS: mine
+#+TITLE: Experimental Results and Notes
+#+AUTHOR: Eric Purdy
+#+EMAIL: epurdy@uchicago.edu
+#+LATEX_HEADER: \usepackage{leonine,amsmath,amssymb,amsthm,graphicx,setspace, hyperref, color}
+#+LATEX_HEADER: \renewcommand{\thechapter}{\Roman{chapter}}
+
+#+LATEX_HEADER: \newcommand{\bow}[1]{\colorbox{black}{\color{white} #1}}
+#+LATEX_HEADER: \newcommand{\experiment}[1]{\bow{This section's results can be recreated by running #1}}
+
+* Results
+#+LATEX: \setcounter{section}{-1}
+
+** Simpler EM experiments
+
+Start with simpler shapes, like quadrilaterals. Draw samples. What are
+the different kinds? trapezoid, parallelogram, rhombus, square,
+rectangle. would like to see if EM preserves our ideas about what
+those classes look like.
+
+Can also do 4-pointed stars
+
+** Assembling Datasets
+*** Synthetic Datasets
+  - Polygons:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/polygons.eps]]
+
+  - Stars:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/stars.eps]]
+
+  - A shape with an articulating arm:
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/articulator.eps]]
+
+  - These are 6-armed shapes, where each arm can have one of two
+    shapes.
+
+#+ATTR_LATEX: width=4in
+[[./0.datasets/synth/output.d/narms.eps]]
+
+*** Romer
+  - We have hand-annotated a simplified version of Romer by
+    hand-marking 27 points on a number of images
+%% #+CAPTION:    Hand-annotated simplified Romer dataset
+%% #+ATTR_LaTeX: width=6in placement=[h!]
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/romer/output.d/romerI.eps]]
+
+  - Also have the "ground-truth" curves that come from diffing images
+    with the background, although they are actually quite messy
+%% #+CAPTION:    "Ground truth" curves from Romer dataset
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/romer/output.d/romerII.eps]]
+  - The images themselves
+
+*** Swedish Leaves
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_01.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_02.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_03.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_04.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_05.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_06.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_07.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_08.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_09.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_10.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_11.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_12.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_13.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_14.eps]]
+
+  -
+#+ATTR_LaTeX: width=4in
+[[./0.datasets/leaves/output.d/leaves_15.eps]]
+
+** Grammatical Shape Models
+** Parsing
+*** One-to-one
+
+Here we have two curves given by hand-annotation of the Romer
+dataset. We build a grammar from the curve on the left, using a
+hand-built set of constituents. We then parse the curve on the right,
+and show the Viterbi parse by showing the correspondences between the
+two curves.
+
+Because there are no missing or extra points, this is straightforward.
+
+%% #+CAPTION:    On the left, the model curve. On the right, the parsed curve
+#+ATTR_LaTeX: width=6in
+[[./2.parsing/one_to_one/output.d/parse.eps]]
+
+
+*** Recover a correspondence with extra intermediate points
+
+We build a grammar from a single example from the hand-annotated Romer
+dataset, and use it to parse a curve from the ground-truth Romer
+dataset. We successfully recover a very reasonable correspondence.
+
+%% #+CAPTION:    On the left, the model curve. On the right, the parsed curve
+#+ATTR_LaTeX: width=6in
+[[./2.parsing/longer_curves/output.d/parse.eps]]
+
+  - The ground-truth Romer curve has more intermediate points, so this
+    demonstrates that our grammar construction and parsing algorithm
+    deal well with additional intermediate points. The grammar must
+    have lengthening rules, but doesn't need shortening rules.
+
+
+*** Recover a correspondence where some points are missing
+  Here we build a grammar from a ground-truth Romer curve, and try to
+  parse one of the (much shorter) hand-annotated Romer curves. We can
+  safely assume that every point in the parsed curve has a
+  corresponding one in the example curve, which is the reverse of the
+  previous experiments.
+
+  In order to do this successfully, the grammar needs shortening
+  rules, but not lengthening rules.
+
+%% #+CAPTION:    On the left, the model curve. On the right, the parsed curve
+#+ATTR_LaTeX: width=6in
+[[./2.parsing/shorter_curves/output.d/parse_00.eps]]
+
+  - This is really quite bad. We are using a pretty bad SDF to
+    initialize the grammar, so maybe that is why. Here is the SDF:
+
+#+ATTR_LaTeX: width=5in
+[[./2.parsing/shorter_curves/output.d/sdf_8.eps]]
+
+  - It is somewhat troubling that it does this badly, though. Let us
+    try it again with less geometric variation.
+
+%% #+CAPTION:    On the left, the model curve. On the right, the parsed curve
+#+ATTR_LaTeX: width=6in
+[[./2.parsing/shorter_curves/output.d/parse_80.eps]]
+
+  - This is basically correct, although the fine details are not very
+    good looking. This is probably because of the SDF. The shortening
+    rules only allow the parser to chop off constituents. If the
+    constituents look bad, then the parse will look bad. 
+
+** EM
+*** Simple tuning of hand-built grammar with curves of constant length
+Here is our example curve, from which we build a grammar with
+hand-chosen rules. It is the grammar shown in section 1.
+
+%% #+CAPTION:    Here is our example curve, from which we build a grammar with hand-chosen rules.
+#+ATTR_LaTeX: width=4in
+[[./3.em/simple_tuning/output.d/examples.eps]]
+
+Here are our training curves:
+
+%% #+CAPTION:    Here are our training curves:
+#+ATTR_LaTeX: width=4in
+[[./3.em/simple_tuning/output.d/training.eps]]
+
+**** Round 2
+\input{./3.em/simple_tuning/output.d/gram.2.d/foo}
+
+*** Tuning with multiple midpoints, and curves of constant length
+
+There may be a small bug here, since EM should settle intoa local
+optimum, and the algorithm seems to be cycling between two relatively
+reasonable grammars. Presumably has to do with the sparsifying
+manipulations of the soft counts.
+
+Here is our example curve, from which we build a grammar with
+hand-chosen rules. We then enrich the grammar by adding in several
+copies of each rule, with jittered midpoints.
+
+%% #+CAPTION: Here is our example curve, from which we build a grammar
+%% #with hand-chosen rules. We then enrich the grammar by adding in
+%% #several copies of each rule, with jittered midpoints
+#+ATTR_LaTeX: width=3in
+[[./3.em/multi_tuning/output.d/examples.eps]]
+
+Here are our training curves. We have removed one of the curves from
+the training set because its correspondence to the original curve is
+questionable. (It is from a frame during the flipping around of the
+arm, and it is hard to pick a labeling of the points that is
+consistent throughout that transition.)
+
+%% #+CAPTION:    Here are our training curves:
+#+ATTR_LaTeX: width=3in
+[[./3.em/multi_tuning/output.d/training.eps]]
+
+**** Round 10
+\input{./3.em/multi_tuning/output.d/gram.10.d/foo}
+*** Tuning with multiple midpoints, learning multi-level correlations
+
+Here is the training data:
+
+#+ATTR_LaTeX: width=3in
+[[./3.em/correlated_tuning/output.d/training.eps]]
+
+**** Round 10
+\input{./3.em/correlated_tuning/output.d/gram.10.d/foo}
+
+
+*** Multi-level correlations, carefully-chosen sdf
+Output looks really nice. It seems like it's super-sensitive to the
+exact SDF we choose.
+
+random thought: can we modify em to express some constraint on the
+model? for instance, if we want to model convex curves, we could
+generate random curves, find the non-convex ones, and somehow use
+those as negative observations (a la contrastive divergence)
+
+could weight them negatively according to how much they violate our
+constraint
+
+in general, can have any sort of positive and negative observations...
+
+need to be able to use negative observations in our estimators. for
+us, we have multinomial counts and the procrustes mean, relatively
+clear how it should be done. need to watch out that the procrustes
+mean matrix remains psd, otherwise weird shit will happen with the
+eigenvalues
+
+is there any way to justify this mathematically? can look at CD
+justification
+
+generally speaking, we can say that we are trying to minimize an
+energy functional on our model. this particular energy functional
+penalizes the model for producing data that is unrealistic in some way
+
+we can also think of it like this: if we had lots and lots of data,
+then we would hope that our model estimation procedure would
+work. but, since we have relatively little data, we want to somehow
+use our intuition about the domain to suggest more data
+
+if we look at the CD notes we found, we CAN sample directly from the
+proposed distribution...
+
+can we think of it as supplementing the observed data with a POE,
+i.e., not in our model, but in the observations somehow...
+
+**** Round 10
+\input{./3.em/sdf_tuning/output.d/gram.10.d/foo}
+
+
+
+*** Adding in multiple midpoints as needed
+
+Here is the training data:
+
+#+ATTR_LaTeX: width=3in
+[[./3.em/incremental/output.d/training.eps]]
+
+**** Round 19
+\input{./3.em/incremental/output.d/gram.19.d/foo}
+
+**** Round 20
+\input{./3.em/incremental/output.d/gram.20.d/foo}
+
+**** Round 30
+\input{./3.em/incremental/output.d/gram.30.d/foo}
+**** Training
+We show training data again for comparison with final samples
+ 
+#+ATTR_LaTeX: width=3in
+[[./3.em/incremental/output.d/training.eps]]
+
+** Parsing in Cluttered Images
+*** Finding obvious curve
+
+We build a grammar from a single curve, using a hand-picked
+decomposition.
+
+#+ATTR_LaTeX: width=4in
+[[./4.images/standard_cky/output.d/examples.eps]]
+
+We then pick some other curves which we wish to parse:
+
+#+ATTR_LaTeX: width=4in
+[[./4.images/standard_cky/output.d/targets.eps]]
+
+We build a simple network on a 16x16 grid. We give curve segments a
+data cost of 1.0, and short non-curve segments a data cost of 100.0.
+On the left are the points of the network, with the curve segments
+shown. On the right is the parse found.
+
+# |-----------------------------------------------------+-------------------------------------------------------|
+# | [[./4.images/standard_cky/output.d/network.0000.eps]] | [[./4.images/standard_cky/output.d/cky.im0000.final.eps]] |
+# |-----------------------------------------------------+-------------------------------------------------------|
+# | [[./4.images/standard_cky/output.d/network.0010.eps]] | [[./4.images/standard_cky/output.d/cky.im0010.final.eps]] |
+# |-----------------------------------------------------+-------------------------------------------------------|
+
+*** Fuzzy parsing
+
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0000.eps]] | [[./4.images/fuzzy_cky/output.d/0000.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0010.eps]] | [[./4.images/fuzzy_cky/output.d/0010.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0020.eps]] | [[./4.images/fuzzy_cky/output.d/0020.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0030.eps]] | [[./4.images/fuzzy_cky/output.d/0030.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0040.eps]] | [[./4.images/fuzzy_cky/output.d/0040.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0050.eps]] | [[./4.images/fuzzy_cky/output.d/0050.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+| [[./4.images/fuzzy_cky/output.d/network.0060.eps]] | [[./4.images/fuzzy_cky/output.d/0060.yield.x8.final.eps]] |
+|------------------------------------------------+-------------------------------------------------------|
+
+
+*** Parsing actual images
+
+We build a grammar using a hand-chosen annotation of this curve:
+[[./4.images/standard_cky/output.d/examples.eps]]
+
+Here is the image we wish to parse
+%% [[../IMG0000.eps]]
+
+Here is the set of line segments allowable during parsing. Cheaper
+curves are darker red.
+
+[[./4.images/image_parsing/output.d/network.0000.eps]]
+
+Here is the curve found during parsing:
+
+[[./4.images/image_parsing/output.d/0000.yield.final.eps]]
+
+
+** Learning Structure
+
+*** Figure out optimal single-example grammar
+
+We use explicit correspondences to learn the statistically best set of
+constituents when building a grammar from a single example.
+
+Note that the arms are found as constituents!
+
+There is a strange issue here, but I've seen it before in other code
+and I don't think it's a bug. Converting to Bookstein coordinates
+improves the results (or here, the results are more intuitive to me),
+even though the Watson distribution shouldn't need this.
+
+Here are the constituents selected by the algorithm:
+
+%% #+CAPTION:    Constituents selected.
+#+ATTR_LaTeX: width=5in
+[[./6.structure/constituents/output.d/optimal.eps]]
+
+Here are the constituents that seemed most intuitive to me:
+
+%% #+CAPTION:    Constituents selected.
+#+ATTR_LaTeX: width=5in
+[[./6.structure/constituents/output.d/handpicked.eps]]
+
+
+*** Constituency from approximation
+
+*** Constituency from decay 
+
+We have the following curve:
+
+#+ATTR_LATEX: width=4in
+[[./6.structure/constituency_heuristics/output.d/curve.eps]]
+
+We attempt to decompose the curve meaningfully by iteratively
+simplifying the curve, like this:
+
+#+ATTR_LATEX: width=4in
+[[./6.structure/constituency_heuristics/output.d/decay.eps]]
+
+
+Here is the decomposition found using this heuristic.
+
+#+ATTR_LATEX: width=4in
+[[./6.structure/constituency_heuristics/output.d/decay_sdf.eps]]
+
+
+

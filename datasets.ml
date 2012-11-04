@@ -14,3 +14,11 @@ let get_articulator ?(n=20) () =
 
 let get_hand ?(n=20) () = 
   Curve.input (sprintf "data/hand/sample.%04d.curve") 0 n
+
+
+(* type ('params, 'data, 'internals) dataset = { *)
+(*   internals: 'internals; *)
+(*   get: 'params -> 'data; *)
+(*   init_classification: unit -> unit; *)
+  
+(* } *)

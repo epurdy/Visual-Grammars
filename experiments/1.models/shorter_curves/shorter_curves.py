@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from experiments.common import *
 
-dir = 'output/2.parsing/shorter_curves'
+dir = 'output/1.models/shorter_curves'
 
 cmd = './subsample.native DATA/romer/clean/diff0080.curve 50 %s/diff0080.50.curve' % dir
 doit(cmd)

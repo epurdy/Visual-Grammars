@@ -14,7 +14,7 @@ module Viz = Visualization.Viz
 let scale = 100.
 
 let do_parse incurve_name excurve_name sdf_name out_name sdf_out_name = 
-  let x = Svg.create out_name in
+  let x = Svg.create_sized out_name (3000.,3000.) in
   let _ = Cairo.scale x.Svg.ctx scale scale in
 
   let curve = Curve.load incurve_name in
@@ -74,12 +74,12 @@ let do_parse incurve_name excurve_name sdf_name out_name sdf_out_name =
 	  in
 	  let ibg, ien = find bg thebigcurve, find en thebigcurve in
 
-	    (* 	    labels <<+ (ibg, scurve.Sdf.first); *)
-	    (* 	    labels <<+ (ien, scurve.Sdf.last); *)
-(* 	    labels <<+ (scurve.sdata.first_, ibg); *)
-(* 	    labels <<+ (scurve.sdata.last_, ien); *)
-	    labels << (scurve.sdata.first_, ibg);
-	    labels << (scurve.sdata.last_, ien);
+	    (* labels <<+ (ibg, scurve.sdata.first_); *)
+	    (* labels <<+ (ien, scurve.sdata.last_); *)
+	    (* labels <<+ (scurve.sdata.first_, ibg); *)
+	    (* labels <<+ (scurve.sdata.last_, ien); *)
+	    labels <<+ (scurve.sdata.first_, ibg);
+	    labels <<+ (scurve.sdata.last_, ien);
 	    printf "s%d (%d,%d) -> sc%d (%d,%d)\n" sid
 	      ibg ien
 	      scid
@@ -103,7 +103,7 @@ let do_parse incurve_name excurve_name sdf_name out_name sdf_out_name =
 	    if labels >>? i then 
 	      (sprintf "%d" (labels >> i))
 	    else
-	      ""
+	      "z"
 	  end
       in
 

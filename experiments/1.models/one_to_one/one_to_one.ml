@@ -11,7 +11,7 @@ open Models.Simple
 let scale = 100.
 
 let one_to_one incurve_name excurve_name sdf_name out_name = 
-  let x = Svg.create out_name in
+  let x = Svg.create_sized out_name (3000.,3000.) in
   let _ = Cairo.scale x.Svg.ctx scale scale in
 
   let curve = Curve.load incurve_name in

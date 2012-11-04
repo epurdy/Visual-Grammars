@@ -18,6 +18,19 @@ let _ =
   in
 
   let curves = Array.of_list (List.rev !curves) in 
+
+  (* let n0 = Array.length curves.(0) in *)
+  (* let axis = curves.(0).(n0/2) -& curves.(0).(0) in *)
+  (* let curves = Array.map *)
+  (*   begin fun c -> *)
+  (*     let nc = Array.length c in *)
+  (*     let axis2 = c.(nc/2) -& c.(0) in *)
+  (*     let factor = axis /& axis2 in *)
+  (* 	Array.map (fun z -> z *& factor) c *)
+  (*   end *)
+  (*   curves  *)
+  (* in *)
+
   let curves = Array.map Curve.normalize curves in
   let ncurves = Array.length curves in
     

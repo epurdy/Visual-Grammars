@@ -12,6 +12,9 @@ let dir = "output/1.models/test_parzen"
 let shape_to_triple shape = (c0, Shape.get_pt shape, c1)
 
 let scale = 100.
+
+let default_baseline_weight = 0.1
+let default_baseline_sigma = 0.05
  
 let save_triangle shape fname = 
   let p = Shape.get_pt shape in
@@ -43,7 +46,7 @@ let _ =
     Array.iter
       begin fun bw ->
 	let model = N.make_model rs bw granularity 
-	  (Shape.default_shape, Con.default_baseline_sigma)  0.0 false
+	  (Shape.default_shape, default_baseline_sigma)  0.0 false
 	in
 	let samples  = Array.init num_new_rs (fun i -> N.sample model) in
 	let fnames = ref "" in

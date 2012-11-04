@@ -3,7 +3,7 @@
 
 from experiments.common import *
 
-dir = 'output/1.grammars/hand_built'
+dir = 'output/1.models/hand_built'
 
 # build the grammars and save them
 doit('./hand_built.native %s' % dir)

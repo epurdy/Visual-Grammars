@@ -6,6 +6,8 @@ open Grammar
 
 let nperpage = 6
 
+let wdf = Watson.watson_distro_family
+
 let prod_cost comp shape =
   match comp.cdata.geom with
       Improper ->
@@ -13,7 +15,7 @@ let prod_cost comp shape =
     | Parzen model ->
 	comp.cdata.cost +. (Parzen.cost model shape)
     | Watson model ->
-	comp.cdata.cost +. Watson.cost model shape
+	comp.cdata.cost +. wdf.Distro.neglog_prob model shape
 
 let draw_prod_curves im bds granularity prod =
   let draw_scurve prod im scurve value =

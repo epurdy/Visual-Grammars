@@ -4,16 +4,9 @@ from experiments.common import *
 
 dir = 'output/3.learning/scaled_nts'
 
-def svg_to_png(dir, svg_name, png_name):
-  dispatch('inkscape tmp/%s' % svg_name, D='', e='%s/%s' % (dir,png_name))
-
-for leafnum in xrange(12,15+1):
-#for leafnum in xrange(5,15+1):
-  if leafnum == 5:
-    continue
-
+for leafnum in xrange(1,15+1):
   cmd = ('./scaled_nts.native %d' % leafnum)
-  dispatch(cmd)
+  doit(cmd)
 
   svg_to_png(dir, 'scaled_nts_%d.svg' % leafnum, 'scaled_nts_%d.png' % leafnum)
   svg_to_png(dir, 'scaled_nts_training_%d.svg' % leafnum, 'scaled_nts_training_%d.png' % leafnum)

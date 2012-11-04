@@ -10,6 +10,45 @@ module type MODEL = sig
 
 end
 
+module Con = 
+struct
+  let throttle = 40
+
+  let nclasses = 15
+  let ntrain = 2
+  let ntest = 10
+  let ntotal = 75
+
+  let nump = 40
+
+  let pi = 4.0 *. atan 1.0
+
+  let regweight = 1.0
+
+  let spfactor = 20.
+
+  (* let default_sigma = 0.00000001  *)
+  (* let default_sigma = 0.01 *)
+  let default_sigma = 0.05
+    (* let default_sigma = 0.1 *)
+    (* let default_sigma = 0.2 *)
+    (* let default_sigma = 0.3 *)
+    (* let default_sigma = 1.0 *)
+
+  (* let default_granularity = 20 *)
+  let default_granularity = 100 
+
+
+  (* let default_baseline_weight = 0.001 *)
+  let default_baseline_weight = 0.1
+  let default_baseline_mean = {C.re=0.5; C.im=0.0}
+  let default_baseline_sigma = 0.05
+    (* let default_baseline_sigma = 1.0 *)
+
+
+  let em_smoothing_nlog = log (100.)
+end
+
 module Simple = 
 struct
   type loc_sdata = {
@@ -64,12 +103,14 @@ struct
 	if comp.cdata.bg = comp.cdata.en then
 	  Improper
 	else
-	  Watson {
-	    Watson.mean = shape; 
-	    (* Watson.conc_ = (\* 1000. *\) scale *. 1000.; *)
-	    (* Watson.conc_ = 1000.; *)
-	    Watson.conc_ = 100.;
-	  }
+	  Watson (
+	    Watson.watson_distro_family.Distro.build {
+	      Watson.mean_shape = shape; 
+	      (* Watson.conc_ = 1000. *)
+	      (* Watson.conc_ = scale *. 1000.; *)
+	      Watson.concentration = 1000.;
+	      (* Watson.conc_ = 100.; *)
+	    })
       in
 
 	{prob = 1.;
@@ -85,57 +126,57 @@ struct
 
       gram
 
-  let grow_grammar gram ntid foldroot (c, fam) =
-    let doubled = Array.append c c in
-    let n = Array.length c in
-    let fn = float_of_int n in
+  (* let grow_grammar gram ntid foldroot (c, fam) = *)
+  (*   let doubled = Array.append c c in *)
+  (*   let n = Array.length c in *)
+  (*   let fn = float_of_int n in *)
 
-    let sdata_maker scurve = 
-      assert(scurve.sdata.first <> scurve.sdata.last);
+  (*   let sdata_maker scurve =  *)
+  (*     assert(scurve.sdata.first <> scurve.sdata.last); *)
 
-      let scale = float_of_int scurve.sdata.len /. fn in
-      let straightcost = 
-	if scurve.dcompids = [] then 0.
-	else 
-	  infinity (* 100000. *. scale *. scale *)
-      in
-      let straightprob = exp (-. straightcost) in
-	Some {closed = false;
-	      straightprob = straightprob;
-	      straightcost = straightcost;
-	      curve = Array.sub doubled scurve.sdata.first (scurve.sdata.len + 1);}
-    in
+  (*     let scale = float_of_int scurve.sdata.len /. fn in *)
+  (*     let straightcost =  *)
+  (* 	if scurve.dcompids = [] then 0. *)
+  (* 	else  *)
+  (* 	  infinity (\* 100000. *. scale *. scale *\) *)
+  (*     in *)
+  (*     let straightprob = exp (-. straightcost) in *)
+  (* 	Some {closed = false; *)
+  (* 	      straightprob = straightprob; *)
+  (* 	      straightcost = straightcost; *)
+  (* 	      curve = Array.sub doubled scurve.sdata.first (scurve.sdata.len + 1);} *)
+  (*   in *)
 
-    let cdata_maker scurve comp = 
-      let scale = float_of_int scurve.sdata.len /. fn in
-      let left, right = Frozen.get_rhs fam comp in
-      let shape = Shape.shape_of_complex_bme  
-	c.(comp.cdata.bg) c.(comp.cdata.md) c.(comp.cdata.en) in
-      let olen = n - (left.sdata.len + right.sdata.len) in
-      let geom = 
-	assert(comp.cdata.bg <> comp.cdata.en);
+  (*   let cdata_maker scurve comp =  *)
+  (*     let scale = float_of_int scurve.sdata.len /. fn in *)
+  (*     let left, right = Frozen.get_rhs fam comp in *)
+  (*     let shape = Shape.shape_of_complex_bme   *)
+  (* 	c.(comp.cdata.bg) c.(comp.cdata.md) c.(comp.cdata.en) in *)
+  (*     let olen = n - (left.sdata.len + right.sdata.len) in *)
+  (*     let geom =  *)
+  (* 	assert(comp.cdata.bg <> comp.cdata.en); *)
 
-	Watson {
-	  Watson.mean = shape; 
-	  (* Watson.conc_ = (\* 1000. *\) scale *. 1000.; *)
-	  Watson.conc_ = 1000.;
-	}
-      in
+  (* 	Watson { *)
+  (* 	  Watson.mean = shape;  *)
+  (* 	  (\* Watson.conc_ = (\\* 1000. *\\) scale *. 1000.; *\) *)
+  (* 	  Watson.conc_ = 1000.; *)
+  (* 	} *)
+  (*     in *)
 
-	{prob = 1.;
-	 cost = 0.;
-	 geom = geom;
-	 lcurve = Array.sub doubled comp.cdata.bg (left.sdata.len+1);
-	 rcurve = Array.sub doubled comp.cdata.md (right.sdata.len+1);
-	 ocurve = Array.sub doubled comp.cdata.en (olen+1);
-	}
-    in
+  (* 	{prob = 1.; *)
+  (* 	 cost = 0.; *)
+  (* 	 geom = geom; *)
+  (* 	 lcurve = Array.sub doubled comp.cdata.bg (left.sdata.len+1); *)
+  (* 	 rcurve = Array.sub doubled comp.cdata.md (right.sdata.len+1); *)
+  (* 	 ocurve = Array.sub doubled comp.cdata.en (olen+1); *)
+  (* 	} *)
+  (*   in *)
 
-    let gram = Grammar.grow_grammar_with_family
-      gram fam ntid foldroot sdata_maker cdata_maker 
-    in
+  (*   let gram = Grammar.grow_grammar_with_family *)
+  (*     gram fam ntid foldroot sdata_maker cdata_maker  *)
+  (*   in *)
 
-      gram
+  (*     gram *)
 
   let add_curve_data_to_family curve fam =
     let n = Array.length curve in
@@ -181,7 +222,9 @@ struct
 	  comp.cdata.cost +. (Parzen.cost model shape)
       | Watson model ->
 	  begin
-	    let watsoncost = Watson.cost model shape in
+	    let watsoncost = 
+	      Watson.watson_distro_family.Distro.neglog_prob model shape 
+	    in
 	      if not (isfinite watsoncost) then
 		printf "watsoncost = %f\n" watsoncost;
 	      comp.cdata.cost +. watsoncost
@@ -218,7 +261,15 @@ struct
       (* 	 | Some shape -> shape *)
       (*        end, baseline_sigma) Con.default_baseline_weight *)
       (*       true *)
-      let geom =  Watson.fit_neglog_weighted samples in
+      let samples = Array.of_list samples in
+      let geom, inference_data =  
+	Watson.watson_distro_family.Distro.infer 
+	  {Watson.samples=samples;
+	   Watson.gamma_shape_param=1000. *. 1000.;
+	   Watson.gamma_mean_param=1000.;
+	  }
+      in
+	(* assert (inference_data.Watson.conc > 0.); *)
 	{
 	  geom = Watson geom;
 	  prob = prod.cdata.prob;
@@ -233,6 +284,155 @@ struct
 
 
 end
+
+module EM = 
+struct
+  let sdata_maker_maker doubled fn scurve =
+    let closed = (scurve.sdata.first = scurve.sdata.last) in
+      if closed then
+	None
+      else begin
+	let scale = float_of_int scurve.sdata.len /. fn in
+	let straightcost = 
+	  if scurve.dcompids = [] then 0.
+	  else 
+	    infinity
+	in
+	let straightprob = exp (-. straightcost) in
+	  Some {closed = closed;
+		straightprob = straightprob;
+		straightcost = straightcost;
+		curve = Array.sub doubled scurve.sdata.first (scurve.sdata.len + 1);}
+      end
+
+  let cdata_maker_maker fam c doubled n fn scurve comp = 
+    let scale = float_of_int scurve.sdata.len /. fn in
+    let left, right = Frozen.get_rhs fam comp in
+    let shape = Shape.shape_of_complex_bme  
+      c.(comp.cdata.bg) c.(comp.cdata.md) c.(comp.cdata.en) in
+    let olen = n - (left.sdata.len + right.sdata.len) in
+    let geom = 
+      if comp.cdata.bg = comp.cdata.en then
+	Improper
+      else
+	Watson (
+	  Watson.watson_distro_family.Distro.build {
+	    Watson.mean_shape = shape; 
+	    (* Watson.conc_ = scale *. 1000.; *)
+	    (* Watson.conc_ = 1000.; *)
+	    Watson.concentration = scale *. 1000. *. 1000.;
+	  })
+    in
+
+      {prob = 1.;
+       cost = 0.;
+       geom = geom;
+       lcurve = Array.sub doubled comp.cdata.bg (left.sdata.len+1);
+       rcurve = Array.sub doubled comp.cdata.md (right.sdata.len+1);
+       ocurve = Array.sub doubled comp.cdata.en (olen+1);
+      }
+
+  let make_grammar (c, fam) =
+    let doubled = Array.append c c in
+    let n = Array.length c in
+    let fn = float_of_int n in
+
+    let sdata_maker = sdata_maker_maker doubled fn in
+    let cdata_maker = cdata_maker_maker fam c doubled n fn in
+
+    let gram = Grammar.grammar_of_family fam {closed=true; straightprob=0.; straightcost=infinity; curve=c} sdata_maker cdata_maker in
+
+      gram
+
+  let grow_grammar gram ntid foldroot (c, fam) =
+    let doubled = Array.append c c in
+    let n = Array.length c in
+    let fn = float_of_int n in
+
+    let sdata_maker scurve = 
+      assert(scurve.sdata.first <> scurve.sdata.last);
+      sdata_maker_maker doubled fn scurve
+    in
+
+    let cdata_maker scurve comp = 
+      assert(comp.cdata.bg <> comp.cdata.en);
+      cdata_maker_maker fam c doubled n fn scurve comp
+    in
+
+    let gram = Grammar.grow_grammar_with_family
+      gram fam ntid foldroot sdata_maker cdata_maker 
+    in
+
+      gram
+
+  let add_curve_data_to_family = Simple.add_curve_data_to_family
+  let strat = Simple.strat
+
+end
+
+module Detection = 
+struct
+  let sdata_maker_maker doubled fn scurve =
+    let closed = (scurve.sdata.first = scurve.sdata.last) in
+      if closed then
+	None
+      else begin
+	let scale = float_of_int scurve.sdata.len /. fn in
+	let straightcost = 
+	  if scurve.dcompids = [] then 0.
+	  else 
+	    infinity
+	in
+	let straightprob = exp (-. straightcost) in
+	  Some {closed = closed;
+		straightprob = straightprob;
+		straightcost = straightcost;
+		curve = Array.sub doubled scurve.sdata.first (scurve.sdata.len + 1);}
+      end
+
+  let cdata_maker_maker fam c doubled n fn scurve comp = 
+    let scale = float_of_int scurve.sdata.len /. fn in
+    let left, right = Frozen.get_rhs fam comp in
+    let shape = Shape.shape_of_complex_bme  
+      c.(comp.cdata.bg) c.(comp.cdata.md) c.(comp.cdata.en) in
+    let olen = n - (left.sdata.len + right.sdata.len) in
+    let geom = 
+      if comp.cdata.bg = comp.cdata.en then
+	Improper
+      else
+	Watson (
+	  Watson.watson_distro_family.Distro.build {
+	    Watson.mean_shape = shape; 
+	    (* Watson.conc_ = (\* 1000. *\) scale *. 1000.; *)
+	    (* Watson.conc_ = 1000.; *)
+	    Watson.concentration = 100.;
+	})
+    in
+
+      {prob = 1.;
+       cost = 0.;
+       geom = geom;
+       lcurve = Array.sub doubled comp.cdata.bg (left.sdata.len+1);
+       rcurve = Array.sub doubled comp.cdata.md (right.sdata.len+1);
+       ocurve = Array.sub doubled comp.cdata.en (olen+1);
+      }
+
+  let make_grammar (c, fam) =
+    let doubled = Array.append c c in
+    let n = Array.length c in
+    let fn = float_of_int n in
+
+    let sdata_maker = sdata_maker_maker doubled fn in
+    let cdata_maker = cdata_maker_maker fam c doubled n fn in
+
+    let gram = Grammar.grammar_of_family fam {closed=true; straightprob=0.; straightcost=infinity; curve=c} sdata_maker cdata_maker in
+
+      gram
+
+  let add_curve_data_to_family = Simple.add_curve_data_to_family
+  let strat = Simple.strat 
+  
+end (* Detection *)
 
 module LLL_shorter = 
 struct
@@ -289,11 +489,12 @@ struct
       	    let cdata = {
       	      prob = prob;
       	      cost = -. log prob;
-      	      geom = Watson {
-      		Watson.mean = Shape.default_shape;
-(*       		Watson.conc_ = scale *. 10.; *)
-      		Watson.conc_ = scale *. 1000.;
-      	      };
+      	      geom = Watson (
+		Watson.watson_distro_family.Distro.build {
+      		  Watson.mean_shape = Shape.default_shape;
+		  (*       		Watson.conc_ = scale *. 10.; *)
+      		  Watson.concentration = scale *. 1000.;
+      	      });
 	      (* A reasonable enough depiction of L->LL: 
 		 o-o-o
 		 How does it interact with grammar drawing code? *)
@@ -338,10 +539,11 @@ struct
       	    let cdata = {
       	      prob = prob;
       	      cost = -. log prob;
-      	      geom = Watson {
-      		Watson.mean = Shape.default_shape;
-      		Watson.conc_ = scale *. 1000.;
-      	      };
+      	      geom = Watson (
+		Watson.watson_distro_family.Distro.build {
+      		  Watson.mean_shape = Shape.default_shape;
+      		  Watson.concentration = scale *. 1000.;
+      		});
 	      (* A reasonable enough depiction of L->LL: 
 		 o-o-o
 		 How does it interact with grammar drawing code? *)
@@ -503,10 +705,11 @@ let make_grammar (c, fam) =
       if comp.cdata.bg_ = comp.cdata.en_ then
 	Improper
       else
-	Watson {
-	  Watson.mean = shape; 
-	  Watson.conc_ = (* 1000. *) scale *. 1000.;
-	}
+	Watson (
+	  Watson.watson_distro_family.Distro.build {
+	    Watson.mean_shape = shape; 
+	    Watson.concentration = (* 1000. *) scale *. 1000.;
+	  })
     in
 
       {prob = 1.;
@@ -531,7 +734,7 @@ let prod_cost comp shape =
 	comp.cdata.cost +. (Parzen.cost model shape)
     | Watson model ->
 	begin
-	  let watsoncost = Watson.cost model shape in
+	  let watsoncost = Watson.watson_distro_family.Distro.neglog_prob model shape in
 	    if not (isfinite watsoncost) then
 	      printf "watsoncost = %f\n" watsoncost;
 	    comp.cdata.cost +. watsoncost
@@ -590,7 +793,13 @@ let strat = {
     (* 	 | Some shape -> shape *)
     (*        end, baseline_sigma) Con.default_baseline_weight *)
     (*       true *)
-    let geom =  Watson.fit_neglog_weighted samples in
+    let geom, inference_data = 
+      Watson.watson_distro_family.Distro.infer 
+	{Watson.samples = (Array.of_list samples);
+	 Watson.gamma_shape_param=1000. *. 1000.;
+	 Watson.gamma_mean_param=1000.;
+	}
+    in
       {
 	geom = Watson geom;
 	prob = prod.cdata.prob;
@@ -743,12 +952,13 @@ let make_grammar (c, fam) =
       if comp.cdata.bg_ = comp.cdata.en_ then
 	Improper
       else
-	Watson {
-	  Watson.mean = shape; 
-(* 	  Watson.conc_ = scale *. 1000.; *)
-(* 	  Watson.conc_ = (sqrt scale) *. 2. *. 1000.; *)
-	  Watson.conc_ = (scale ** 0.8) *. 1000.;
-	}
+	Watson (
+	  Watson.watson_distro_family.Distro.build {
+	    Watson.mean_shape = shape; 
+	    (* 	  Watson.conc_ = scale *. 1000.; *)
+	    (* 	  Watson.conc_ = (sqrt scale) *. 2. *. 1000.; *)
+	    Watson.concentration = (scale ** 0.8) *. 1000.;
+	  })
     in
 
       {prob = 1.;
@@ -770,7 +980,7 @@ let prod_cost comp shape =
 	comp.cdata.cost
     | Watson model ->
 	begin
-	  let watsoncost = Watson.cost model shape in
+	  let watsoncost = Watson.watson_distro_family.Distro.neglog_prob model shape in
 	    if not (isfinite watsoncost) then
 	      printf "watsoncost = %f\n" watsoncost;
 	    comp.cdata.cost +. watsoncost
@@ -849,7 +1059,13 @@ let strat = {
   Parsing.getshape = (fun cdata -> cdata.shape_);
 
   Parsing.fit_midpoint_distro = begin fun prod samples themode ->
-    let geom =  Watson.fit_neglog_weighted samples in
+    let geom, inference_data =  
+      Watson.watson_distro_family.Distro.infer 
+	{Watson.samples = (Array.of_list samples);
+	 Watson.gamma_shape_param=1000. *. 1000.;
+	 Watson.gamma_mean_param=1000.;
+	}
+    in
       {
 	geom = Watson geom;
 	prob = prod.cdata.prob;
