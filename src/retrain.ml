@@ -24,6 +24,8 @@ type ('tgt_sym, 'tgt_comp, 'tgt_glob) retraining_build_data = {
 type ('tgt_sym, 'tgt_comp, 'tgt_glob, 'a) retraining_internal_data = {
   soft_counts: 'a sparse_counts_table;
   build_data: ('tgt_sym, 'tgt_comp, 'tgt_glob) retraining_build_data;
+  watson_prior_shape_: float;
+  watson_prior_mean_: float;
 }
 
 let print_counts2 counts =
@@ -145,7 +147,10 @@ let retrain_initialize gram params =
   in
 
     {soft_counts = soft;
-     build_data = params}
+     build_data = params;
+     watson_prior_shape_ = params.watson_prior_shape;
+     watson_prior_mean_ = params.watson_prior_mean;
+    }
 
 let retrain_apply soft_data gram =
   (* let gram = Grammar.copy gram in *)
@@ -195,7 +200,7 @@ let retrain_apply soft_data gram =
 
 
 	    (* replace midpoint distro *)
-	    prod.cdata <- soft_data.build_data.strat.fit_midpoint_distro prod samples themode;
+	    prod.cdata <- soft_data.build_data.strat.fit_midpoint_distro prod samples themode soft_data.watson_prior_shape_ soft_data.watson_prior_mean_;
 	    (* 	    printf "computed (some) midpoints for state #%d\n%!" state.G.sid	   *)
       end;
 

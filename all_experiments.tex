@@ -36,7 +36,7 @@ three different starting structures, which are shown below as
 decompositions of the example curve.
 
 Unless otherwise noted, these experiments use Watson distributions and
-a $Gamma(\sigma=1000, \overline{\kappa}=100)$ prior on the
+a $Gamma(\sigma=10^6, \overline{\kappa}=1000)$ prior on the
 concentration of the Watson distributions.
 
 \input{output/3.learning/learning_setup/out}
@@ -59,6 +59,10 @@ after each round of training in the table below.
 \input{output/3.learning/simple_tuning/out}
 
 \section{Experimenting with different priors over concentration}
+
+Here we are using Watson distributions and a $Gamma(\sigma,
+\overline{\kappa}=100)$ prior on the concentration of the Watson
+distributions, for $\sigma=1, 1000, 10^6$.
 
 \input{output/3.learning/concentration/out}
 

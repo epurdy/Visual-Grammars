@@ -252,7 +252,7 @@ struct
     Parsing.compatible = (fun sym scurve -> sym.sdata.closed = scurve.startable);
     Parsing.getshape = (fun cdata -> cdata.shape_);
 
-    Parsing.fit_midpoint_distro = begin fun prod samples themode ->
+    Parsing.fit_midpoint_distro = begin fun prod samples themode prior_shape prior_mean ->
       (*     let geom = Parzen.make_model_neglog_weighted *)
       (*       (Array.of_list samples) *)
       (*       sigma Con.default_granularity *)
@@ -265,8 +265,8 @@ struct
       let geom, inference_data =  
 	Watson.watson_distro_family.Distro.infer 
 	  {Watson.samples=samples;
-	   Watson.gamma_shape_param=1000. *. 1000.;
-	   Watson.gamma_mean_param=1000.;
+	   Watson.gamma_shape_param = prior_shape;
+	   Watson.gamma_mean_param = prior_mean;
 	  }
       in
 	(* assert (inference_data.Watson.conc > 0.); *)
@@ -784,7 +784,7 @@ let strat = {
   Parsing.compatible = (fun sym scurve -> sym.sdata.closed = scurve.startable);
   Parsing.getshape = (fun cdata -> cdata.shape_);
 
-  Parsing.fit_midpoint_distro = begin fun prod samples themode ->
+  Parsing.fit_midpoint_distro = begin fun prod samples themode prior_shape prior_mean ->
     (*     let geom = Parzen.make_model_neglog_weighted *)
     (*       (Array.of_list samples) *)
     (*       sigma Con.default_granularity *)
@@ -796,8 +796,8 @@ let strat = {
     let geom, inference_data = 
       Watson.watson_distro_family.Distro.infer 
 	{Watson.samples = (Array.of_list samples);
-	 Watson.gamma_shape_param=1000. *. 1000.;
-	 Watson.gamma_mean_param=1000.;
+	 Watson.gamma_shape_param = prior_shape;
+	 Watson.gamma_mean_param = prior_mean;
 	}
     in
       {
@@ -1058,12 +1058,12 @@ let strat = {
   Parsing.compatible = (fun sym scurve -> sym.sdata.closed = scurve.startable);
   Parsing.getshape = (fun cdata -> cdata.shape_);
 
-  Parsing.fit_midpoint_distro = begin fun prod samples themode ->
+  Parsing.fit_midpoint_distro = begin fun prod samples themode prior_shape prior_mean ->
     let geom, inference_data =  
       Watson.watson_distro_family.Distro.infer 
 	{Watson.samples = (Array.of_list samples);
-	 Watson.gamma_shape_param=1000. *. 1000.;
-	 Watson.gamma_mean_param=1000.;
+	 Watson.gamma_shape_param = prior_shape;
+	 Watson.gamma_mean_param = prior_mean;
 	}
     in
       {

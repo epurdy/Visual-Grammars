@@ -31,7 +31,7 @@ for isdf, sdf in enumerate(sdfs):
     gram_file = experiment.tmp_file_namer('foo', 'gram', ('sdf',isdf), ('iter',i))
     next_gram_file = experiment.tmp_file_namer('foo', 'gram', ('sdf',isdf), ('iter',i+1))
     dispatch('./do_retrain.native', input=gram_file, output=next_gram_file, anon=training,
-             prior_shape=1000.0, prior_mean=100.0)
+             prior_shape=1000000.0, prior_mean=1000.0)
     
 ################################
 # boilerplate from here on out #

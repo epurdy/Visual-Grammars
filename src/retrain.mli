@@ -16,6 +16,8 @@ type ('tgt_sym, 'tgt_comp, 'tgt_glob) retraining_build_data = {
 type ('tgt_sym, 'tgt_comp, 'tgt_glob, 'a) retraining_internal_data = {
   soft_counts: 'a Parsing.sparse_counts_table;
   build_data: ('tgt_sym, 'tgt_comp, 'tgt_glob) retraining_build_data;
+  watson_prior_shape_: float;
+  watson_prior_mean_: float;
 }
 
 val retrain_heuristic:  

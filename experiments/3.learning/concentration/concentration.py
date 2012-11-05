@@ -17,7 +17,7 @@ training = [ 'DATA/romer/newann/IMG%03d0.curve' % i for i in xrange(28) ]
 validation = [ x.rstrip() for x in os.popen('ls DATA/romer/validation/*.curve') ]
 
 
-prior_shape_weights = [ 1, 10, 100, 1000 ]
+prior_shape_weights = [ 1, 1000, 1000000 ]
 iters_to_draw = range(0,niters+1,10)
 
 # make the initial grammars
@@ -37,8 +37,10 @@ for psw in prior_shape_weights:
 experiment.start_table('xent', '|l|l|l|l|', '''
 Cross-entropy scores across iterations. Each column represents a different weight given to the prior over concentrations.''')
 
-for psw in prior_shape_weights:
+for ipsw, psw in enumerate(prior_shape_weights):
   experiment.table_cell_from_string('xent', str(psw))
+  if ipsw < len(prior_shape_weights)-1:
+    experiment.table_end_cell('xent')
 experiment.table_end_row('xent')
 experiment.table_hrule('xent')
 
